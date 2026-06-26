@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    container_name: yakquest-api
+    ports:
+      - "8010:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+      - ./tools:/app/tools
+      - ./imports:/app/imports
+      - ./raw:/app/raw
+
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: yakquest-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
+    volumes:
+      - yakquest_pgdata:/var/lib/postgresql/data
+
+volumes:
+  yakquest_pgdata:

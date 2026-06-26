@@ -1,0 +1,17 @@
+.env
+.env.example
+todo.txt
+
+node_modules/
+dist/
+build/
+
+.expo/
+.expo-shared/
+
+__pycache__/
+*.pyc
+
+backend/.env
+mobile/.env
+web/.env

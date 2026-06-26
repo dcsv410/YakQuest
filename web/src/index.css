@@ -1,0 +1,815 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #10201c;
+  background: #f4f7f3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.site-header {
+  height: 76px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 33, 29, 0.95);
+  color: white;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #1ca7a6;
+  font-weight: 900;
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.brand-tagline {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  opacity: 0.8;
+}
+
+.nav {
+  display: flex;
+  gap: 18px;
+  font-weight: 700;
+}
+
+.nav a {
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.nav a:hover {
+  opacity: 1;
+}
+
+.site-main {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.hero {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+}
+
+.hero-card {
+  max-width: 660px;
+  padding: 42px;
+  border-radius: 28px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #1ca7a6;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(36px, 6vw, 68px);
+  line-height: 0.95;
+}
+
+.hero-text {
+  font-size: 19px;
+  line-height: 1.55;
+  color: #49635c;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 13px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.primary-button {
+  background: #1ca7a6;
+  color: white;
+}
+
+.secondary-button {
+  border: 1px solid #1ca7a6;
+  color: #147473;
+}
+
+.muted {
+  color: #61736e;
+}
+
+.river-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.river-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.river-card h2 {
+  margin: 0 0 4px;
+}
+
+.stats-row {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.error-box {
+  white-space: pre-wrap;
+  background: #2b1111;
+  color: #ffd8d8;
+  padding: 16px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+/* Planner */
+
+.planner-workspace {
+  display: grid;
+  grid-template-columns: 280px minmax(620px, 1.8fr) 320px;
+  gap: 18px;
+  min-height: calc(100vh - 140px);
+}
+
+.planner-left,
+.planner-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.planner-left,
+.planner-right,
+.planner-center {
+  min-height: 760px;
+}
+
+.panel-heading,
+.planner-controls,
+.overview-card {
+  background: white;
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.panel-heading h1 {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.river-list {
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.river-list-item {
+  border: 1px solid rgba(16, 32, 28, 0.1);
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.river-list-item strong {
+  display: block;
+  font-size: 15px;
+}
+
+.river-list-item small {
+  display: block;
+  color: #64756f;
+  margin-top: 3px;
+}
+
+.river-list-item.selected {
+  border-color: #1ca7a6;
+  background: #e8f7f6;
+}
+
+.river-list-meta {
+  font-size: 12px;
+  color: #55706a;
+  white-space: nowrap;
+}
+
+.selection-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.selection-toggle button {
+  border: 1px solid rgba(16, 32, 28, 0.15);
+  background: #f4f7f3;
+  border-radius: 999px;
+  padding: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.selection-toggle button.active {
+  background: #1ca7a6;
+  color: white;
+  border-color: #1ca7a6;
+}
+
+.form-label {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  font-weight: 800;
+}
+
+.form-label select,
+.form-label input {
+  width: 100%;
+  border: 1px solid rgba(16, 32, 28, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 15px;
+  background: white;
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  color: #147473;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 10px 0 0;
+}
+
+.planner-center {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+  min-height: 760px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.metric-grid div,
+.trip-metric {
+  border-radius: 14px;
+  background: #f4f7f3;
+  padding: 12px;
+}
+
+.metric-grid span,
+.trip-metric span {
+  display: block;
+  font-size: 12px;
+  color: #64756f;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-grid strong,
+.trip-metric strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.trip-metric {
+  margin-top: 10px;
+}
+
+.trip-detail-list {
+  margin-top: 14px;
+}
+
+.trip-detail-list p {
+  margin: 8px 0;
+}
+
+.poi-list {
+  display: grid;
+  gap: 12px;
+}
+
+.poi-item {
+  border-top: 1px solid rgba(16, 32, 28, 0.08);
+  padding-top: 12px;
+}
+
+.poi-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.poi-item p {
+  margin: 6px 0 0;
+  color: #64756f;
+}
+
+.popup-button {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border: 0;
+  background: #1ca7a6;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.button-reset {
+  border: 0;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* Printable route map + timeline */
+
+.print-map-wrapper {
+  display: none;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(16, 32, 28, 0.12);
+}
+
+.timeline-row:first-child {
+  border-top: 0;
+}
+
+.timeline-distance {
+  font-weight: 900;
+  color: #147473;
+}
+
+.timeline-row p {
+  margin: 4px 0 0;
+  color: #61736e;
+}
+
+.print-section {
+  margin-top: 24px;
+  border-top: 1px solid rgba(16, 32, 28, 0.12);
+  padding-top: 16px;
+}
+
+.print-section h3 {
+  margin: 0 0 10px;
+}
+
+/* Print */
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .site-header,
+  .planner-left,
+  .planner-center,
+  .overview-card:not(.trip-print-area),
+  .button-reset {
+    display: none !important;
+  }
+
+  .site-main {
+    padding: 0;
+    max-width: none;
+  }
+
+  .planner-workspace {
+    display: block;
+  }
+
+  .planner-right {
+    display: block;
+  }
+
+  .trip-print-area {
+    box-shadow: none;
+    border: 0;
+    font-size: 16px;
+    page-break-inside: avoid;
+  }
+
+  .print-map-wrapper {
+    display: block;
+    margin: 18px 0 24px;
+    page-break-inside: avoid;
+  }
+
+  .print-route-map {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+  }
+
+  .print-map-bg {
+    fill: #f4f7f3;
+  }
+
+  .print-route-line {
+    fill: none;
+    stroke: #147473;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .print-marker-start {
+    fill: #1ca7a6;
+    stroke: white;
+    stroke-width: 2;
+  }
+
+  .print-marker-end {
+    fill: #d64545;
+    stroke: white;
+    stroke-width: 2;
+  }
+
+  .print-marker-poi {
+    fill: #3468c9;
+    stroke: white;
+    stroke-width: 2;
+  }
+
+  .print-marker-hazard {
+    fill: #9f1d1d;
+    stroke: white;
+    stroke-width: 2;
+  }
+
+  .print-map-label {
+    font-size: 13px;
+    font-weight: 700;
+    fill: #10201c;
+  }
+
+  .timeline-row {
+    break-inside: avoid;
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .site-main {
+    padding: 18px;
+  }
+
+  .planner-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-left,
+  .planner-right,
+  .planner-center {
+    min-height: auto;
+  }
+
+  .leaflet-map {
+    min-height: 520px;
+  }
+}
+
+.rivers-map-page {
+  display: grid;
+  grid-template-columns: minmax(640px, 1fr) 380px;
+  gap: 20px;
+  height: calc(100vh - 124px);
+  overflow: hidden;
+}
+
+.rivers-map-shell {
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  min-height: 0;
+}
+
+.rivers-leaflet-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.river-detail-panel {
+  background: white;
+  border-radius: 24px;
+  padding: 22px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.river-detail-panel h1 {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.river-mini-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.river-mini-item {
+  border: 1px solid rgba(16, 32, 28, 0.12);
+  background: #f4f7f3;
+  padding: 14px;
+  border-radius: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.river-mini-item strong {
+  display: block;
+  font-size: 16px;
+}
+
+.river-mini-item span {
+  display: block;
+  color: #61736e;
+  margin-top: 4px;
+}
+
+.river-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 22px 0;
+}
+
+.river-detail-metrics div {
+  border-radius: 16px;
+  background: #f4f7f3;
+  padding: 14px;
+}
+
+.river-detail-metrics span {
+  display: block;
+  color: #61736e;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.river-detail-metrics strong {
+  display: block;
+  font-size: 20px;
+  margin-top: 5px;
+}
+
+.river-info-card {
+  border-top: 1px solid rgba(16, 32, 28, 0.1);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.river-info-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.river-info-card p {
+  margin: 6px 0;
+  color: #61736e;
+}
+
+.river-detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.river-button {
+  background: white;
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .rivers-map-page {
+    grid-template-columns: 1fr;
+  }
+
+  .rivers-map-shell,
+  .rivers-leaflet-map {
+    min-height: 520px;
+  }
+}
+
+.auth-page {
+  min-height: calc(100vh - 140px);
+  display: grid;
+  place-items: center;
+}
+
+.auth-card {
+  width: min(100%, 480px);
+  background: white;
+  border-radius: 28px;
+  padding: 34px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.12);
+}
+
+.auth-card h1 {
+  font-size: 46px;
+}
+
+.auth-form {
+  margin-top: 24px;
+}
+
+.auth-submit {
+  border: 0;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.form-error {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffe8e8;
+  color: #8a1f1f;
+  font-weight: 700;
+}
+
+.account-page {
+  min-height: calc(100vh - 140px);
+  display: grid;
+  place-items: center;
+}
+
+.account-grid {
+  width: min(100%, 980px);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+}
+
+.account-card {
+  background: white;
+  border-radius: 28px;
+  padding: 34px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.12);
+}
+
+.account-card h1 {
+  font-size: 48px;
+}
+
+.account-benefits {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0;
+  color: #24433b;
+  font-weight: 700;
+}
+
+.account-detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.account-detail-list div {
+  background: #f4f7f3;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.account-detail-list span {
+  display: block;
+  color: #61736e;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.account-detail-list strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 24px;
+}
+
+.account-button {
+  border: 1px solid #1ca7a6;
+  background: white;
+  cursor: pointer;
+}
+
+.account-links {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.account-links a {
+  display: block;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f4f7f3;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+@media (max-width: 800px) {
+  .account-grid {
+    grid-template-columns: 1fr;
+  }
+}
