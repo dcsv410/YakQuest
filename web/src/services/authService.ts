@@ -45,19 +45,24 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthResponse> {
+  const payload: LoginRequest = {
+    email,
+    password,
+  };
+
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     throw new Error(await response.text());
   }
 
-  const data = await response.json();
+  const data: AuthResponse = await response.json();
   storeAuth(data);
   return data;
 }
@@ -67,23 +72,25 @@ export async function register(
   password: string,
   displayName?: string
 ): Promise<AuthResponse> {
+  const payload: RegisterRequest = {
+    email,
+    password,
+    displayName,
+  };
+
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      password,
-      displayName,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     throw new Error(await response.text());
   }
 
-  const data = await response.json();
+  const data: AuthResponse = await response.json();
   storeAuth(data);
   return data;
 }

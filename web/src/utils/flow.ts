@@ -1,4 +1,8 @@
-import type { FlowStats } from "../types/river";
+export {
+  getFlowPercentile,
+  getFlowRating,
+  getSafetyWarnings,
+} from "@yakquest/shared";
 
 export async function fetchUSGSFlow(
   gaugeId: string
@@ -28,23 +32,4 @@ export async function fetchUSGSFlow(
   } catch {
     return null;
   }
-}
-
-export function getFlowPercentile(
-  flowCfs: number,
-  stats: FlowStats
-): number {
-  if (flowCfs <= stats.lowPercentile) return 10;
-  if (flowCfs <= stats.median) return 40;
-  if (flowCfs <= stats.highPercentile) return 70;
-  if (flowCfs <= stats.max) return 90;
-  return 99;
-}
-
-export function getFlowRating(percentile: number | null) {
-  if (percentile === null) return "Unknown";
-  if (percentile < 20) return "Low";
-  if (percentile < 75) return "Ideal";
-  if (percentile < 95) return "High";
-  return "Dangerous";
 }

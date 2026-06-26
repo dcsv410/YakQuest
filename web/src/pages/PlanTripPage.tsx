@@ -287,7 +287,7 @@ export default function PlanTripPage() {
         <MapContainer
           key={selectedRiver?.id ?? "empty-map"}
           center={mapCenter}
-          zoom={selectedRiver ? 12 : 8}
+          zoom={selectedRiver ? 12 : 10}
           scrollWheelZoom
           className="leaflet-map"
         >
@@ -295,6 +295,32 @@ export default function PlanTripPage() {
             attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
+          {rivers.map((river) => {
+            const selected = river.id === selectedRiverId;
+
+            return (
+              <Polyline
+                key={river.id}
+                positions={river.coordinates.map((coord) => [
+                  coord.latitude,
+                  coord.longitude,
+                ])}
+                pathOptions={{
+                  weight: selected ? 7 : 4,
+                  opacity: selected ? 1 : 0.45,
+                }}
+                eventHandlers={{
+                  click: () => {
+                    setSelectedRiverId(river.id);
+                    setStartId("");
+                    setEndId("");
+                    setSelectionMode("start");
+                  },
+                }}
+              />
+            );
+          })}
 
           {selectedRiver && start && end ? (
             <FitTripBounds
@@ -308,12 +334,12 @@ export default function PlanTripPage() {
 
           {selectedRiver ? (
             <>
-              <Polyline
+              {/* <Polyline
                 positions={selectedRiver.coordinates.map((coord) => [
                   coord.latitude,
                   coord.longitude,
                 ])}
-              />
+              /> */}
 
               {accessPoints.map((point) => {
                 const isStart = point.id === startId;
