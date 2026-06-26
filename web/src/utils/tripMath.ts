@@ -1,4 +1,4 @@
-import type { Coordinate, River, RiverPoint } from "../types/river";
+import type { Coordinate, River, RiverPoint } from "@yakquest/shared";
 
 const EARTH_RADIUS_FEET = 20902231;
 

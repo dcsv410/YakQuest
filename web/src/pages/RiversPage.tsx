@@ -9,8 +9,9 @@ import {
 } from "react-leaflet";
 
 import { fetchRivers } from "../services/riverService";
-import type { River } from "../types/river";
+import type { River } from "@yakquest/shared";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
+import FitRiverBounds from "../components/FitRiverBounds";
 
 function getRiverCenter(river: River): [number, number] {
   if (!river.coordinates.length) {
@@ -141,6 +142,10 @@ export default function RiversPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          {selectedRiver ? (
+            <FitRiverBounds coordinates={selectedRiver.coordinates} />
+          ) : null}
+
           {userCenter ? (
             <Marker position={userCenter}>
               <Popup>Your approximate location</Popup>
@@ -167,6 +172,56 @@ export default function RiversPage() {
               />
             );
           })}
+
+          {selectedRiver ? (
+            <>
+              {[
+                ...selectedRiver.accessPoints.public,
+                ...selectedRiver.accessPoints.private,
+              ].map((point) => (
+                <Marker
+                  key={point.id}
+                  position={[point.latitude, point.longitude]}
+                >
+                  <Popup>
+                    <strong>{point.name}</strong>
+                    <br />
+                    {point.type === "public_access"
+                      ? "Public Access"
+                      : point.type === "private_access"
+                      ? "Private Access"
+                      : point.type}
+                  </Popup>
+                </Marker>
+              ))}
+
+              {selectedRiver.pois.map((point) => (
+                <Marker
+                  key={point.id}
+                  position={[point.latitude, point.longitude]}
+                >
+                  <Popup>
+                    <strong>{point.name}</strong>
+                    <br />
+                    Point of Interest
+                  </Popup>
+                </Marker>
+              ))}
+
+              {(selectedRiver.hazards ?? []).map((point) => (
+                <Marker
+                  key={point.id}
+                  position={[point.latitude, point.longitude]}
+                >
+                  <Popup>
+                    <strong>{point.name}</strong>
+                    <br />
+                    Hazard
+                  </Popup>
+                </Marker>
+              ))}
+            </>
+          ) : null}
         </MapContainer>
       </div>
 

@@ -10,14 +10,15 @@ import {
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
-import type { River, RiverPoint } from "../types/river";
+import type { River, RiverPoint } from "@yakquest/shared";
 import {
   getTripDistanceMiles,
   getTripTimeRange,
   getTripTimelinePoints,
 } from "../utils/tripMath";
 import FitRiverBounds from "../components/FitRiverBounds";
-import PrintableRouteMap from "../components/PrintableRouteMap";
+import FitTripBounds from "../components/FitTripBounds";
+import { fetchSavedTrips } from "../services/savedTripService";
 
 type SelectionMode = "start" | "end";
 
@@ -30,31 +31,21 @@ function getAccessPoints(river: River): RiverPoint[] {
 
 function getPointLabel(point: RiverPoint) {
   switch (point.type) {
-    case "public":
     case "public_access":
       return "Public Access";
-    case "private":
+
     case "private_access":
       return "Private Access";
+
     case "poi":
       return "Point of Interest";
+
     case "hazard":
       return "Hazard";
+
     default:
       return point.type;
   }
-}
-
-function getPointClass(point: RiverPoint) {
-  if (point.type === "public" || point.type === "public_access") {
-    return "public";
-  }
-
-  if (point.type === "private" || point.type === "private_access") {
-    return "private";
-  }
-
-  return point.type;
 }
 
 export default function PlanTripPage() {
@@ -72,6 +63,7 @@ export default function PlanTripPage() {
   const [endId, setEndId] = useState("");
   const [searchParams] = useSearchParams();
   const initialRiverId = searchParams.get("riverId");
+  const initialSavedTripId = searchParams.get("savedTripId");
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
@@ -132,6 +124,53 @@ export default function PlanTripPage() {
 
     setEndId(point.id);
   };
+
+  useEffect(() => {
+    async function loadSavedTripFromUrl() {
+      if (!initialSavedTripId) return;
+      if (!rivers.length) return;
+
+      const trips = await fetchSavedTrips();
+      const trip = trips.find((item) => item.id === initialSavedTripId);
+
+      if (!trip) return;
+
+      const river = rivers.find(
+        (item) =>
+          item.id === trip.riverId ||
+          item.name === trip.riverName
+      );
+
+      if (!river) return;
+
+      setSelectedRiverId(river.id);
+
+      const accessPoints = getAccessPoints(river);
+
+      const startPoint = accessPoints.find(
+        (point) =>
+          point.name === trip.startName ||
+          (
+            point.latitude === trip.startLatitude &&
+            point.longitude === trip.startLongitude
+          )
+      );
+
+      const endPoint = accessPoints.find(
+        (point) =>
+          point.name === trip.endName ||
+          (
+            point.latitude === trip.endLatitude &&
+            point.longitude === trip.endLongitude
+          )
+      );
+
+      if (startPoint) setStartId(startPoint.id);
+      if (endPoint) setEndId(endPoint.id);
+    }
+
+    loadSavedTripFromUrl();
+  }, [initialSavedTripId, rivers]);
 
   const clearTrip = () => {
     setStartId("");
@@ -257,7 +296,13 @@ export default function PlanTripPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {selectedRiver ? (
+          {selectedRiver && start && end ? (
+            <FitTripBounds
+              river={selectedRiver}
+              start={start}
+              end={end}
+            />
+          ) : selectedRiver ? (
             <FitRiverBounds coordinates={selectedRiver.coordinates} />
           ) : null}
 

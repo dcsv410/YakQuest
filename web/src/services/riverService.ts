@@ -1,5 +1,5 @@
 import { API_URL } from "../config";
-import type { River } from "../types/river";
+import type { River } from "@yakquest/shared";
 
 export async function fetchRivers(): Promise<River[]> {
   const response = await fetch(`${API_URL}/rivers`);
