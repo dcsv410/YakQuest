@@ -8,12 +8,24 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Contribution, Review, River, RiverPoint
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
-
 from app.security import require_admin
 from app.models import User
+from app.security import get_current_user
+from app.schemas import RiverUpdate
+from app.routers.rivers import serialize_river
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+def require_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required",
+        )
+
+    return current_user
 
 @router.get("/contributions", response_model=list[ContributionOut])
 def list_contributions(db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
@@ -195,3 +207,43 @@ def reject_contribution(
     db.refresh(contribution)
 
     return contribution
+
+@router.patch("/rivers/{river_id}")
+def update_river(
+    river_id: str,
+    payload: RiverUpdate,
+    db: Session = Depends(get_db),
+    admin_user=Depends(require_admin_user),
+):
+    river = db.query(River).filter(River.id == river_id).first()
+
+    if not river:
+        raise HTTPException(status_code=404, detail="River not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+
+    if "name" in updates:
+        river.name = updates["name"]
+
+    if "state" in updates:
+        river.state = updates["state"]
+
+    if "difficulty" in updates:
+        river.difficulty = updates["difficulty"]
+
+    if "cleanliness" in updates:
+        river.cleanliness = updates["cleanliness"]
+
+    if "fishing" in updates:
+        river.fishing = updates["fishing"]
+
+    if "usgsGaugeId" in updates:
+        river.usgs_gauge_id = updates["usgsGaugeId"] or None
+
+    if "flowStats" in updates:
+        river.flow_stats = updates["flowStats"]
+
+    db.commit()
+    db.refresh(river)
+
+    return serialize_river(river)

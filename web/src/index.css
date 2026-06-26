@@ -936,3 +936,152 @@ h1 {
   font-size: 44px;
   margin-top: 10px;
 }
+
+.admin-rivers-page {
+  display: grid;
+  grid-template-columns: 300px minmax(520px, 1fr) 320px;
+  gap: 18px;
+  height: 100%;
+}
+
+.admin-rivers-list-panel,
+.admin-river-detail-panel {
+  background: white;
+  border-radius: 22px;
+  padding: 20px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  overflow-y: auto;
+}
+
+.admin-rivers-list-panel h1 {
+  font-size: 38px;
+}
+
+.admin-rivers-map-panel {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-rivers-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.river-mini-item.selected {
+  border-color: #1ca7a6;
+  background: #e8f7f6;
+}
+
+.admin-detail-grid {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0;
+}
+
+.admin-detail-grid div {
+  background: #f4f7f3;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.admin-detail-grid span {
+  display: block;
+  font-size: 12px;
+  color: #61736e;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-detail-grid strong {
+  display: block;
+  margin-top: 5px;
+}
+
+.admin-action-button {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.admin-link-button {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.admin-editor-page {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-editor-header h1 {
+  font-size: 42px;
+}
+
+.admin-editor-back {
+  background: white;
+  border: 1px solid #1ca7a6;
+  text-decoration: none;
+}
+
+.admin-editor-grid {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 18px;
+  min-height: 680px;
+}
+
+.admin-editor-form {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.admin-editor-section {
+  background: white;
+  border-radius: 22px;
+  padding: 20px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-editor-section h2 {
+  margin: 0 0 12px;
+}
+
+.admin-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.admin-save-button {
+  border: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.admin-editor-map-panel {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-editor-map {
+  width: 100%;
+  height: 100%;
+  min-height: 680px;
+}

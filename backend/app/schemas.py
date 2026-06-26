@@ -4,6 +4,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from pydantic import BaseModel
+from typing import Optional
+
 
 RiverPointType = Literal[
     "public",
@@ -55,9 +58,7 @@ class ContributionCreate(BaseModel):
     riverId: str | None = None
     riverName: str | None = None
     state: str | None = None
-
     points: list[RiverPointCreate] = Field(default_factory=list)
-
     targetPointId: str | None = None
     targetPointName: str | None = None
     removalReason: str | None = None
@@ -68,23 +69,20 @@ class ContributionOut(BaseModel):
     created_at: datetime
     kind: str
     status: str
-
     river_id: UUID | None = None
     river_name: str | None = None
     state: str | None = None
-
     points: list = Field(default_factory=list)
-
     target_point_id: UUID | None = None
     target_point_name: str | None = None
     removal_reason: str | None = None
-
     class Config:
         from_attributes = True
 
 
 class ReviewCreate(BaseModel):
     notes: str | None = None
+
 
 class UserCreate(BaseModel):
     email: str
@@ -98,7 +96,6 @@ class UserOut(BaseModel):
     display_name: str | None = None
     is_admin: bool
     trust_score: int
-
     class Config:
         from_attributes = True
 
@@ -117,18 +114,14 @@ class AuthResponse(BaseModel):
 class SavedTripCreate(BaseModel):
     riverId: UUID
     name: str | None = None
-
     startName: str | None = None
     startLatitude: float
     startLongitude: float
-
     endName: str | None = None
     endLatitude: float
     endLongitude: float
-
     plannedDistanceMiles: float | None = None
     estimatedTimeMin: int | None = None
-
     notes: str | None = None
 
 
@@ -136,24 +129,18 @@ class SavedTripOut(BaseModel):
     id: UUID
     user_id: UUID
     river_id: UUID
-
     name: str | None = None
-
     start_name: str | None = None
     start_latitude: float
     start_longitude: float
-
     end_name: str | None = None
     end_latitude: float
     end_longitude: float
-
     planned_distance_miles: float | None = None
     estimated_time_min: int | None = None
-
     notes: str | None = None
     created_at: datetime
     updated_at: datetime
-
     class Config:
         from_attributes = True
 
@@ -162,18 +149,13 @@ class CompletedTripCreate(BaseModel):
     riverId: UUID
     riverName: str
     state: str | None = None
-
     startName: str | None = None
     endName: str | None = None
-
     plannedDistanceMiles: float | None = None
     actualDistanceMiles: float | None = None
-
     elapsedTimeSeconds: int | None = None
-
     startedAt: datetime | None = None
     completedAt: datetime
-
     notes: str | None = None
 
 
@@ -185,25 +167,34 @@ class CompletedTripOut(BaseModel):
     id: UUID
     user_id: UUID
     river_id: UUID
-
     river_name: str
     state: str | None = None
-
     start_name: str | None = None
     end_name: str | None = None
-
     planned_distance_miles: float | None = None
     actual_distance_miles: float | None = None
-
     elapsed_time_seconds: int | None = None
-
     started_at: datetime | None = None
     completed_at: datetime
-
     notes: str | None = None
-
     created_at: datetime
     updated_at: datetime
-
     class Config:
         from_attributes = True
+
+
+class FlowStatsUpdate(BaseModel):
+    lowPercentile: Optional[float] = None
+    median: Optional[float] = None
+    highPercentile: Optional[float] = None
+    max: Optional[float] = None
+
+
+class RiverUpdate(BaseModel):
+    name: Optional[str] = None
+    state: Optional[str] = None
+    difficulty: Optional[int] = None
+    cleanliness: Optional[int] = None
+    fishing: Optional[int] = None
+    usgsGaugeId: Optional[str] = None
+    flowStats: Optional[FlowStatsUpdate] = None
