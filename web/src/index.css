@@ -828,3 +828,111 @@ h1 {
   max-width: none;
   padding: 24px;
 }
+
+.site-main:has(.admin-shell) {
+  max-width: none;
+  padding: 0;
+  height: calc(100vh - 76px);
+  overflow: hidden;
+}
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100%;
+  background: #eef4f1;
+}
+
+.admin-sidebar {
+  background: #10201c;
+  color: white;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.admin-brand {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-brand-link {
+  color: white;
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.admin-brand span {
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.admin-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-nav a {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.admin-nav a.active,
+.admin-nav a:hover {
+  background: rgba(28, 167, 166, 0.22);
+  color: white;
+}
+
+.admin-user {
+  margin-top: auto;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.admin-user span {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.admin-main {
+  padding: 28px;
+  overflow-y: auto;
+}
+
+.admin-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.admin-stat-card {
+  background: white;
+  border-radius: 22px;
+  padding: 24px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-stat-card span {
+  display: block;
+  color: #61736e;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-stat-card strong {
+  display: block;
+  font-size: 44px;
+  margin-top: 10px;
+}

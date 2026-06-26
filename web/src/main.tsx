@@ -18,7 +18,13 @@ import PlanTripPage from "./pages/PlanTripPage";
 import SavedTripsPage from "./pages/SavedTripsPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
-import AdminPage from "./pages/AdminPage";
+
+import AdminLayout from "./admin/components/AdminLayout";
+import AdminDashboardPage from "./admin/pages/AdminDashboardPage";
+import AdminRiversPage from "./admin/pages/AdminRiversPage";
+import AdminContributionsPage from "./admin/pages/AdminContributionsPage";
+import AdminUsersPage from "./admin/pages/AdminUsersPage";
+import AdminAnalyticsPage from "./admin/pages/AdminAnalyticsPage";
 
 import "./index.css";
 
@@ -36,7 +42,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/saved-trips" element={<SavedTripsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="rivers" element={<AdminRiversPage />} />
+              <Route path="contributions" element={<AdminContributionsPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

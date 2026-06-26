@@ -4,6 +4,10 @@ import {
   feetToMiles,
   findClosestIndex,
 } from "./geo";
+import {
+  FAST_PADDLING_MPH,
+  SLOW_PADDLING_MPH,
+} from "../constants";
 
 export function getTripDistanceMiles(
   river: River,
@@ -28,11 +32,8 @@ export function getTripDistanceMiles(
 }
 
 export function getTripTimeRange(distanceMiles: number) {
-  const fastMph = 2.5;
-  const slowMph = 1.5;
-
-  const fastHours = distanceMiles / fastMph;
-  const slowHours = distanceMiles / slowMph;
+  const fastHours = distanceMiles / FAST_PADDLING_MPH;
+  const slowHours = distanceMiles / SLOW_PADDLING_MPH;
 
   return {
     fastHours,

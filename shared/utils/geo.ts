@@ -1,4 +1,5 @@
 import type { Coordinate } from "../models";
+import { FEET_PER_MILE } from "../constants";
 
 const EARTH_RADIUS_FEET = 20902231;
 
@@ -23,7 +24,7 @@ export function distanceFeet(a: Coordinate, b: Coordinate) {
 }
 
 export function feetToMiles(feet: number) {
-  return feet / 5280;
+  return feet / FEET_PER_MILE;
 }
 
 export function findClosestIndex(

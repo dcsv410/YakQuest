@@ -1,6 +1,4 @@
-import type { RiverResponseDTO } from "@yakquest/shared";
+import { riversApi } from "@yakquest/shared";
 import { apiClient } from "./apiClient";
 
-export async function fetchRivers(): Promise<RiverResponseDTO[]> {
-  return apiClient.get<RiverResponseDTO[]>("/rivers");
-}
+export const fetchRivers = () => riversApi.list(apiClient);
