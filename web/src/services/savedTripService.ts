@@ -1,31 +1,6 @@
 import { API_URL } from "../config";
 import { getToken } from "./authService";
-
-export type SavedTrip = {
-  id: string;
-
-  riverId: string;
-  riverName?: string;
-
-  name?: string;
-
-  startName: string;
-  endName: string;
-
-  startLatitude: number;
-  startLongitude: number;
-
-  endLatitude: number;
-  endLongitude: number;
-
-  plannedDistanceMiles: number;
-  estimatedTimeMin?: number;
-
-  notes?: string;
-
-  createdAt: string;
-  updatedAt?: string;
-};
+import type { SavedTrip } from "@yakquest/shared";
 
 type ApiSavedTrip = {
   id: string;

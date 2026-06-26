@@ -1,4 +1,10 @@
 import { API_URL } from "../config";
+import type {
+    AuthUser,
+    AuthResponse,
+    LoginRequest,
+    RegisterRequest,
+} from "@yakquest/shared";
 
 const AUTH_TOKEN_KEY = "yakquest:web:authToken";
 const AUTH_USER_KEY = "yakquest:web:user";
@@ -15,20 +21,6 @@ export function listenForAuthChanges(callback: () => void) {
     window.removeEventListener(AUTH_EVENT_NAME, callback);
   };
 }
-
-export type AuthUser = {
-  id: string;
-  email: string;
-  display_name?: string | null;
-  is_admin: boolean;
-  trust_score: number;
-};
-
-export type AuthResponse = {
-  accessToken: string;
-  tokenType: string;
-  user: AuthUser;
-};
 
 export function getToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
