@@ -1,15 +1,6 @@
-import { API_URL } from "../config";
-import type { River } from "@yakquest/shared";
+import type { RiverResponseDTO } from "@yakquest/shared";
+import { apiClient } from "./apiClient";
 
-export async function fetchRivers(): Promise<River[]> {
-  const response = await fetch(`${API_URL}/rivers`);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to fetch rivers: ${response.status} ${errorText}`
-    );
-  }
-
-  return response.json();
+export async function fetchRivers(): Promise<RiverResponseDTO[]> {
+  return apiClient.get<RiverResponseDTO[]>("/rivers");
 }
