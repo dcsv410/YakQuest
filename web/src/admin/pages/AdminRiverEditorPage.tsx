@@ -7,6 +7,7 @@ import {
   Polyline,
   Popup,
   TileLayer,
+  useMapEvents,
 } from "react-leaflet";
 
 import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint } from "../../services/riverService";
@@ -52,6 +53,26 @@ function getInitialForm(river: River): RiverEditForm {
   };
 }
 
+type MapClickPointPickerProps = {
+  enabled: boolean;
+  onPick: (latitude: number, longitude: number) => void;
+};
+
+function MapClickPointPicker({
+  enabled,
+  onPick,
+}: MapClickPointPickerProps) {
+  useMapEvents({
+    click(event) {
+      if (!enabled) return;
+
+      onPick(event.latlng.lat, event.latlng.lng);
+    },
+  });
+
+  return null;
+}
+
 export default function AdminRiverEditorPage() {
   const { riverId } = useParams();
   const navigate = useNavigate();
@@ -66,6 +87,7 @@ export default function AdminRiverEditorPage() {
   const river = rivers.find((item) => item.id === riverId);
 
   const [form, setForm] = useState<RiverEditForm | null>(null);
+  const [pickingPoint, setPickingPoint] = useState(false);
 
   const [newPoint, setNewPoint] = useState<NewPointForm>({
     name: "",
@@ -417,6 +439,16 @@ export default function AdminRiverEditorPage() {
               </label>
             </div>
 
+            <button
+              type="button"
+              className={`secondary-button admin-pick-button ${
+                pickingPoint ? "active" : ""
+              }`}
+              onClick={() => setPickingPoint((current) => !current)}
+            >
+              {pickingPoint ? "Click the Map..." : "Pick on Map"}
+            </button>
+
             <label className="form-label">
               Description
               <textarea
@@ -564,6 +596,15 @@ export default function AdminRiverEditorPage() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
+            <MapClickPointPicker
+              enabled={pickingPoint}
+              onPick={(latitude, longitude) => {
+                updateNewPoint("latitude", latitude.toFixed(6));
+                updateNewPoint("longitude", longitude.toFixed(6));
+                setPickingPoint(false);
+              }}
+            />
+
             <FitRiverBounds coordinates={river.coordinates} />
 
             <Polyline
@@ -594,6 +635,20 @@ export default function AdminRiverEditorPage() {
                 </Popup>
               </Marker>
             ))}
+            {newPoint.latitude && newPoint.longitude ? (
+              <Marker
+                position={[
+                  Number(newPoint.latitude),
+                  Number(newPoint.longitude),
+                ]}
+              >
+                <Popup>
+                  New point preview
+                  <br />
+                  {newPoint.name || "Unnamed point"}
+                </Popup>
+              </Marker>
+            ) : null}
           </MapContainer>
         </div>
       </div>

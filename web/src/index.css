@@ -1140,3 +1140,93 @@ h1 {
   font-weight: 800;
   color: #24433b;
 }
+
+.admin-pick-button {
+  width: 100%;
+  margin-top: 10px;
+  background: white;
+  border: 1px solid #1ca7a6;
+  cursor: pointer;
+}
+
+.admin-pick-button.active {
+  background: #1ca7a6;
+  color: white;
+}
+
+.admin-import-page {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-import-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 18px;
+  min-height: 680px;
+}
+
+.kml-drop-zone {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 170px;
+  border: 2px dashed rgba(28, 167, 166, 0.45);
+  border-radius: 20px;
+  background: #f4f7f3;
+  cursor: pointer;
+  text-align: center;
+  padding: 20px;
+}
+
+.kml-drop-zone input {
+  display: none;
+}
+
+.kml-drop-zone strong {
+  font-size: 18px;
+  color: #147473;
+}
+
+.kml-drop-zone span {
+  color: #61736e;
+  font-weight: 700;
+}
+
+.admin-import-stats {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.admin-import-stats div {
+  background: #f4f7f3;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.admin-import-stats span {
+  display: block;
+  font-size: 12px;
+  color: #61736e;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.admin-import-stats strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.admin-import-map-panel {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-import-map {
+  width: 100%;
+  height: 100%;
+  min-height: 680px;
+}

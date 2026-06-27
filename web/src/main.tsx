@@ -26,6 +26,7 @@ import AdminContributionsPage from "./admin/pages/AdminContributionsPage";
 import AdminUsersPage from "./admin/pages/AdminUsersPage";
 import AdminAnalyticsPage from "./admin/pages/AdminAnalyticsPage";
 import AdminRiverEditorPage from "./admin/pages/AdminRiverEditorPage";
+import AdminRiverImportPage from "./admin/pages/AdminRiverImportPage";
 
 import "./index.css";
 
@@ -50,6 +51,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="contributions" element={<AdminContributionsPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="rivers/import" element={<AdminRiverImportPage />} />
             </Route>
           </Route>
         </Routes>

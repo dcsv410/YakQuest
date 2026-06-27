@@ -65,6 +65,13 @@ export default function AdminRiversPage() {
         <p className="eyebrow">Admin</p>
         <h1>Rivers</h1>
 
+        <Link
+          className="primary-button admin-link-button"
+          to="/admin/rivers/import"
+        >
+          Import River KML
+        </Link>
+
         <label className="form-label">
           State
           <select
