@@ -9,8 +9,8 @@ import {
   TileLayer,
 } from "react-leaflet";
 
-import { fetchRivers, updateRiver } from "../../services/riverService";
-import type { River } from "@yakquest/shared";
+import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint } from "../../services/riverService";
+import type { River, RiverPoint, RiverPointType } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
 
 type RiverEditForm = {
@@ -24,6 +24,17 @@ type RiverEditForm = {
   median: string;
   highPercentile: string;
   max: string;
+};
+
+type NewPointForm = {
+  name: string;
+  type: RiverPointType;
+  latitude: string;
+  longitude: string;
+  description: string;
+  parking: boolean;
+  restroom: boolean;
+  camping: boolean;
 };
 
 function getInitialForm(river: River): RiverEditForm {
@@ -55,6 +66,77 @@ export default function AdminRiverEditorPage() {
   const river = rivers.find((item) => item.id === riverId);
 
   const [form, setForm] = useState<RiverEditForm | null>(null);
+
+  const [newPoint, setNewPoint] = useState<NewPointForm>({
+    name: "",
+    type: "public_access",
+    latitude: "",
+    longitude: "",
+    description: "",
+    parking: false,
+    restroom: false,
+    camping: false,
+  });
+
+  function updateNewPoint<K extends keyof NewPointForm>(
+    key: K,
+    value: NewPointForm[K]
+  ) {
+    setNewPoint((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  async function createPoint() {
+    if (!river) return;
+
+    const latitude = Number(newPoint.latitude);
+    const longitude = Number(newPoint.longitude);
+
+    if (!newPoint.name.trim()) {
+      alert("Point name is required.");
+      return;
+    }
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      alert("Latitude and longitude must be valid numbers.");
+      return;
+    }
+
+    try {
+      await createRiverPoint(river.id, {
+        name: newPoint.name.trim(),
+        type: newPoint.type,
+        latitude,
+        longitude,
+        description: newPoint.description.trim() || null,
+        parking: newPoint.parking,
+        restroom: newPoint.restroom,
+        camping: newPoint.camping,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      setNewPoint({
+        name: "",
+        type: "public_access",
+        latitude: "",
+        longitude: "",
+        description: "",
+        parking: false,
+        restroom: false,
+        camping: false,
+      });
+
+      alert("Point created.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create point.");
+    }
+  }
 
   useEffect(() => {
     if (river) {
@@ -91,6 +173,29 @@ export default function AdminRiverEditorPage() {
           }
         : current
     );
+  }
+
+  async function deactivatePoint(point: RiverPoint) {
+    const confirmed = window.confirm(
+      `Deactivate "${point.name}"? It will be hidden from public river data.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await updateRiverPoint(point.id, {
+        isActive: false,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      alert("Point deactivated.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to deactivate point.");
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -262,6 +367,181 @@ export default function AdminRiverEditorPage() {
                 />
               </label>
             </div>
+          </div>
+
+          <div className="admin-editor-section">
+            <h2>Add Point</h2>
+
+            <label className="form-label">
+              Name
+              <input
+                value={newPoint.name}
+                onChange={(event) => updateNewPoint("name", event.target.value)}
+              />
+            </label>
+
+            <label className="form-label">
+              Type
+              <select
+                value={newPoint.type}
+                onChange={(event) =>
+                  updateNewPoint("type", event.target.value as RiverPointType)
+                }
+              >
+                <option value="public_access">Public Access</option>
+                <option value="private_access">Private Access</option>
+                <option value="poi">Point of Interest</option>
+                <option value="hazard">Hazard</option>
+              </select>
+            </label>
+
+            <div className="admin-score-grid">
+              <label className="form-label">
+                Latitude
+                <input
+                  value={newPoint.latitude}
+                  onChange={(event) =>
+                    updateNewPoint("latitude", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="form-label">
+                Longitude
+                <input
+                  value={newPoint.longitude}
+                  onChange={(event) =>
+                    updateNewPoint("longitude", event.target.value)
+                  }
+                />
+              </label>
+            </div>
+
+            <label className="form-label">
+              Description
+              <textarea
+                value={newPoint.description}
+                onChange={(event) =>
+                  updateNewPoint("description", event.target.value)
+                }
+              />
+            </label>
+
+            <div className="admin-checkbox-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={newPoint.parking}
+                  onChange={(event) =>
+                    updateNewPoint("parking", event.target.checked)
+                  }
+                />
+                Parking
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={newPoint.restroom}
+                  onChange={(event) =>
+                    updateNewPoint("restroom", event.target.checked)
+                  }
+                />
+                Restroom
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={newPoint.camping}
+                  onChange={(event) =>
+                    updateNewPoint("camping", event.target.checked)
+                  }
+                />
+                Camping
+              </label>
+            </div>
+
+            <button
+              type="button"
+              className="primary-button admin-save-button"
+              onClick={createPoint}
+            >
+              Create Point
+            </button>
+          </div>
+
+          <div className="admin-editor-section">
+            <h2>Access Points</h2>
+
+            {[...river.accessPoints.public, ...river.accessPoints.private].map(
+              (point) => (
+                <div key={point.id} className="admin-point-row">
+                  <div>
+                    <strong>{point.name}</strong>
+                    <p>{point.type}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => deactivatePoint(point)}
+                  >
+                    Deactivate
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="admin-editor-section">
+            <h2>POIs</h2>
+
+            {river.pois.length ? (
+              river.pois.map((point) => (
+                <div key={point.id} className="admin-point-row">
+                  <div>
+                    <strong>{point.name}</strong>
+                    <p>{point.description || point.type}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => deactivatePoint(point)}
+                  >
+                    Deactivate
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="muted">No POIs listed.</p>
+            )}
+          </div>
+
+          <div className="admin-editor-section">
+            <h2>Hazards</h2>
+
+            {(river.hazards ?? []).length ? (
+              (river.hazards ?? []).map((point) => (
+                <div key={point.id} className="admin-point-row">
+                  <div>
+                    <strong>{point.name}</strong>
+                    <p>{point.description || point.type}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => deactivatePoint(point)}
+                  >
+                    Deactivate
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="muted">No hazards listed.</p>
+            )}
           </div>
 
           <button className="primary-button admin-save-button" disabled={saving}>

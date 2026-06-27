@@ -2,16 +2,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from geoalchemy2.shape import from_shape
+from geoalchemy2.elements import WKTElement
 from shapely.geometry import Point
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Contribution, Review, River, RiverPoint
+from app.models import Contribution, Review, River, RiverPoint, User
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
 from app.models import User
 from app.security import get_current_user
-from app.schemas import RiverUpdate
+from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate
 from app.routers.rivers import serialize_river
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -247,3 +248,115 @@ def update_river(
     db.refresh(river)
 
     return serialize_river(river)
+
+
+@router.patch("/river-points/{point_id}")
+def update_river_point(
+    point_id: str,
+    payload: RiverPointUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    point = db.query(RiverPoint).filter(RiverPoint.id == point_id).first()
+
+    if not point:
+        raise HTTPException(status_code=404, detail="River point not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+
+    if "name" in updates:
+        point.name = updates["name"]
+
+    if "description" in updates:
+        point.description = updates["description"]
+
+    if "parking" in updates:
+        point.parking = updates["parking"]
+
+    if "restroom" in updates:
+        point.restroom = updates["restroom"]
+
+    if "camping" in updates:
+        point.camping = updates["camping"]
+
+    if "isActive" in updates:
+        point.is_active = updates["isActive"]
+
+    db.commit()
+    db.refresh(point)
+
+    return {
+        "id": str(point.id),
+        "name": point.name,
+        "type": point.type,
+        "latitude": point.latitude,
+        "longitude": point.longitude,
+        "description": point.description,
+        "parking": point.parking,
+        "restroom": point.restroom,
+        "camping": point.camping,
+        "photos": point.photos or [],
+        "website": point.website,
+        "phone": point.phone,
+        "isActive": point.is_active,
+    }
+
+
+@router.post("/rivers/{river_id}/points")
+def create_river_point(
+    river_id: str,
+    payload: RiverPointCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    river = db.query(River).filter(River.id == river_id).first()
+
+    if not river:
+        raise HTTPException(status_code=404, detail="River not found")
+
+    allowed_types = {
+        "public_access",
+        "private_access",
+        "poi",
+        "hazard",
+    }
+
+    if payload.type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid point type")
+
+    point = RiverPoint(
+        river_id=river.id,
+        name=payload.name,
+        type=payload.type,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        location=WKTElement(
+            f"POINT({payload.longitude} {payload.latitude})",
+            srid=4326,
+        ),
+        description=payload.description,
+        parking=payload.parking,
+        restroom=payload.restroom,
+        camping=payload.camping,
+        is_active=True,
+    )
+
+    db.add(point)
+    db.commit()
+    db.refresh(point)
+
+    return {
+        "id": str(point.id),
+        "name": point.name,
+        "type": point.type,
+        "latitude": point.latitude,
+        "longitude": point.longitude,
+        "description": point.description,
+        "parking": point.parking,
+        "restroom": point.restroom,
+        "camping": point.camping,
+        "photos": point.photos or [],
+        "website": point.website,
+        "phone": point.phone,
+        "isActive": point.is_active,
+    }

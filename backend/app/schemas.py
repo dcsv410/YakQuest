@@ -198,3 +198,27 @@ class RiverUpdate(BaseModel):
     fishing: Optional[int] = None
     usgsGaugeId: Optional[str] = None
     flowStats: Optional[FlowStatsUpdate] = None
+
+
+class RiverPointUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+    parking: Optional[bool] = None
+    restroom: Optional[bool] = None
+    camping: Optional[bool] = None
+
+    isActive: Optional[bool] = None
+
+
+class RiverPointCreate(BaseModel):
+    name: str
+    type: str
+    latitude: float
+    longitude: float
+
+    description: Optional[str] = None
+
+    parking: Optional[bool] = False
+    restroom: Optional[bool] = False
+    camping: Optional[bool] = False

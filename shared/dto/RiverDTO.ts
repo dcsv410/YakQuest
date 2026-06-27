@@ -1,4 +1,4 @@
-import type { FlowStats, River } from "../models";
+import type { FlowStats, River, RiverPoint, RiverPointType } from "../models";
 
 export type RiverResponseDTO = River;
 
@@ -10,4 +10,32 @@ export type UpdateRiverRequestDTO = {
   fishing?: number;
   usgsGaugeId?: string | null;
   flowStats?: FlowStats | null;
+};
+
+export type UpdateRiverPointRequestDTO = {
+  name?: string;
+  description?: string | null;
+
+  parking?: boolean | null;
+  restroom?: boolean | null;
+  camping?: boolean | null;
+
+  isActive?: boolean;
+};
+
+export type RiverPointResponseDTO = RiverPoint & {
+  isActive?: boolean;
+};
+
+export type CreateRiverPointRequestDTO = {
+  name: string;
+  type: RiverPointType;
+  latitude: number;
+  longitude: number;
+
+  description?: string | null;
+
+  parking?: boolean | null;
+  restroom?: boolean | null;
+  camping?: boolean | null;
 };
