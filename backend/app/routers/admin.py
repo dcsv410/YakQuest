@@ -12,7 +12,7 @@ from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
 from app.models import User
 from app.security import get_current_user
-from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate
+from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate, RiverCreate
 from app.routers.rivers import serialize_river
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -360,3 +360,41 @@ def create_river_point(
         "phone": point.phone,
         "isActive": point.is_active,
     }
+
+
+@router.post("/rivers")
+def create_river(
+    payload: RiverCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    if len(payload.coordinates) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="River must have at least two coordinates",
+        )
+
+    line_coordinates = ", ".join(
+        f"{coord.longitude} {coord.latitude}"
+        for coord in payload.coordinates
+    )
+
+    river = River(
+        name=payload.name.strip(),
+        state=payload.state.strip().upper(),
+        difficulty=payload.difficulty,
+        cleanliness=payload.cleanliness,
+        fishing=payload.fishing,
+        usgs_gauge_id=payload.usgsGaugeId or None,
+        flow_stats=payload.flowStats.model_dump() if payload.flowStats else None,
+        route=WKTElement(
+            f"LINESTRING({line_coordinates})",
+            srid=4326,
+        ),
+    )
+
+    db.add(river)
+    db.commit()
+    db.refresh(river)
+
+    return serialize_river(river)

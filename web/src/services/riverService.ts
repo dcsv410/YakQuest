@@ -1,8 +1,9 @@
 import { riversApi } from "@yakquest/shared";
 import type {
-  UpdateRiverRequestDTO,
-  UpdateRiverPointRequestDTO,
+  CreateRiverRequestDTO,
   CreateRiverPointRequestDTO,
+  UpdateRiverPointRequestDTO,
+  UpdateRiverRequestDTO,
 } from "@yakquest/shared";
 import { apiClient } from "./apiClient";
 
@@ -22,3 +23,6 @@ export const createRiverPoint = (
   riverId: string,
   payload: CreateRiverPointRequestDTO
 ) => riversApi.createPoint(apiClient, riverId, payload);
+
+export const createRiver = (payload: CreateRiverRequestDTO) =>
+  riversApi.create(apiClient, payload);

@@ -1230,3 +1230,9 @@ h1 {
   height: 100%;
   min-height: 680px;
 }
+
+.admin-import-metadata {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(16, 32, 28, 0.12);
+}

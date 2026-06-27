@@ -1,4 +1,4 @@
-import type { FlowStats, River, RiverPoint, RiverPointType } from "../models";
+import type { FlowStats, River, RiverPoint, RiverPointType, Coordinate } from "../models";
 
 export type RiverResponseDTO = River;
 
@@ -38,4 +38,15 @@ export type CreateRiverPointRequestDTO = {
   parking?: boolean | null;
   restroom?: boolean | null;
   camping?: boolean | null;
+};
+
+export type CreateRiverRequestDTO = {
+  name: string;
+  state: string;
+  difficulty: number;
+  cleanliness: number;
+  fishing: number;
+  usgsGaugeId?: string | null;
+  flowStats?: FlowStats | null;
+  coordinates: Coordinate[];
 };

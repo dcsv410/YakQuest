@@ -1,5 +1,6 @@
 import type { ApiClient } from "../../network";
 import type {
+  CreateRiverRequestDTO,
   RiverResponseDTO,
   UpdateRiverRequestDTO,
   UpdateRiverPointRequestDTO,
@@ -41,6 +42,16 @@ export const riversApi = {
   ): Promise<RiverPointResponseDTO> {
     return client.post<RiverPointResponseDTO, CreateRiverPointRequestDTO>(
       `/admin/rivers/${riverId}/points`,
+      payload
+    );
+  },
+
+  create(
+    client: ApiClient,
+    payload: CreateRiverRequestDTO
+  ): Promise<RiverResponseDTO> {
+    return client.post<RiverResponseDTO, CreateRiverRequestDTO>(
+      "/admin/rivers",
       payload
     );
   },

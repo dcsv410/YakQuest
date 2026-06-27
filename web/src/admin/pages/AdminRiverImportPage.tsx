@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  MapContainer,
-  Polyline,
-  TileLayer,
-} from "react-leaflet";
+import { Link, useNavigate } from "react-router-dom";
+import { MapContainer, Polyline, TileLayer } from "react-leaflet";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { createRiver } from "../../services/riverService";
 import type { Coordinate } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
 
@@ -32,10 +30,7 @@ function parseKmlCoordinates(kmlText: string): Coordinate[] {
           return null;
         }
 
-        return {
-          latitude,
-          longitude,
-        };
+        return { latitude, longitude };
       })
       .filter((coord): coord is Coordinate => coord !== null);
 
@@ -46,9 +41,28 @@ function parseKmlCoordinates(kmlText: string): Coordinate[] {
 }
 
 export default function AdminRiverImportPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [fileName, setFileName] = useState("");
   const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
   const [error, setError] = useState("");
+
+  const [step, setStep] = useState<1 | 2>(1);
+  const [saving, setSaving] = useState(false);
+
+  const [metadata, setMetadata] = useState({
+    name: "",
+    state: "AL",
+    difficulty: 3,
+    cleanliness: 3,
+    fishing: 3,
+    usgsGaugeId: "",
+    lowPercentile: "",
+    median: "",
+    highPercentile: "",
+    max: "",
+  });
 
   const mapCenter: [number, number] = coordinates.length
     ? [coordinates[0].latitude, coordinates[0].longitude]
@@ -69,9 +83,20 @@ export default function AdminRiverImportPage() {
     };
   }, [coordinates]);
 
+  function updateMetadata<K extends keyof typeof metadata>(
+    key: K,
+    value: (typeof metadata)[K]
+  ) {
+    setMetadata((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
   async function handleFile(file: File) {
     setError("");
     setFileName(file.name);
+    setStep(1);
 
     if (!file.name.toLowerCase().endsWith(".kml")) {
       setCoordinates([]);
@@ -89,6 +114,57 @@ export default function AdminRiverImportPage() {
     }
 
     setCoordinates(parsed);
+  }
+
+  async function saveRiver() {
+    if (!coordinates.length) {
+      alert("Upload a KML first.");
+      return;
+    }
+
+    if (!metadata.name.trim()) {
+      alert("River name is required.");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const hasFlowStats =
+        metadata.lowPercentile &&
+        metadata.median &&
+        metadata.highPercentile &&
+        metadata.max;
+
+      const river = await createRiver({
+        name: metadata.name.trim(),
+        state: metadata.state.trim().toUpperCase(),
+        difficulty: Number(metadata.difficulty),
+        cleanliness: Number(metadata.cleanliness),
+        fishing: Number(metadata.fishing),
+        usgsGaugeId: metadata.usgsGaugeId.trim() || null,
+        flowStats: hasFlowStats
+          ? {
+              lowPercentile: Number(metadata.lowPercentile),
+              median: Number(metadata.median),
+              highPercentile: Number(metadata.highPercentile),
+              max: Number(metadata.max),
+            }
+          : null,
+        coordinates,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      navigate(`/admin/rivers/${river.id}/edit`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create river.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -154,9 +230,140 @@ export default function AdminRiverImportPage() {
             className="primary-button admin-save-button"
             disabled={!coordinates.length}
             type="button"
+            onClick={() => setStep(2)}
           >
             Continue to Metadata
           </button>
+
+          {step === 2 ? (
+            <div className="admin-import-metadata">
+              <h2>River Metadata</h2>
+
+              <label className="form-label">
+                River Name
+                <input
+                  value={metadata.name}
+                  onChange={(event) =>
+                    updateMetadata("name", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="form-label">
+                State
+                <input
+                  value={metadata.state}
+                  onChange={(event) =>
+                    updateMetadata("state", event.target.value.toUpperCase())
+                  }
+                />
+              </label>
+
+              <div className="admin-score-grid">
+                <label className="form-label">
+                  Difficulty
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={metadata.difficulty}
+                    onChange={(event) =>
+                      updateMetadata("difficulty", Number(event.target.value))
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  Cleanliness
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={metadata.cleanliness}
+                    onChange={(event) =>
+                      updateMetadata("cleanliness", Number(event.target.value))
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  Fishing
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={metadata.fishing}
+                    onChange={(event) =>
+                      updateMetadata("fishing", Number(event.target.value))
+                    }
+                  />
+                </label>
+              </div>
+
+              <label className="form-label">
+                USGS Gauge ID
+                <input
+                  value={metadata.usgsGaugeId}
+                  onChange={(event) =>
+                    updateMetadata("usgsGaugeId", event.target.value)
+                  }
+                />
+              </label>
+
+              <h3>Flow Thresholds</h3>
+
+              <div className="admin-score-grid">
+                <label className="form-label">
+                  Low
+                  <input
+                    value={metadata.lowPercentile}
+                    onChange={(event) =>
+                      updateMetadata("lowPercentile", event.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  Median
+                  <input
+                    value={metadata.median}
+                    onChange={(event) =>
+                      updateMetadata("median", event.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  High
+                  <input
+                    value={metadata.highPercentile}
+                    onChange={(event) =>
+                      updateMetadata("highPercentile", event.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  Max
+                  <input
+                    value={metadata.max}
+                    onChange={(event) =>
+                      updateMetadata("max", event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+
+              <button
+                type="button"
+                className="primary-button admin-save-button"
+                disabled={saving}
+                onClick={saveRiver}
+              >
+                {saving ? "Saving..." : "Create River"}
+              </button>
+            </div>
+          ) : null}
         </aside>
 
         <div className="admin-import-map-panel">

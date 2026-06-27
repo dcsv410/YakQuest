@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 RiverPointType = Literal[
@@ -222,3 +222,26 @@ class RiverPointCreate(BaseModel):
     parking: Optional[bool] = False
     restroom: Optional[bool] = False
     camping: Optional[bool] = False
+
+
+class CoordinateIn(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class FlowStatsIn(BaseModel):
+    lowPercentile: float
+    median: float
+    highPercentile: float
+    max: float
+
+
+class RiverCreate(BaseModel):
+    name: str
+    state: str
+    difficulty: int
+    cleanliness: int
+    fishing: int
+    usgsGaugeId: Optional[str] = None
+    flowStats: Optional[FlowStatsIn] = None
+    coordinates: List[CoordinateIn]
