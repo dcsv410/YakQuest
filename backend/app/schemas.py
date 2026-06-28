@@ -245,3 +245,17 @@ class RiverCreate(BaseModel):
     usgsGaugeId: Optional[str] = None
     flowStats: Optional[FlowStatsIn] = None
     coordinates: List[CoordinateIn]
+
+
+class RiverPointUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    parking: Optional[bool] = None
+    restroom: Optional[bool] = None
+    camping: Optional[bool] = None
+
+    isActive: Optional[bool] = None

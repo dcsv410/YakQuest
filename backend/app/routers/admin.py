@@ -270,6 +270,24 @@ def update_river_point(
     if "description" in updates:
         point.description = updates["description"]
 
+    latitude = updates.get("latitude")
+    longitude = updates.get("longitude")
+
+    if latitude is not None:
+        point.latitude = latitude
+
+    if longitude is not None:
+        point.longitude = longitude
+
+    if latitude is not None or longitude is not None:
+        final_latitude = point.latitude
+        final_longitude = point.longitude
+
+        point.location = WKTElement(
+            f"POINT({final_longitude} {final_latitude})",
+            srid=4326,
+        )
+
     if "parking" in updates:
         point.parking = updates["parking"]
 

@@ -16,6 +16,9 @@ export type UpdateRiverPointRequestDTO = {
   name?: string;
   description?: string | null;
 
+  latitude?: number;
+  longitude?: number;
+
   parking?: boolean | null;
   restroom?: boolean | null;
   camping?: boolean | null;

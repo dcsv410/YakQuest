@@ -100,6 +100,61 @@ export default function AdminRiverEditorPage() {
     camping: false,
   });
 
+  const [editingPoint, setEditingPoint] = useState<RiverPoint | null>(null);
+
+  const [pointEditForm, setPointEditForm] = useState({
+    name: "",
+    description: "",
+    parking: false,
+    restroom: false,
+    camping: false,
+  });
+
+  function startEditingPoint(point: RiverPoint) {
+    setEditingPoint(point);
+    setPointEditForm({
+      name: point.name,
+      description: point.description ?? "",
+      parking: !!point.parking,
+      restroom: !!point.restroom,
+      camping: !!point.camping,
+    });
+  }
+
+  function updatePointEdit<K extends keyof typeof pointEditForm>(
+    key: K,
+    value: (typeof pointEditForm)[K]
+  ) {
+    setPointEditForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  async function savePointEdit() {
+    if (!editingPoint) return;
+
+    try {
+      await updateRiverPoint(editingPoint.id, {
+        name: pointEditForm.name.trim(),
+        description: pointEditForm.description.trim() || null,
+        parking: pointEditForm.parking,
+        restroom: pointEditForm.restroom,
+        camping: pointEditForm.camping,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      setEditingPoint(null);
+      alert("Point updated.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update point.");
+    }
+  }
+
   function updateNewPoint<K extends keyof NewPointForm>(
     key: K,
     value: NewPointForm[K]
@@ -503,6 +558,89 @@ export default function AdminRiverEditorPage() {
             </button>
           </div>
 
+          {editingPoint ? (
+            <div className="admin-editor-section">
+              <h2>Edit Point</h2>
+
+              <p className="muted">
+                Editing {editingPoint.type}
+              </p>
+
+              <label className="form-label">
+                Name
+                <input
+                  value={pointEditForm.name}
+                  onChange={(event) =>
+                    updatePointEdit("name", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="form-label">
+                Description
+                <textarea
+                  value={pointEditForm.description}
+                  onChange={(event) =>
+                    updatePointEdit("description", event.target.value)
+                  }
+                />
+              </label>
+
+              <div className="admin-checkbox-row">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={pointEditForm.parking}
+                    onChange={(event) =>
+                      updatePointEdit("parking", event.target.checked)
+                    }
+                  />
+                  Parking
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={pointEditForm.restroom}
+                    onChange={(event) =>
+                      updatePointEdit("restroom", event.target.checked)
+                    }
+                  />
+                  Restroom
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={pointEditForm.camping}
+                    onChange={(event) =>
+                      updatePointEdit("camping", event.target.checked)
+                    }
+                  />
+                  Camping
+                </label>
+              </div>
+
+              <div className="admin-inline-actions">
+                <button
+                  type="button"
+                  className="primary-button admin-save-button"
+                  onClick={savePointEdit}
+                >
+                  Save Point
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary-button admin-cancel-button"
+                  onClick={() => setEditingPoint(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="admin-editor-section">
             <h2>Access Points</h2>
 
@@ -514,13 +652,23 @@ export default function AdminRiverEditorPage() {
                     <p>{point.type}</p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="danger-button"
-                    onClick={() => deactivatePoint(point)}
-                  >
-                    Deactivate
-                  </button>
+                  <div className="admin-point-actions">
+                    <button
+                      type="button"
+                      className="secondary-button small-action-button"
+                      onClick={() => startEditingPoint(point)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => deactivatePoint(point)}
+                    >
+                      Deactivate
+                    </button>
+                  </div>
                 </div>
               )
             )}
@@ -537,13 +685,23 @@ export default function AdminRiverEditorPage() {
                     <p>{point.description || point.type}</p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="danger-button"
-                    onClick={() => deactivatePoint(point)}
-                  >
-                    Deactivate
-                  </button>
+                  <div className="admin-point-actions">
+                    <button
+                      type="button"
+                      className="secondary-button small-action-button"
+                      onClick={() => startEditingPoint(point)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => deactivatePoint(point)}
+                    >
+                      Deactivate
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -562,13 +720,23 @@ export default function AdminRiverEditorPage() {
                     <p>{point.description || point.type}</p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="danger-button"
-                    onClick={() => deactivatePoint(point)}
-                  >
-                    Deactivate
-                  </button>
+                  <div className="admin-point-actions">
+                    <button
+                      type="button"
+                      className="secondary-button small-action-button"
+                      onClick={() => startEditingPoint(point)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => deactivatePoint(point)}
+                    >
+                      Deactivate
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -627,6 +795,37 @@ export default function AdminRiverEditorPage() {
               <Marker
                 key={point.id}
                 position={[point.latitude, point.longitude]}
+                draggable
+                eventHandlers={{
+                  dragend: async (event) => {
+                    const marker = event.target;
+                    const latLng = marker.getLatLng();
+
+                    const confirmed = window.confirm(
+                      `Move "${point.name}" to this new location?`
+                    );
+
+                    if (!confirmed) {
+                      marker.setLatLng([point.latitude, point.longitude]);
+                      return;
+                    }
+
+                    try {
+                      await updateRiverPoint(point.id, {
+                        latitude: latLng.lat,
+                        longitude: latLng.lng,
+                      });
+
+                      await queryClient.invalidateQueries({
+                        queryKey: ["rivers"],
+                      });
+                    } catch (error) {
+                      console.error(error);
+                      alert("Failed to move point.");
+                      marker.setLatLng([point.latitude, point.longitude]);
+                    }
+                  },
+                }}
               >
                 <Popup>
                   <strong>{point.name}</strong>
