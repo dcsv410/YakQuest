@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -78,6 +78,7 @@ export default function AdminRiverEditorPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const editPointRef = useRef<HTMLDivElement | null>(null);
 
   const { data: rivers = [], isLoading, error } = useQuery({
     queryKey: ["rivers"],
@@ -119,6 +120,13 @@ export default function AdminRiverEditorPage() {
       restroom: !!point.restroom,
       camping: !!point.camping,
     });
+
+    setTimeout(() => {
+      editPointRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
   }
 
   function updatePointEdit<K extends keyof typeof pointEditForm>(
@@ -559,7 +567,7 @@ export default function AdminRiverEditorPage() {
           </div>
 
           {editingPoint ? (
-            <div className="admin-editor-section">
+            <div ref={editPointRef} className="admin-editor-section">
               <h2>Edit Point</h2>
 
               <p className="muted">
@@ -831,6 +839,31 @@ export default function AdminRiverEditorPage() {
                   <strong>{point.name}</strong>
                   <br />
                   {point.type}
+
+                  {point.description ? (
+                    <>
+                      <br />
+                      {point.description}
+                    </>
+                  ) : null}
+
+                  <div className="admin-popup-actions">
+                    <button
+                      type="button"
+                      className="popup-button"
+                      onClick={() => startEditingPoint(point)}
+                    >
+                      Edit Point
+                    </button>
+
+                    <button
+                      type="button"
+                      className="popup-button danger-popup-button"
+                      onClick={() => deactivatePoint(point)}
+                    >
+                      Deactivate
+                    </button>
+                  </div>
                 </Popup>
               </Marker>
             ))}

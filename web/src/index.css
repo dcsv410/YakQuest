@@ -1272,3 +1272,13 @@ h1 {
   background: white;
   cursor: pointer;
 }
+
+.admin-popup-actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.danger-popup-button {
+  background: #9f1d1d;
+}
