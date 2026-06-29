@@ -249,13 +249,13 @@ class RiverCreate(BaseModel):
 
 class RiverPointUpdate(BaseModel):
     name: Optional[str] = None
+    type: Optional[str] = None
     description: Optional[str] = None
-
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
     parking: Optional[bool] = None
     restroom: Optional[bool] = None
     camping: Optional[bool] = None
-
+    website: Optional[str] = None
+    phone: Optional[str] = None
     isActive: Optional[bool] = None

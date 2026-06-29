@@ -14,15 +14,15 @@ export type UpdateRiverRequestDTO = {
 
 export type UpdateRiverPointRequestDTO = {
   name?: string;
+  type?: RiverPointType;
   description?: string | null;
-
   latitude?: number;
   longitude?: number;
-
   parking?: boolean | null;
   restroom?: boolean | null;
   camping?: boolean | null;
-
+  website?: string | null;
+  phone?: string | null;
   isActive?: boolean;
 };
 

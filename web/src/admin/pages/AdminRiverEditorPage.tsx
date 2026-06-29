@@ -9,6 +9,7 @@ import {
   TileLayer,
   useMapEvents,
 } from "react-leaflet";
+import L from "leaflet";
 
 import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint } from "../../services/riverService";
 import type { River, RiverPoint, RiverPointType } from "@yakquest/shared";
@@ -73,12 +74,44 @@ function MapClickPointPicker({
   return null;
 }
 
+function getPointMarkerClass(type: string) {
+  switch (type) {
+    case "public_access":
+      return "admin-marker-public";
+    case "private_access":
+      return "admin-marker-private";
+    case "poi":
+      return "admin-marker-poi";
+    case "hazard":
+      return "admin-marker-hazard";
+    default:
+      return "admin-marker-default";
+  }
+}
+
+function getPointIcon(type: string) {
+  return L.divIcon({
+    className: `admin-map-marker ${getPointMarkerClass(type)}`,
+    html: "",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
+}
+
+const newPointIcon = L.divIcon({
+  className: "admin-map-marker admin-marker-new",
+  html: "",
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+});
+
 export default function AdminRiverEditorPage() {
   const { riverId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const editPointRef = useRef<HTMLDivElement | null>(null);
+  const addPointRef = useRef<HTMLDivElement | null>(null);
 
   const { data: rivers = [], isLoading, error } = useQuery({
     queryKey: ["rivers"],
@@ -105,20 +138,44 @@ export default function AdminRiverEditorPage() {
 
   const [pointEditForm, setPointEditForm] = useState({
     name: "",
+    type: "poi" as RiverPointType,
     description: "",
+    latitude: "",
+    longitude: "",
     parking: false,
     restroom: false,
     camping: false,
+    website: "",
+    phone: "",
   });
+
+  const [markerFilters, setMarkerFilters] = useState({
+    access: true,
+    poi: true,
+    hazard: true,
+    newPoint: true,
+  });
+
+  function toggleMarkerFilter(key: keyof typeof markerFilters) {
+    setMarkerFilters((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  }
 
   function startEditingPoint(point: RiverPoint) {
     setEditingPoint(point);
     setPointEditForm({
       name: point.name,
+      type: point.type,
       description: point.description ?? "",
+      latitude: point.latitude.toFixed(6),
+      longitude: point.longitude.toFixed(6),
       parking: !!point.parking,
       restroom: !!point.restroom,
       camping: !!point.camping,
+      website: point.website ?? "",
+      phone: point.phone ?? "",
     });
 
     setTimeout(() => {
@@ -141,15 +198,27 @@ export default function AdminRiverEditorPage() {
 
   async function savePointEdit() {
     if (!editingPoint) return;
+    const latitude = Number(pointEditForm.latitude);
+    const longitude = Number(pointEditForm.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      alert("Latitude and longitude must be valid numbers.");
+      return;
+    }
 
     try {
       await updateRiverPoint(editingPoint.id, {
-        name: pointEditForm.name.trim(),
-        description: pointEditForm.description.trim() || null,
-        parking: pointEditForm.parking,
-        restroom: pointEditForm.restroom,
-        camping: pointEditForm.camping,
-      });
+      name: pointEditForm.name.trim(),
+      type: pointEditForm.type,
+      description: pointEditForm.description.trim() || null,
+      latitude,
+      longitude,
+      parking: pointEditForm.parking,
+      restroom: pointEditForm.restroom,
+      camping: pointEditForm.camping,
+      website: pointEditForm.website.trim() || null,
+      phone: pointEditForm.phone.trim() || null,
+    });
 
       await queryClient.invalidateQueries({
         queryKey: ["rivers"],
@@ -319,6 +388,30 @@ export default function AdminRiverEditorPage() {
     }
   }
 
+  const visibleEditorPoints = [
+    ...river.accessPoints.public,
+    ...river.accessPoints.private,
+    ...river.pois,
+    ...(river.hazards ?? []),
+  ].filter((point) => {
+    if (
+      (point.type === "public_access" || point.type === "private_access") &&
+      !markerFilters.access
+    ) {
+      return false;
+    }
+
+    if (point.type === "poi" && !markerFilters.poi) {
+      return false;
+    }
+
+    if (point.type === "hazard" && !markerFilters.hazard) {
+      return false;
+    }
+
+    return true;
+  });
+
   return (
     <section className="admin-editor-page">
       <div className="admin-editor-header">
@@ -454,7 +547,7 @@ export default function AdminRiverEditorPage() {
             </div>
           </div>
 
-          <div className="admin-editor-section">
+          <div ref={addPointRef} className="admin-editor-section">
             <h2>Add Point</h2>
 
             <label className="form-label">
@@ -469,9 +562,9 @@ export default function AdminRiverEditorPage() {
               Type
               <select
                 value={newPoint.type}
-                onChange={(event) =>
-                  updateNewPoint("type", event.target.value as RiverPointType)
-                }
+                  onChange={(event) =>
+                    updateNewPoint("type", event.target.value as RiverPointType)
+                  }
               >
                 <option value="public_access">Public Access</option>
                 <option value="private_access">Private Access</option>
@@ -479,28 +572,6 @@ export default function AdminRiverEditorPage() {
                 <option value="hazard">Hazard</option>
               </select>
             </label>
-
-            <div className="admin-score-grid">
-              <label className="form-label">
-                Latitude
-                <input
-                  value={newPoint.latitude}
-                  onChange={(event) =>
-                    updateNewPoint("latitude", event.target.value)
-                  }
-                />
-              </label>
-
-              <label className="form-label">
-                Longitude
-                <input
-                  value={newPoint.longitude}
-                  onChange={(event) =>
-                    updateNewPoint("longitude", event.target.value)
-                  }
-                />
-              </label>
-            </div>
 
             <button
               type="button"
@@ -512,12 +583,60 @@ export default function AdminRiverEditorPage() {
               {pickingPoint ? "Click the Map..." : "Pick on Map"}
             </button>
 
+            {pickingPoint ? (
+              <p className="muted">
+                Click anywhere on the map to set the new point location.
+              </p>
+            ) : null}
+
             <label className="form-label">
               Description
               <textarea
                 value={newPoint.description}
                 onChange={(event) =>
                   updateNewPoint("description", event.target.value)
+                }
+              />
+            </label>
+
+            <div className="admin-score-grid">
+              <label className="form-label">
+                Latitude
+                <input
+                  value={newPoint.latitude}
+                  onChange={(event) =>
+                    updatePointEdit("latitude", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="form-label">
+                Longitude
+                <input
+                  value={newPoint.longitude}
+                  onChange={(event) =>
+                    updatePointEdit("longitude", event.target.value)
+                  }
+                />
+              </label>
+            </div>
+
+            <label className="form-label">
+              Website
+              <input
+                value={pointEditForm.website}
+                onChange={(event) =>
+                  updatePointEdit("website", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Phone
+              <input
+                value={pointEditForm.phone}
+                onChange={(event) =>
+                  updatePointEdit("phone", event.target.value)
                 }
               />
             </label>
@@ -585,11 +704,68 @@ export default function AdminRiverEditorPage() {
               </label>
 
               <label className="form-label">
+                Type
+                <select
+                  value={pointEditForm.type}
+                  onChange={(event) =>
+                    updatePointEdit("type", event.target.value as RiverPointType)
+                  }
+                >
+                  <option value="public_access">Public Access</option>
+                  <option value="private_access">Private Access</option>
+                  <option value="poi">Point of Interest</option>
+                  <option value="hazard">Hazard</option>
+                </select>
+              </label>
+
+              <label className="form-label">
                 Description
                 <textarea
                   value={pointEditForm.description}
                   onChange={(event) =>
                     updatePointEdit("description", event.target.value)
+                  }
+                />
+              </label>
+
+              <div className="admin-score-grid">
+                <label className="form-label">
+                  Latitude
+                  <input
+                    value={pointEditForm.latitude}
+                    onChange={(event) =>
+                      updatePointEdit("latitude", event.target.value)
+                    }
+                  />
+                </label>
+
+                <label className="form-label">
+                  Longitude
+                  <input
+                    value={pointEditForm.longitude}
+                    onChange={(event) =>
+                      updatePointEdit("longitude", event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+
+              <label className="form-label">
+                Website
+                <input
+                  value={pointEditForm.website}
+                  onChange={(event) =>
+                    updatePointEdit("website", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="form-label">
+                Phone
+                <input
+                  value={pointEditForm.phone}
+                  onChange={(event) =>
+                    updatePointEdit("phone", event.target.value)
                   }
                 />
               </label>
@@ -758,6 +934,43 @@ export default function AdminRiverEditorPage() {
         </form>
 
         <div className="admin-editor-map-panel">
+          <div className="admin-map-legend">
+            <button
+              type="button"
+              className={!markerFilters.access ? "disabled" : ""}
+              onClick={() => toggleMarkerFilter("access")}
+            >
+              <span className="legend-dot admin-marker-public" />
+              Access
+            </button>
+
+            <button
+              type="button"
+              className={!markerFilters.poi ? "disabled" : ""}
+              onClick={() => toggleMarkerFilter("poi")}
+            >
+              <span className="legend-dot admin-marker-poi" />
+              POIs
+            </button>
+
+            <button
+              type="button"
+              className={!markerFilters.hazard ? "disabled" : ""}
+              onClick={() => toggleMarkerFilter("hazard")}
+            >
+              <span className="legend-dot admin-marker-hazard" />
+              Hazards
+            </button>
+
+            <button
+              type="button"
+              className={!markerFilters.newPoint ? "disabled" : ""}
+              onClick={() => toggleMarkerFilter("newPoint")}
+            >
+              <span className="legend-dot admin-marker-new" />
+              New Point
+            </button>
+          </div>
           <MapContainer
             center={[
               river.coordinates[0]?.latitude ?? 35.1,
@@ -778,8 +991,17 @@ export default function AdminRiverEditorPage() {
                 updateNewPoint("latitude", latitude.toFixed(6));
                 updateNewPoint("longitude", longitude.toFixed(6));
                 setPickingPoint(false);
+
+                setTimeout(() => {
+                  addPointRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }, 50);
               }}
             />
+
+            
 
             <FitRiverBounds coordinates={river.coordinates} />
 
@@ -794,15 +1016,13 @@ export default function AdminRiverEditorPage() {
               }}
             />
 
-            {[
-              ...river.accessPoints.public,
-              ...river.accessPoints.private,
-              ...river.pois,
-              ...(river.hazards ?? []),
-            ].map((point) => (
+            
+
+            {visibleEditorPoints.map((point) => (
               <Marker
                 key={point.id}
                 position={[point.latitude, point.longitude]}
+                icon={getPointIcon(point.type)}
                 draggable
                 eventHandlers={{
                   dragend: async (event) => {
@@ -867,12 +1087,13 @@ export default function AdminRiverEditorPage() {
                 </Popup>
               </Marker>
             ))}
-            {newPoint.latitude && newPoint.longitude ? (
+            {markerFilters.newPoint && newPoint.latitude && newPoint.longitude ? (
               <Marker
                 position={[
                   Number(newPoint.latitude),
                   Number(newPoint.longitude),
                 ]}
+                icon={newPointIcon}
               >
                 <Popup>
                   New point preview

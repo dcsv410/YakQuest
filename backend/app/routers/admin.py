@@ -264,6 +264,25 @@ def update_river_point(
 
     updates = payload.model_dump(exclude_unset=True)
 
+    if "type" in updates:
+        allowed_types = {
+            "public_access",
+            "private_access",
+            "poi",
+            "hazard",
+        }
+
+    if "website" in updates:
+        point.website = updates["website"] or None
+
+    if "phone" in updates:
+        point.phone = updates["phone"] or None
+
+    if updates["type"] not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid point type")
+
+    point.type = updates["type"]
+
     if "name" in updates:
         point.name = updates["name"]
 

@@ -1282,3 +1282,232 @@ h1 {
 .danger-popup-button {
   background: #9f1d1d;
 }
+
+.admin-map-marker {
+  border-radius: 999px;
+  border: 3px solid white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.admin-marker-public {
+  background: #23a455;
+}
+
+.admin-marker-private {
+  background: #f59e0b;
+}
+
+.admin-marker-poi {
+  background: #2563eb;
+}
+
+.admin-marker-hazard {
+  background: #dc2626;
+}
+
+.admin-marker-new {
+  background: #9333ea;
+  box-shadow: 0 0 0 5px rgba(147, 51, 234, 0.25),
+    0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.admin-marker-default {
+  background: #64748b;
+}
+
+.admin-editor-map-panel {
+  position: relative;
+}
+
+.admin-map-legend {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 800;
+  display: grid;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(16, 32, 28, 0.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.admin-map-legend div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border-radius: 999px;
+  border: 2px solid white;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.admin-map-legend button {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-map-legend button.disabled {
+  opacity: 0.35;
+}
+
+.admin-filter-row {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.admin-filter-row button {
+  border: 1px solid rgba(16, 32, 28, 0.14);
+  background: white;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.admin-filter-row button.active {
+  background: #1ca7a6;
+  color: white;
+  border-color: #1ca7a6;
+}
+
+.admin-contribution-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.admin-contribution-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  background: white;
+  border-radius: 22px;
+  padding: 22px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.admin-contribution-points {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-contribution-points div {
+  background: #f4f7f3;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.admin-contribution-points p {
+  margin: 0 0 4px;
+}
+
+.admin-contribution-actions {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.admin-contribution-actions button {
+  border: 0;
+  cursor: pointer;
+}
+
+.site-main:has(.admin-contributions-page) {
+  height: calc(100vh - 76px);
+  max-width: none;
+  padding: 28px;
+  overflow: hidden;
+}
+
+.admin-contributions-page {
+  display: grid;
+  grid-template-columns: 520px 1fr;
+  gap: 18px;
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-contributions-left {
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.admin-contributions-map-panel {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.admin-contributions-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-contribution-card {
+  cursor: pointer;
+}
+
+.admin-contribution-card.selected {
+  border-color: #1ca7a6;
+  box-shadow: 0 0 0 3px rgba(28, 167, 166, 0.18),
+    0 12px 34px rgba(0, 0, 0, 0.08);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 9px 12px;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.status-pill.approved {
+  background: #e8f7f0;
+  color: #137a3f;
+}
+
+.status-pill.rejected {
+  background: #ffe8e8;
+  color: #9f1d1d;
+}
+
+.admin-map-empty-state {
+  position: absolute;
+  z-index: 850;
+  top: 14px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #61736e;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}

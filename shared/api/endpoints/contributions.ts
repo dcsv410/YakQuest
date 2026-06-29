@@ -2,7 +2,6 @@ import type { ApiClient } from "../../network";
 import type {
   ContributionResponseDTO,
   CreateContributionRequestDTO,
-  ReviewContributionRequestDTO,
 } from "../../dto";
 
 export const contributionsApi = {
@@ -20,20 +19,27 @@ export const contributionsApi = {
     );
   },
 
-  review(
+  approve(
     client: ApiClient,
-    id: string,
-    payload: ReviewContributionRequestDTO
+    id: string
   ): Promise<ContributionResponseDTO> {
-    return client.patch<ContributionResponseDTO, ReviewContributionRequestDTO>(
-      `/admin/contributions/${id}`,
-      payload
+    return client.post<ContributionResponseDTO>(
+      `/admin/contributions/${id}/approve`
+    );
+  },
+
+  reject(
+    client: ApiClient,
+    id: string
+  ): Promise<ContributionResponseDTO> {
+    return client.post<ContributionResponseDTO>(
+      `/admin/contributions/${id}/reject`
     );
   },
 
   apply(client: ApiClient, id: string): Promise<ContributionResponseDTO> {
     return client.post<ContributionResponseDTO>(
-      `/admin/contributions/${id}/apply`
+      `/admin/contributions/${id}/attach-river`
     );
   },
 };
