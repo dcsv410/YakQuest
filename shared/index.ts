@@ -6,3 +6,5 @@ export * from "./api";
 export * from "./constants";
 export * from "./enums";
 export * from "./validation";
+export * from "./geometry";
+export * from "./trip";

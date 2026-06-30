@@ -1,10 +1,23 @@
-import { Coordinate, River, RiverPoint } from "../../../data/types";
 import {
   distanceFeet,
   feetToMiles,
   findClosestIndex,
+  getPolylineDistanceFeet,
+  getPolylineDistanceMiles,
 } from "./geo";
-import { FEET_PER_MILE, FAST_PADDLING_MPH, SLOW_PADDLING_MPH } from "@yakquest/shared";
+import { 
+  FEET_PER_MILE, 
+  FAST_PADDLING_MPH, 
+  SLOW_PADDLING_MPH, 
+  Coordinate, 
+  River, 
+  RiverPoint,
+  formatDuration,
+  getAllRiverPoints,
+  getAverageSpeedMph,
+  getEtaFromSpeed,
+  getTimeRange,
+ } from "@yakquest/shared";
 
 export const getNearestRiver = (
   rivers: River[],
@@ -117,73 +130,24 @@ export const getSegmentBounds = (
   return a < b ? [a, b] : [b, a];
 };
 
-export const getRiverLengthMiles = (river: River) => {
-  let total = 0;
-
-  for (let i = 1; i < river.coordinates.length; i++) {
-    total += distanceFeet(
-      river.coordinates[i - 1],
-      river.coordinates[i]
-    );
-  }
-
-  return feetToMiles(total);
-};
+export const getRiverLengthMiles = (river: River) =>
+  getPolylineDistanceMiles(river.coordinates);
 
 export const getSegmentMiles = (
   river: River,
   start: RiverPoint,
   end: RiverPoint
 ) => {
-  const coords = river.coordinates;
   const [s, e] = getSegmentBounds(river, start, end);
 
-  let total = 0;
-
-  for (let i = s + 1; i <= e; i++) {
-    total += distanceFeet(coords[i - 1], coords[i]);
-  }
-
-  return feetToMiles(total);
-};
-
-export const getTimeRange = (miles: number) => {
-  const fast = miles / FAST_PADDLING_MPH;
-  const slow = miles / SLOW_PADDLING_MPH;
-
-  const roundHalf = (t: number) => Math.round(t * 2) / 2;
-
-  return {
-    min: roundHalf(fast),
-    max: roundHalf(slow),
-  };
-};
-
-export const getAllRiverPoints = (river: River) => {
-  return [
-    ...(river.accessPoints?.public || []),
-    ...(river.accessPoints?.private || []),
-    ...(river.pois || []),
-  ];
+  return getPolylineDistanceMiles(river.coordinates, s, e);
 };
 
 export const getPathDistanceFeetBetweenIndexes = (
   river: River,
   startIndex: number,
   endIndex: number
-) => {
-  const coords = river.coordinates;
-  const s = Math.min(startIndex, endIndex);
-  const e = Math.max(startIndex, endIndex);
-
-  let total = 0;
-
-  for (let i = s + 1; i <= e; i++) {
-    total += distanceFeet(coords[i - 1], coords[i]);
-  }
-
-  return total;
-};
+) => getPolylineDistanceFeet(river.coordinates, startIndex, endIndex);
 
 export const getRemainingRiverDistanceFeet = (
   river: River,
@@ -198,39 +162,6 @@ export const getRemainingRiverDistanceFeet = (
     currentIndex,
     endIndex
   );
-};
-
-export const formatDuration = (ms: number) => {
-  const totalMinutes = Math.max(0, Math.round(ms / 60000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours <= 0) return `${minutes} min`;
-  return `${hours} hr ${minutes} min`;
-};
-
-export const getAverageSpeedMph = (
-  distanceFeet: number,
-  elapsedMs: number
-) => {
-  if (elapsedMs <= 0) return 0;
-
-  const miles = distanceFeet / FEET_PER_MILE;
-  const hours = elapsedMs / 1000 / 60 / 60;
-
-  return miles / hours;
-};
-
-export const getEtaFromSpeed = (
-  distanceFeet: number,
-  averageSpeedMph: number
-) => {
-  if (averageSpeedMph <= 0) return null;
-
-  const miles = distanceFeet / FEET_PER_MILE;
-  const hours = miles / averageSpeedMph;
-
-  return hours * 60 * 60 * 1000;
 };
 
 export const getNextRiverPointByPath = (

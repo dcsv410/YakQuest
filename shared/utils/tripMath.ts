@@ -3,7 +3,7 @@ import {
   distanceFeet,
   feetToMiles,
   findClosestIndex,
-} from "./geo";
+} from "../geometry";
 import {
   FAST_PADDLING_MPH,
   SLOW_PADDLING_MPH,

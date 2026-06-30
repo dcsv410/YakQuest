@@ -1,8 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { RiverPoint } from "../../../data/types";
-import { formatDuration } from "../utils/tripMath";
-import { FEET_PER_MILE } from "@yakquest/shared";
+import { FEET_PER_MILE, formatDuration } from "@yakquest/shared";
 
 type Props = {
   navigationArmed: boolean;

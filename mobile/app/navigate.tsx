@@ -15,11 +15,9 @@ import LiveNavigationHud from "../src/features/trip-planning/components/LiveNavi
 import {
   getNearestRiver,
   getNextPointDownstream,
-  getAllRiverPoints,
   getDistanceToRiverPointByPath,
-  getAverageSpeedMph ,
 } from "../src/features/trip-planning/utils/tripMath";
-import { distanceFeet } from "../src/features/trip-planning/utils/geo";
+import { distanceFeet } from "@yakquest/shared";
 import { River, RiverPoint } from "../src/data/types";
 import { useRouter } from "expo-router";
 import { useLocalContributionPoints } from "../src/features/contribute/hooks/useLocalContributionPoints";
@@ -31,7 +29,7 @@ import {
 import { setupNavigationNotifications } from "../src/services/notificationService";
 import { useApprovedRemovalPointIds } from "../src/features/contribute/hooks/useApprovedRemovalPointIds";
 import SafetyStartScreen from "../src/features/trip-planning/components/SafetyStartScreen";
-import { FEET_PER_MILE } from "@yakquest/shared";
+import { FEET_PER_MILE, getAverageSpeedMph, getAllRiverPoints } from "@yakquest/shared";
 
 const POINT_ALERT_DISTANCE_FEET = 100;
 

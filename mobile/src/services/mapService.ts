@@ -1,6 +1,6 @@
 import { River, RiverPoint } from "../../src/data/types";
 import { getBounds } from "../../src/features/trip-planning/utils/geo";
-import { getAllRiverPoints } from "../../src/features/trip-planning/utils/tripMath";
+import { getAllRiverPoints } from "@yakquest/shared";
 
 export const getRiverMapBounds = (river: River) => {
   return getBounds(river);

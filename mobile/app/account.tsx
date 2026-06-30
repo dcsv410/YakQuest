@@ -9,12 +9,12 @@ import {
   View,
 } from "react-native";
 import {
-  AuthUser,
   getCurrentUser,
   login,
   logout,
   register,
 } from "../src/services/authService";
+import type { AuthUser } from "@yakquest/shared";
 import { syncUserData } from "../src/services/syncService";
 
 export default function AccountScreen() {

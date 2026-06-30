@@ -5,9 +5,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getRiverById } from "./riverService";
 import { sendNavigationNotification } from "./notificationService";
 import { Coordinate, RiverPoint } from "../data/types";
-import { distanceFeet } from "../features/trip-planning/utils/geo";
+import { distanceFeet, getAllRiverPoints } from "@yakquest/shared";
 import {
-  getAllRiverPoints,
   getRemainingRiverDistanceFeet,
 } from "../features/trip-planning/utils/tripMath";
 

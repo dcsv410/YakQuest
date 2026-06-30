@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, AppState } from "react-native";
 
 import { River, RiverPoint, Coordinate } from "../../../data/types";
-import { distanceFeet } from "../utils/geo";
+import { distanceFeet } from "@yakquest/shared";
 import {
-  getAllRiverPoints,
   getRemainingRiverDistanceFeet,
   getNextRiverPointByPath,
-  getAverageSpeedMph,
-  getEtaFromSpeed,
 } from "../utils/tripMath";
 import { sendNavigationNotification } from "../../../services/notificationService";
+import {
+  getAllRiverPoints,
+  getAverageSpeedMph,
+  getEtaFromSpeed,
+} from "@yakquest/shared";
 
 const NAV_ALERTS = {
   pointApproachFeet: 500,

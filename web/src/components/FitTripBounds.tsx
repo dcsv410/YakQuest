@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import type { River, RiverPoint } from "@yakquest/shared";
-import { findClosestIndex } from "../utils/tripMath";
+import { findClosestIndex } from "@yakquest/shared";
 
 type Props = {
   river: River;

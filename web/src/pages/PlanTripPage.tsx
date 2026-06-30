@@ -15,7 +15,7 @@ import {
   getTripDistanceMiles,
   getTripTimeRange,
   getTripTimelinePoints,
-} from "../utils/tripMath";
+} from "@yakquest/shared";
 import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
 import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";

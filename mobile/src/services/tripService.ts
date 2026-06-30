@@ -3,8 +3,8 @@ import {
   buildTimeline,
   getRiverLengthMiles,
   getSegmentMiles,
-  getTimeRange,
 } from "../../src/features/trip-planning/utils/tripMath";
+import { getTimeRange } from "@yakquest/shared";
 
 export const getRiverLength = (river: River | null): number => {
   if (!river) return 0;

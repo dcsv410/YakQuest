@@ -1,38 +1,31 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config";
+import type {
+  AuthResponse,
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
+} from "@yakquest/shared";
 
 export const AUTH_TOKEN_KEY = "yakquest:authToken";
 export const AUTH_USER_KEY = "yakquest:user";
-
-export type AuthUser = {
-  id: string;
-  email: string;
-  display_name?: string;
-  is_admin: boolean;
-  trust_score: number;
-};
-
-export type AuthResponse = {
-  accessToken: string;
-  tokenType: string;
-  user: AuthUser;
-};
 
 export async function register(
   email: string,
   password: string,
   displayName?: string
 ): Promise<AuthResponse> {
+  const payload: RegisterRequest = {
+    email,
+    password,
+    displayName,
+  };
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      password,
-      displayName,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
@@ -58,15 +51,16 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthResponse> {
+  const payload: LoginRequest = {
+    email,
+    password,
+  };
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {

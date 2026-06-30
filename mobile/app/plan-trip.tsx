@@ -36,7 +36,7 @@ import RiverSelectSheet from "../src/features/trip-planning/components/RiverSele
 import { useRecentRivers } from "../src/features/trip-planning/hooks/useRecentRivers";
 import NavigationHud from "../src/features/trip-planning/components/NavigationHud";
 import { getPathDistanceFeetBetweenIndexes } from "../src/features/trip-planning/utils/tripMath";
-import { findClosestIndex, feetToMiles } from "../src/features/trip-planning/utils/geo";
+import { findClosestIndex, feetToMiles } from "@yakquest/shared";
 import TripCompleteScreen from "../src/features/trip-planning/components/TripCompleteScreen";
 import { saveCompletedTrip } from "../src/services/completedTripService";
 import { getCompletedTripById } from "../src/services/completedTripService";
