@@ -31,14 +31,15 @@ import {
 import { setupNavigationNotifications } from "../src/services/notificationService";
 import { useApprovedRemovalPointIds } from "../src/features/contribute/hooks/useApprovedRemovalPointIds";
 import SafetyStartScreen from "../src/features/trip-planning/components/SafetyStartScreen";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 const POINT_ALERT_DISTANCE_FEET = 100;
 
 const getPointPinColor = (point: RiverPoint) => {
   switch (point.type) {
-    case "public":
+    case "public_access":
       return "green";
-    case "private":
+    case "private_access":
       return "red";
     case "poi":
       return "purple";
@@ -62,7 +63,7 @@ const getPointTypeLabel = (type: string) => {
 
 const formatDistance = (feet: number) => {
   if (feet < 528) return `${Math.round(feet)} ft`;
-  return `${(feet / 5280).toFixed(2)} mi`;
+  return `${(feet / FEET_PER_MILE).toFixed(2)} mi`;
 };
 
 export default function NavigateScreen() {

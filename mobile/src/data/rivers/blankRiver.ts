@@ -23,7 +23,7 @@ export const blankRiver: River = {
       {
         id: "public_id_1",
         name: "Name (Public Access)",
-        type: "public",
+        type: "public_access",
         latitude: 35.19238,
         longitude: -86.28018,
       },
@@ -33,7 +33,7 @@ export const blankRiver: River = {
       {
         id: "private_id_1",
         name: "Name (Private Access)",
-        type: "private",
+        type: "private_access",
         latitude: 35.12720,
         longitude: -86.40793,
       },

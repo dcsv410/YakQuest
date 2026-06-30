@@ -77,7 +77,7 @@ export default function TripPanel({
           )}
 
           <Text style={styles.stat}>
-            💧 Flow: {flowCfs ? `${flowCfs} cfs` : selectedRiver.flow}
+            💧 Flow: {flowCfs ? `${flowCfs} cfs` : "Uknown"}
           </Text>
 
           <Text style={styles.stat}>📊 Conditions: {flowRating}</Text>

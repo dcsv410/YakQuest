@@ -100,7 +100,7 @@ const fromApiCompletedTrip = (apiTrip: any): CompletedTrip => ({
   start: {
     id: `${apiTrip.id}-start`,
     name: apiTrip.start_name ?? "Start",
-    type: "public",
+    type: "public_access",
     latitude: 0,
     longitude: 0,
   },
@@ -108,7 +108,7 @@ const fromApiCompletedTrip = (apiTrip: any): CompletedTrip => ({
   end: {
     id: `${apiTrip.id}-end`,
     name: apiTrip.end_name ?? "End",
-    type: "public",
+    type: "public_access",
     latitude: 0,
     longitude: 0,
   },

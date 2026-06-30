@@ -13,7 +13,6 @@ export const paintRockRiverAL: River = {
   cleanliness: 4,
   fishing: 4,
 
-  flow: "Unknown",
   usgsGaugeId: "03574500",
 
   flowStats: {
@@ -29,14 +28,14 @@ export const paintRockRiverAL: River = {
         name: "Paint Rock River Fording Point (Public Access)",
         latitude: 34.69891,
         longitude: -86.30797,
-        type: "public",
+        type: "public_access",
       },
       {
         id: "paintRock-pa-2",
         name: "Hwy 72 (Public Access)",
         latitude: 34.62433,
         longitude: -86.30650,
-        type: "public",
+        type: "public_access",
       },
     ],
 
@@ -46,7 +45,7 @@ export const paintRockRiverAL: River = {
         name: "Paint Rock River Canoe and Kayak Rental (Private Access)",
         latitude: 34.66018,
         longitude: -86.32627,
-        type: "private",
+        type: "private_access",
       },
     ],
   },

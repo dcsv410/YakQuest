@@ -51,8 +51,11 @@ import {
   getBackgroundCompletedTrip,
   clearBackgroundCompletedTrip,
 } from "../src/services/backgroundNavigationService";
-
-import { fetchRivers } from "../src/services/apiRiverService";
+import { FEET_PER_MILE } from "@yakquest/shared";
+import {
+  FAST_PADDLING_MPH,
+  SLOW_PADDLING_MPH,
+} from "@yakquest/shared";
 
 export default function PlanTrip() {
   const mapRef = useRef<MapView | null>(null);
@@ -124,7 +127,7 @@ export default function PlanTrip() {
       planner.completeTrip();
 
       setTripSummary({
-        actualDistanceMiles: summary.actualDistanceFeet / 5280,
+        actualDistanceMiles: summary.actualDistanceFeet / FEET_PER_MILE,
         elapsedMs: summary.elapsedMs,
       });
     },
@@ -235,8 +238,8 @@ export default function PlanTrip() {
 
     const distanceMiles = feetToMiles(distanceFeet);
 
-    const fastHours = distanceMiles / 2.5;
-    const slowHours = distanceMiles / 1.5;
+    const fastHours = distanceMiles / FAST_PADDLING_MPH;
+    const slowHours = distanceMiles / SLOW_PADDLING_MPH;
 
     const formatTime = (hours: number) => {
       const minutes = Math.round(hours * 60);

@@ -13,7 +13,6 @@ export const foxwoodRiverAL: River = {
   cleanliness: 4,
   fishing: 4,
 
-  flow: "Unknown",
   usgsGaugeId: "03574500",
 
   flowStats: {
@@ -29,14 +28,14 @@ export const foxwoodRiverAL: River = {
         name: "Foxwood River Access 1 (Public Access)",
         latitude: 34.783224,
         longitude: -86.777391,
-        type: "public",
+        type: "public_access",
       },
       {
         id: "foxwood-pa-2",
         name: "Foxwood River Access 2 (Public Access)",
         latitude: 34.779535,
         longitude: -86.775736,
-        type: "public",
+        type: "public_access",
       },
     ],
 
@@ -46,7 +45,7 @@ export const foxwoodRiverAL: River = {
         name: "Foxwood River Access 3 (Private Access)",
         latitude: 34.779622,
         longitude: -86.784368,
-        type: "private",
+        type: "private_access",
       },
     ],
   },

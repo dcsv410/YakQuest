@@ -1,8 +1,9 @@
 import { rivers, riverMap, riversByState } from "../../src/data/rivers";
-import { River, StateCode } from "../../src/data/types";
+import { River } from "../../src/data/types";
 import { fetchRivers } from "./apiRiverService";
 
 const USE_BACKEND_RIVERS = true;
+type StateCode = string;
 
 export const getAllRivers = async (): Promise<River[]> => {
   if (USE_BACKEND_RIVERS) {
@@ -30,9 +31,9 @@ export const searchRivers = (query: string): River[] => {
   return rivers.filter((river) => {
     return (
       river.name.toLowerCase().includes(normalizedQuery) ||
-      river.stateName.toLowerCase().includes(normalizedQuery) ||
-      river.state.toLowerCase().includes(normalizedQuery) ||
-      river.slug.toLowerCase().includes(normalizedQuery)
+      (river.stateName ?? "").toLowerCase().includes(normalizedQuery) ||
+      (river.state ?? "").toLowerCase().includes(normalizedQuery) ||
+      (river.slug ?? "").toLowerCase().includes(normalizedQuery)
     );
   });
 };

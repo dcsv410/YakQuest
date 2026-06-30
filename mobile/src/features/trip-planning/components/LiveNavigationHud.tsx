@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { River, RiverPoint } from "../../../data/types";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 type Props = {
   river: River | null;
@@ -10,7 +11,7 @@ type Props = {
   averageSpeedMph?: number;
 };
 
-const feetToMiles = (feet: number) => feet / 5280;
+const feetToMiles = (feet: number) => feet / FEET_PER_MILE;
 
 const formatDistance = (feet: number) => {
   if (feet < 528) return `${Math.round(feet)} ft`;

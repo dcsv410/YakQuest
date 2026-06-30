@@ -1,16 +1,5 @@
 import type { Coordinate, RiverPointType } from "../models";
-
-export type ContributionStatus =
-  | "pending"
-  | "submitted"
-  | "approved"
-  | "rejected"
-  | "failed";
-
-export type ContributionKind =
-  | "new-river"
-  | "existing-river-point"
-  | "remove-existing-point";
+import type { ContributionStatus, ContributionKind } from "../models";
 
 export type ContributionPointDTO = Coordinate & {
   id?: string;

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { RiverPoint } from "../../../data/types";
 import { formatDuration } from "../utils/tripMath";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 type Props = {
   navigationArmed: boolean;
@@ -12,7 +13,7 @@ type Props = {
   estimatedTimeRemainingMs?: number | null;
 };
 
-const feetToMiles = (feet: number) => feet / 5280;
+const feetToMiles = (feet: number) => feet / FEET_PER_MILE;
 
 export default function NavigationHud({
   navigationArmed,

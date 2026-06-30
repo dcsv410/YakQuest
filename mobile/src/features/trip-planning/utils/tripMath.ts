@@ -4,6 +4,7 @@ import {
   feetToMiles,
   findClosestIndex,
 } from "./geo";
+import { FEET_PER_MILE, FAST_PADDLING_MPH, SLOW_PADDLING_MPH } from "@yakquest/shared";
 
 export const getNearestRiver = (
   rivers: River[],
@@ -147,8 +148,8 @@ export const getSegmentMiles = (
 };
 
 export const getTimeRange = (miles: number) => {
-  const fast = miles / 2.5;
-  const slow = miles / 1.5;
+  const fast = miles / FAST_PADDLING_MPH;
+  const slow = miles / SLOW_PADDLING_MPH;
 
   const roundHalf = (t: number) => Math.round(t * 2) / 2;
 
@@ -214,7 +215,7 @@ export const getAverageSpeedMph = (
 ) => {
   if (elapsedMs <= 0) return 0;
 
-  const miles = distanceFeet / 5280;
+  const miles = distanceFeet / FEET_PER_MILE;
   const hours = elapsedMs / 1000 / 60 / 60;
 
   return miles / hours;
@@ -226,7 +227,7 @@ export const getEtaFromSpeed = (
 ) => {
   if (averageSpeedMph <= 0) return null;
 
-  const miles = distanceFeet / 5280;
+  const miles = distanceFeet / FEET_PER_MILE;
   const hours = miles / averageSpeedMph;
 
   return hours * 60 * 60 * 1000;

@@ -1,4 +1,4 @@
-import { StateCode } from "../types";
+type StateCode = string;
 
 export const riverStates: {
   code: StateCode;

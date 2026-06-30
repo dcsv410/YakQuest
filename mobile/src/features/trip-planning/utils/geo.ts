@@ -1,4 +1,5 @@
 import { Coordinate } from "../../../data/types";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 export const toRad = (x: number) => (x * Math.PI) / 180;
 
@@ -19,7 +20,7 @@ export const distanceFeet = (a: Coordinate, b: Coordinate) => {
   return R * c * 3.28084;
 };
 
-export const feetToMiles = (ft: number) => ft / 5280;
+export const feetToMiles = (ft: number) => ft / FEET_PER_MILE;
 
 export const findClosestIndex = (
   coords: Coordinate[],

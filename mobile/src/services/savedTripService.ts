@@ -3,7 +3,6 @@ import { RiverPoint } from "../../src/data/types";
 import {
   createSavedTripInApi,
   fetchSavedTripsFromApi,
-  updateSavedTripInApi,
   deleteSavedTripFromApi,
 } from "./apiSavedTripService";
 
@@ -87,7 +86,7 @@ const fromApiSavedTrip = (apiTrip: any): SavedTrip => ({
   start: {
     id: `${apiTrip.id}-start`,
     name: apiTrip.start_name ?? "Start",
-    type: "public",
+    type: "public_access",
     latitude: apiTrip.start_latitude,
     longitude: apiTrip.start_longitude,
   },
@@ -95,7 +94,7 @@ const fromApiSavedTrip = (apiTrip: any): SavedTrip => ({
   end: {
     id: `${apiTrip.id}-end`,
     name: apiTrip.end_name ?? "End",
-    type: "public",
+    type: "public_access",
     latitude: apiTrip.end_latitude,
     longitude: apiTrip.end_longitude,
   },

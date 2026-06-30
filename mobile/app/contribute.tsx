@@ -31,8 +31,8 @@ const pointTypes: {
   label: string;
   value: RiverPointType;
 }[] = [
-  { label: "Public Access", value: "public" },
-  { label: "Private Access", value: "private" },
+  { label: "Public Access", value: "public_access" },
+  { label: "Private Access", value: "private_access" },
   { label: "Point of Interest", value: "poi" },
   { label: "Hazard", value: "hazard" },
 ];
