@@ -11,11 +11,25 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 
-import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint, fetchAdminRiver } from "../../services/riverService";
-import type { River, RiverPoint, RiverPointType } from "@yakquest/shared";
+import {
+  createOutfitter,
+  createRiverPoint,
+  fetchAdminRiver,
+  fetchAdminRiverOutfitters,
+  fetchRivers,
+  updateOutfitter,
+  updateRiver,
+  updateRiverPoint,
+} from "../../services/riverService";
+import type {
+  AdminRiverPointDTO,
+  Outfitter,
+  River,
+  RiverPoint,
+  RiverPointType,
+} from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
 import { distanceFeet } from "@yakquest/shared";
-import type { AdminRiverPointDTO } from "@yakquest/shared";
 
 type RiverEditForm = {
   name: string;
@@ -118,6 +132,26 @@ export default function AdminRiverEditorPage() {
   const { data: rivers = [], isLoading, error } = useQuery({
     queryKey: ["rivers"],
     queryFn: fetchRivers,
+  });
+
+  const { data: outfitters = [] } = useQuery({
+    queryKey: ["adminRiverOutfitters", riverId],
+    queryFn: () => fetchAdminRiverOutfitters(riverId ?? ""),
+    enabled: !!riverId,
+  });
+
+  const [editingOutfitter, setEditingOutfitter] =
+    useState<Outfitter | null>(null);
+
+  const [outfitterForm, setOutfitterForm] = useState({
+    name: "",
+    website: "",
+    phone: "",
+    email: "",
+    description: "",
+    highestPutInPointId: "",
+    lowestTakeOutPointId: "",
+    accessPointIds: [] as string[],
   });
 
   const { data: adminRiver } = useQuery({
@@ -375,6 +409,126 @@ export default function AdminRiverEditorPage() {
         <Link to="/admin/rivers">Back to Rivers</Link>
       </div>
     );
+  }
+
+  const allAccessPoints = [
+    ...river.accessPoints.public,
+    ...river.accessPoints.private,
+  ];
+
+  function updateOutfitterForm<K extends keyof typeof outfitterForm>(
+    key: K,
+    value: (typeof outfitterForm)[K]
+  ) {
+    setOutfitterForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function resetOutfitterForm() {
+    setEditingOutfitter(null);
+    setOutfitterForm({
+      name: "",
+      website: "",
+      phone: "",
+      email: "",
+      description: "",
+      highestPutInPointId: "",
+      lowestTakeOutPointId: "",
+      accessPointIds: [],
+    });
+  }
+
+  function startEditingOutfitter(outfitter: Outfitter) {
+    setEditingOutfitter(outfitter);
+    setOutfitterForm({
+      name: outfitter.name,
+      website: outfitter.website ?? "",
+      phone: outfitter.phone ?? "",
+      email: outfitter.email ?? "",
+      description: outfitter.description ?? "",
+      highestPutInPointId: outfitter.highestPutInPointId ?? "",
+      lowestTakeOutPointId: outfitter.lowestTakeOutPointId ?? "",
+      accessPointIds: outfitter.accessPointIds ?? [],
+    });
+  }
+
+  function toggleOutfitterAccessPoint(pointId: string) {
+    setOutfitterForm((current) => {
+      const exists = current.accessPointIds.includes(pointId);
+
+      return {
+        ...current,
+        accessPointIds: exists
+          ? current.accessPointIds.filter((id) => id !== pointId)
+          : [...current.accessPointIds, pointId],
+      };
+    });
+  }
+
+  async function saveOutfitter() {
+    if (!river) return;
+
+    if (!outfitterForm.name.trim()) {
+      alert("Outfitter name is required.");
+      return;
+    }
+
+    try {
+      const payload = {
+        name: outfitterForm.name.trim(),
+        website: outfitterForm.website.trim() || null,
+        phone: outfitterForm.phone.trim() || null,
+        email: outfitterForm.email.trim() || null,
+        description: outfitterForm.description.trim() || null,
+        highestPutInPointId: outfitterForm.highestPutInPointId || null,
+        lowestTakeOutPointId: outfitterForm.lowestTakeOutPointId || null,
+        accessPointIds: outfitterForm.accessPointIds,
+      };
+
+      if (editingOutfitter) {
+        await updateOutfitter(editingOutfitter.id, payload);
+      } else {
+        await createOutfitter({
+          riverId: river.id,
+          ...payload,
+        });
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["adminRiverOutfitters", riverId],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["riverOutfitters", riverId],
+      });
+
+      resetOutfitterForm();
+      alert("Outfitter saved.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save outfitter.");
+    }
+  }
+
+  async function setOutfitterActive(outfitter: Outfitter, isActive: boolean) {
+    try {
+      await updateOutfitter(outfitter.id, {
+        isActive,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["adminRiverOutfitters", riverId],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["riverOutfitters", riverId],
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update outfitter.");
+    }
   }
 
   function updateForm<K extends keyof RiverEditForm>(
@@ -1057,6 +1211,178 @@ export default function AdminRiverEditorPage() {
                 Hidden points can be restored here.
               </p>
             )}
+          </div>
+
+          <div className="admin-editor-section">
+            <h2>Outfitters</h2>
+
+            <label className="form-label">
+              Name
+              <input
+                value={outfitterForm.name}
+                onChange={(event) =>
+                  updateOutfitterForm("name", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Website
+              <input
+                value={outfitterForm.website}
+                onChange={(event) =>
+                  updateOutfitterForm("website", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Phone
+              <input
+                value={outfitterForm.phone}
+                onChange={(event) =>
+                  updateOutfitterForm("phone", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Email
+              <input
+                value={outfitterForm.email}
+                onChange={(event) =>
+                  updateOutfitterForm("email", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Description
+              <textarea
+                value={outfitterForm.description}
+                onChange={(event) =>
+                  updateOutfitterForm("description", event.target.value)
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Highest Put-In
+              <select
+                value={outfitterForm.highestPutInPointId}
+                onChange={(event) =>
+                  updateOutfitterForm("highestPutInPointId", event.target.value)
+                }
+              >
+                <option value="">None selected</option>
+                {allAccessPoints.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form-label">
+              Lowest Take-Out
+              <select
+                value={outfitterForm.lowestTakeOutPointId}
+                onChange={(event) =>
+                  updateOutfitterForm("lowestTakeOutPointId", event.target.value)
+                }
+              >
+                <option value="">None selected</option>
+                {allAccessPoints.map((point) => (
+                  <option key={point.id} value={point.id}>
+                    {point.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="admin-outfitter-access-list">
+              <strong>Access Points Used</strong>
+
+              {allAccessPoints.map((point) => (
+                <label key={point.id}>
+                  <input
+                    type="checkbox"
+                    checked={outfitterForm.accessPointIds.includes(point.id)}
+                    onChange={() => toggleOutfitterAccessPoint(point.id)}
+                  />
+                  {point.name}
+                </label>
+              ))}
+            </div>
+
+            <div className="admin-inline-actions">
+              <button
+                type="button"
+                className="primary-button admin-save-button"
+                onClick={saveOutfitter}
+              >
+                {editingOutfitter ? "Save Outfitter" : "Add Outfitter"}
+              </button>
+
+              {editingOutfitter ? (
+                <button
+                  type="button"
+                  className="secondary-button admin-cancel-button"
+                  onClick={resetOutfitterForm}
+                >
+                  Cancel
+                </button>
+              ) : null}
+            </div>
+
+            <div className="admin-outfitter-list">
+              {outfitters.length ? (
+                outfitters.map((outfitter) => (
+                  <div
+                    key={outfitter.id}
+                    className={`admin-outfitter-row ${
+                      !outfitter.isActive ? "inactive" : ""
+                    }`}
+                  >
+                    <div>
+                      <strong>{outfitter.name}</strong>
+                      <p>{outfitter.phone || outfitter.website || "No contact listed"}</p>
+                      {!outfitter.isActive ? <small>Inactive</small> : null}
+                    </div>
+
+                    <div className="admin-point-actions">
+                      <button
+                        type="button"
+                        className="secondary-button small-action-button"
+                        onClick={() => startEditingOutfitter(outfitter)}
+                      >
+                        Edit
+                      </button>
+
+                      {outfitter.isActive ? (
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() => setOutfitterActive(outfitter, false)}
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="secondary-button small-action-button"
+                          onClick={() => setOutfitterActive(outfitter, true)}
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="muted">No outfitters listed.</p>
+              )}
+            </div>
           </div>
 
           <button className="primary-button admin-save-button" disabled={saving}>

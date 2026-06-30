@@ -7,7 +7,9 @@ import type {
   RiverPointResponseDTO,
   CreateRiverPointRequestDTO,
   AdminRiverResponseDTO,
+  CreateOutfitterRequestDTO,
   OutfitterResponseDTO,
+  UpdateOutfitterRequestDTO,
 } from "../../dto";
 
 export const riversApi = {
@@ -27,6 +29,36 @@ export const riversApi = {
   ): Promise<OutfitterResponseDTO[]> {
     return client.get<OutfitterResponseDTO[]>(
       `/rivers/${riverId}/outfitters`
+    );
+  },
+
+  listAdminOutfitters(
+    client: ApiClient,
+    riverId: string
+  ): Promise<OutfitterResponseDTO[]> {
+    return client.get<OutfitterResponseDTO[]>(
+      `/admin/rivers/${riverId}/outfitters`
+    );
+  },
+
+  createOutfitter(
+    client: ApiClient,
+    payload: CreateOutfitterRequestDTO
+  ): Promise<OutfitterResponseDTO> {
+    return client.post<OutfitterResponseDTO, CreateOutfitterRequestDTO>(
+      "/admin/outfitters",
+      payload
+    );
+  },
+
+  updateOutfitter(
+    client: ApiClient,
+    outfitterId: string,
+    payload: UpdateOutfitterRequestDTO
+  ): Promise<OutfitterResponseDTO> {
+    return client.patch<OutfitterResponseDTO, UpdateOutfitterRequestDTO>(
+      `/admin/outfitters/${outfitterId}`,
+      payload
     );
   },
 

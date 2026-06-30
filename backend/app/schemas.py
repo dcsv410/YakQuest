@@ -273,3 +273,27 @@ class OutfitterOut(BaseModel):
     lowestTakeOutPointId: Optional[str] = None
     accessPointIds: list[str] = []
     isActive: bool
+
+
+class OutfitterCreate(BaseModel):
+    riverId: str
+    name: str
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    description: Optional[str] = None
+    highestPutInPointId: Optional[str] = None
+    lowestTakeOutPointId: Optional[str] = None
+    accessPointIds: list[str] = []
+
+
+class OutfitterUpdate(BaseModel):
+    name: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    description: Optional[str] = None
+    highestPutInPointId: Optional[str] = None
+    lowestTakeOutPointId: Optional[str] = None
+    accessPointIds: Optional[list[str]] = None
+    isActive: Optional[bool] = None

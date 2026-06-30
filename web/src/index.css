@@ -1580,3 +1580,47 @@ h1 {
   color: #147473;
   font-weight: 900;
 }
+
+.admin-outfitter-access-list {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.admin-outfitter-access-list strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-outfitter-access-list label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+
+.admin-outfitter-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.admin-outfitter-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  background: #f4f7f3;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.admin-outfitter-row p {
+  margin: 4px 0 0;
+  color: #61736e;
+  font-size: 13px;
+}
+
+.admin-outfitter-row.inactive {
+  opacity: 0.55;
+}

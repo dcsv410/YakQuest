@@ -4,6 +4,8 @@ import type {
   CreateRiverPointRequestDTO,
   UpdateRiverPointRequestDTO,
   UpdateRiverRequestDTO,
+  CreateOutfitterRequestDTO,
+  UpdateOutfitterRequestDTO,
 } from "@yakquest/shared";
 import { apiClient } from "./apiClient";
 
@@ -32,3 +34,14 @@ export const fetchAdminRiver = (id: string) =>
 
 export const fetchRiverOutfitters = (riverId: string) =>
   riversApi.listOutfitters(apiClient, riverId);
+
+export const fetchAdminRiverOutfitters = (riverId: string) =>
+  riversApi.listAdminOutfitters(apiClient, riverId);
+
+export const createOutfitter = (payload: CreateOutfitterRequestDTO) =>
+  riversApi.createOutfitter(apiClient, payload);
+
+export const updateOutfitter = (
+  outfitterId: string,
+  payload: UpdateOutfitterRequestDTO
+) => riversApi.updateOutfitter(apiClient, outfitterId, payload);

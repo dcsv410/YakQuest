@@ -10,10 +10,10 @@ from app.database import get_db
 from app.models import Contribution, Review, River, RiverPoint, User
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
-from app.models import User
+from app.models import User, Outfitter
 from app.security import get_current_user
-from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate, RiverCreate
-from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point
+from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate, RiverCreate, OutfitterCreate, OutfitterUpdate
+from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point, serialize_outfitter
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -475,3 +475,92 @@ def get_admin_river(
         "coordinates": serialize_coordinates(river),
         "points": points,
     }
+
+
+@router.get("/rivers/{river_id}/outfitters")
+def list_admin_river_outfitters(
+    river_id: str,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    outfitters = (
+        db.query(Outfitter)
+        .filter(Outfitter.river_id == river_id)
+        .order_by(Outfitter.name)
+        .all()
+    )
+
+    return [serialize_outfitter(outfitter) for outfitter in outfitters]
+
+
+@router.post("/outfitters")
+def create_outfitter(
+    payload: OutfitterCreate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    outfitter = Outfitter(
+        river_id=payload.riverId,
+        name=payload.name.strip(),
+        website=payload.website or None,
+        phone=payload.phone or None,
+        email=payload.email or None,
+        description=payload.description or None,
+        highest_put_in_point_id=payload.highestPutInPointId or None,
+        lowest_take_out_point_id=payload.lowestTakeOutPointId or None,
+        access_point_ids=payload.accessPointIds,
+        is_active=True,
+    )
+
+    db.add(outfitter)
+    db.commit()
+    db.refresh(outfitter)
+
+    return serialize_outfitter(outfitter)
+
+
+@router.patch("/outfitters/{outfitter_id}")
+def update_outfitter(
+    outfitter_id: str,
+    payload: OutfitterUpdate,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    outfitter = db.query(Outfitter).filter(Outfitter.id == outfitter_id).first()
+
+    if not outfitter:
+        raise HTTPException(status_code=404, detail="Outfitter not found")
+
+    updates = payload.model_dump(exclude_unset=True)
+
+    if "name" in updates:
+        outfitter.name = updates["name"].strip()
+
+    if "website" in updates:
+        outfitter.website = updates["website"] or None
+
+    if "phone" in updates:
+        outfitter.phone = updates["phone"] or None
+
+    if "email" in updates:
+        outfitter.email = updates["email"] or None
+
+    if "description" in updates:
+        outfitter.description = updates["description"] or None
+
+    if "highestPutInPointId" in updates:
+        outfitter.highest_put_in_point_id = updates["highestPutInPointId"] or None
+
+    if "lowestTakeOutPointId" in updates:
+        outfitter.lowest_take_out_point_id = updates["lowestTakeOutPointId"] or None
+
+    if "accessPointIds" in updates:
+        outfitter.access_point_ids = updates["accessPointIds"]
+
+    if "isActive" in updates:
+        outfitter.is_active = updates["isActive"]
+
+    db.commit()
+    db.refresh(outfitter)
+
+    return serialize_outfitter(outfitter)
