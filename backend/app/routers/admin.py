@@ -13,7 +13,7 @@ from app.security import require_admin
 from app.models import User
 from app.security import get_current_user
 from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate, RiverCreate
-from app.routers.rivers import serialize_river
+from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -27,6 +27,11 @@ def require_admin_user(
         )
 
     return current_user
+
+def serialize_admin_point(point: RiverPoint):
+    data = serialize_point(point)
+    data["isActive"] = point.is_active
+    return data
 
 @router.get("/contributions", response_model=list[ContributionOut])
 def list_contributions(db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
@@ -278,10 +283,18 @@ def update_river_point(
     if "phone" in updates:
         point.phone = updates["phone"] or None
 
-    if updates["type"] not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid point type")
+    if "type" in updates and updates["type"] is not None:
+        allowed_types = {
+            "public_access",
+            "private_access",
+            "poi",
+            "hazard",
+        }
 
-    point.type = updates["type"]
+        if updates["type"] not in allowed_types:
+            raise HTTPException(status_code=400, detail="Invalid point type")
+
+        point.type = updates["type"]
 
     if "name" in updates:
         point.name = updates["name"]
@@ -435,3 +448,30 @@ def create_river(
     db.refresh(river)
 
     return serialize_river(river)
+
+
+@router.get("/rivers/{river_id}")
+def get_admin_river(
+    river_id: str,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    river = db.query(River).filter(River.id == river_id).first()
+
+    if not river:
+        raise HTTPException(status_code=404, detail="River not found")
+
+    points = [serialize_admin_point(point) for point in river.points]
+
+    return {
+        "id": str(river.id),
+        "name": river.name,
+        "state": river.state,
+        "usgsGaugeId": river.usgs_gauge_id,
+        "flowStats": river.flow_stats,
+        "difficulty": river.difficulty,
+        "cleanliness": river.cleanliness,
+        "fishing": river.fishing,
+        "coordinates": serialize_coordinates(river),
+        "points": points,
+    }

@@ -26,3 +26,6 @@ export const createRiverPoint = (
 
 export const createRiver = (payload: CreateRiverRequestDTO) =>
   riversApi.create(apiClient, payload);
+
+export const fetchAdminRiver = (id: string) =>
+  riversApi.getAdmin(apiClient, id);

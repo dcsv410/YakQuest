@@ -6,9 +6,16 @@ import type {
   UpdateRiverPointRequestDTO,
   RiverPointResponseDTO,
   CreateRiverPointRequestDTO,
+  AdminRiverResponseDTO,
 } from "../../dto";
 
 export const riversApi = {
+  getAdmin(
+    client: ApiClient,
+    id: string
+  ): Promise<AdminRiverResponseDTO> {
+    return client.get<AdminRiverResponseDTO>(`/admin/rivers/${id}`);
+  },
   list(client: ApiClient): Promise<RiverResponseDTO[]> {
     return client.get<RiverResponseDTO[]>("/rivers");
   },

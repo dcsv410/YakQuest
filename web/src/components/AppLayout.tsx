@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
 import { APP_NAME, TAGLINE } from "../config";
+import type { AuthUser } from "@yakquest/shared";
 import {
   fetchMe,
   getStoredUser,
   listenForAuthChanges,
-  type AuthUser,  
 } from "../services/authService";
 
 export default function AppLayout() {
@@ -32,7 +32,13 @@ export default function AppLayout() {
     <div className="app-shell">
       <header className="site-header">
         <Link to="/" className="brand">
-          <div className="brand-mark">YQ</div>
+          <div className="brand-mark">
+            <img
+              src="/yakquest-icon.png"
+              alt="YakQuest"
+              className="brand-icon"
+            />
+          </div>
           <div>
             <div className="brand-name">{APP_NAME}</div>
             <div className="brand-tagline">{TAGLINE}</div>

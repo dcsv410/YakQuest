@@ -53,3 +53,14 @@ export type CreateRiverRequestDTO = {
   flowStats?: FlowStats | null;
   coordinates: Coordinate[];
 };
+
+export type AdminRiverPointDTO = RiverPoint & {
+  isActive: boolean;
+};
+
+export type AdminRiverResponseDTO = Omit<
+  River,
+  "accessPoints" | "pois" | "hazards"
+> & {
+  points: AdminRiverPointDTO[];
+};

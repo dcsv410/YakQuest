@@ -43,6 +43,18 @@ export default function RiversPage() {
   const [flowCfs, setFlowCfs] = useState<number | null>(null);
   const [flowLoading, setFlowLoading] = useState(false);
 
+  const states = useMemo(() => {
+    return Array.from(new Set(rivers.map((river) => river.state))).sort();
+  }, [rivers]);
+
+  const [selectedState, setSelectedState] = useState("AL");
+
+  const filteredRivers = useMemo(() => {
+    return rivers
+      .filter((river) => river.state === selectedState)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rivers, selectedState]);
+
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -105,12 +117,12 @@ export default function RiversPage() {
   const defaultCenter: [number, number] = useMemo(() => {
     if (userCenter) return userCenter;
 
-    if (rivers.length && rivers[0].coordinates.length) {
-      return getRiverCenter(rivers[0]);
+    if (filteredRivers.length && filteredRivers[0].coordinates.length) {
+      return getRiverCenter(filteredRivers[0]);
     }
 
     return [35.1, -86.5];
-  }, [userCenter, rivers]);
+  }, [userCenter, filteredRivers]);
 
   if (isLoading) {
     return <p>Loading rivers...</p>;
@@ -235,8 +247,25 @@ export default function RiversPage() {
               points, flow information, and planning options.
             </p>
 
+            <label className="form-label">
+              State
+              <select
+                value={selectedState}
+                onChange={(event) => {
+                  setSelectedState(event.target.value);
+                  setSelectedRiverId("");
+                }}
+              >
+                {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <div className="river-mini-list">
-              {rivers.map((river) => (
+              {filteredRivers.map((river) => (
                 <button
                   key={river.id}
                   className="river-mini-item"

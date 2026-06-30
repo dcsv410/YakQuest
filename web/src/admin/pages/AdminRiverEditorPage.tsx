@@ -11,9 +11,11 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 
-import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint } from "../../services/riverService";
+import { fetchRivers, updateRiver, updateRiverPoint, createRiverPoint, fetchAdminRiver } from "../../services/riverService";
 import type { River, RiverPoint, RiverPointType } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
+import { distanceFeet } from "@yakquest/shared";
+import type { AdminRiverPointDTO } from "@yakquest/shared";
 
 type RiverEditForm = {
   name: string;
@@ -117,6 +119,14 @@ export default function AdminRiverEditorPage() {
     queryKey: ["rivers"],
     queryFn: fetchRivers,
   });
+
+  const { data: adminRiver } = useQuery({
+    queryKey: ["adminRiver", riverId],
+    queryFn: () => fetchAdminRiver(riverId ?? ""),
+    enabled: !!riverId,
+  });
+
+  const [showInactivePoints, setShowInactivePoints] = useState(false);
 
   const river = rivers.find((item) => item.id === riverId);
 
@@ -242,6 +252,46 @@ export default function AdminRiverEditorPage() {
     }));
   }
 
+  function findNearbyDuplicatePoint() {
+    const latitude = Number(newPoint.latitude);
+    const longitude = Number(newPoint.longitude);
+
+    if (!river || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    const candidate = {
+      latitude,
+      longitude,
+    };
+
+    const allPoints = [
+      ...river.accessPoints.public,
+      ...river.accessPoints.private,
+      ...river.pois,
+      ...(river.hazards ?? []),
+    ];
+
+    const nearby = allPoints
+      .map((point) => ({
+        point,
+        distance: distanceFeet(candidate, point),
+      }))
+      .filter(({ point, distance }) => {
+        const sameType =
+          point.type === newPoint.type ||
+          ((point.type === "public_access" ||
+            point.type === "private_access") &&
+            (newPoint.type === "public_access" ||
+              newPoint.type === "private_access"));
+
+        return sameType && distance <= 75;
+      })
+      .sort((a, b) => a.distance - b.distance)[0];
+
+    return nearby ?? null;
+  }
+
   async function createPoint() {
     if (!river) return;
 
@@ -256,6 +306,18 @@ export default function AdminRiverEditorPage() {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       alert("Latitude and longitude must be valid numbers.");
       return;
+    }
+
+    const nearbyDuplicate = findNearbyDuplicatePoint();
+
+    if (nearbyDuplicate) {
+      const confirmed = window.confirm(
+        `"${nearbyDuplicate.point.name}" is already ${Math.round(
+          nearbyDuplicate.distance
+        )} feet away.\n\nCreate this point anyway?`
+      );
+
+      if (!confirmed) return;
     }
 
     try {
@@ -345,6 +407,10 @@ export default function AdminRiverEditorPage() {
         queryKey: ["rivers"],
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: ["adminRiver", riverId],
+      });
+
       alert("Point deactivated.");
     } catch (error) {
       console.error(error);
@@ -411,6 +477,30 @@ export default function AdminRiverEditorPage() {
 
     return true;
   });
+
+  const inactivePoints: AdminRiverPointDTO[] =
+    adminRiver?.points.filter((point) => !point.isActive) ?? [];
+
+  async function reactivatePoint(point: AdminRiverPointDTO) {
+    try {
+      await updateRiverPoint(point.id, {
+        isActive: true,
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["adminRiver", riverId],
+      });
+
+      alert("Point reactivated.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to reactivate point.");
+    }
+  }
 
   return (
     <section className="admin-editor-page">
@@ -925,6 +1015,47 @@ export default function AdminRiverEditorPage() {
               ))
             ) : (
               <p className="muted">No hazards listed.</p>
+            )}
+          </div>
+
+          <div className="admin-editor-section">
+            <div className="admin-section-title-row">
+              <h2>Inactive Points</h2>
+
+              <button
+                type="button"
+                className="secondary-button small-action-button"
+                onClick={() => setShowInactivePoints((current) => !current)}
+              >
+                {showInactivePoints ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            {showInactivePoints ? (
+              inactivePoints.length ? (
+                inactivePoints.map((point) => (
+                  <div key={point.id} className="admin-point-row inactive">
+                    <div>
+                      <strong>{point.name}</strong>
+                      <p>{point.type}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondary-button small-action-button"
+                      onClick={() => reactivatePoint(point)}
+                    >
+                      Reactivate
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="muted">No inactive points.</p>
+              )
+            ) : (
+              <p className="muted">
+                Hidden points can be restored here.
+              </p>
             )}
           </div>
 

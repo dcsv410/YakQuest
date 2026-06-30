@@ -159,3 +159,25 @@ class CompletedTrip(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Outfitter(Base):
+    __tablename__ = "outfitters"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    river_id = Column(UUID(as_uuid=True), ForeignKey("rivers.id"), nullable=False)
+
+    name = Column(String, nullable=False)
+    website = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+
+    highest_put_in_point_id = Column(UUID(as_uuid=True), ForeignKey("river_points.id"), nullable=True)
+    lowest_take_out_point_id = Column(UUID(as_uuid=True), ForeignKey("river_points.id"), nullable=True)
+
+    access_point_ids = Column(JSON, nullable=False, default=list)
+
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
