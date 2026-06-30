@@ -18,7 +18,8 @@ import {
 } from "../utils/tripMath";
 import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
-import { fetchSavedTrips } from "../services/savedTripService";
+import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
+import { isLoggedIn } from "../services/authService";
 
 type SelectionMode = "start" | "end";
 
@@ -64,6 +65,8 @@ export default function PlanTripPage() {
   const [searchParams] = useSearchParams();
   const initialRiverId = searchParams.get("riverId");
   const initialSavedTripId = searchParams.get("savedTripId");
+  const [savingTrip, setSavingTrip] = useState(false);
+  const [tripSaved, setTripSaved] = useState(false);
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
@@ -171,6 +174,54 @@ export default function PlanTripPage() {
 
     loadSavedTripFromUrl();
   }, [initialSavedTripId, rivers]);
+
+  async function savePlannedTrip() {
+      if (!selectedRiver || !start || !end) {
+        alert("Select a river, launch, and takeout before saving.");
+        return;
+      }
+
+      if (!isLoggedIn()) {
+        alert("Please log in before saving a trip.");
+        return;
+      }
+
+      setSavingTrip(true);
+
+      try {
+        await createSavedTrip({
+          riverId: selectedRiver.id,
+          riverName: selectedRiver.name,
+          name: `${selectedRiver.name}: ${start.name} to ${end.name}`,
+
+          startName: start.name,
+          startLatitude: start.latitude,
+          startLongitude: start.longitude,
+
+          endName: end.name,
+          endLatitude: end.latitude,
+          endLongitude: end.longitude,
+
+          plannedDistanceMiles: tripDistanceMiles,
+          estimatedTimeMin: null,
+
+          notes: null,
+        });
+
+        setTripSaved(true);
+
+        alert("Trip saved.");
+      } catch (error) {
+        console.error(error);
+        alert("Failed to save trip.");
+      } finally {
+        setSavingTrip(false);
+      }
+    }
+
+  useEffect(() => {
+    setTripSaved(false);
+  }, [selectedRiverId, startId, endId]);
 
   const clearTrip = () => {
     setStartId("");
@@ -502,6 +553,15 @@ export default function PlanTripPage() {
                     onClick={() => window.print()}
                   >
                     Print Trip Plan
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button button-reset"
+                    disabled={savingTrip || tripSaved}
+                    onClick={savePlannedTrip}
+                  >
+                    {savingTrip ? "Saving..." : tripSaved ? "Saved!" : "Save Trip"}
                   </button>
                 </>
               ) : (

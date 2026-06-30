@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { fetchSavedTrips } from "../services/savedTripService";
+import { fetchSavedTrips, deleteSavedTrip } from "../services/savedTripService";
 
 export default function SavedTripsPage() {
   const {
@@ -11,6 +11,25 @@ export default function SavedTripsPage() {
     queryKey: ["savedTrips"],
     queryFn: fetchSavedTrips,
   });
+
+  const queryClient = useQueryClient();
+
+  async function removeSavedTrip(id: string) {
+    const confirmed = window.confirm("Remove this saved trip?");
+
+    if (!confirmed) return;
+
+    try {
+      await deleteSavedTrip(id);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["savedTrips"],
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to remove saved trip.");
+    }
+  }
 
   if (isLoading) {
     return <p>Loading saved trips...</p>;
@@ -64,12 +83,22 @@ export default function SavedTripsPage() {
                 ) : null}
               </div>
 
-              <Link
-                className="primary-button"
-                to={`/plan?savedTripId=${trip.id}`}
-              >
-                Open Trip
-              </Link>
+              <div className="saved-trip-actions">
+                <Link
+                  className="primary-button saved-trip-button"
+                  to={`/plan?savedTripId=${trip.id}`}
+                >
+                  Open Trip
+                </Link>
+
+                <button
+                  type="button"
+                  className="danger-button saved-trip-button"
+                  onClick={() => removeSavedTrip(trip.id)}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))}
         </div>

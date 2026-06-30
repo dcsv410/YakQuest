@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createRiver } from "../../services/riverService";
 import type { Coordinate } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
+import { distanceFeet } from "@yakquest/shared";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 function parseKmlCoordinates(kmlText: string): Coordinate[] {
   const parser = new DOMParser();
@@ -74,12 +76,23 @@ export default function AdminRiverImportPage() {
     const lats = coordinates.map((coord) => coord.latitude);
     const lngs = coordinates.map((coord) => coord.longitude);
 
+    const lengthFeet = coordinates.reduce((total, coord, index) => {
+      const next = coordinates[index + 1];
+
+      if (!next) return total;
+
+      return total + distanceFeet(coord, next);
+    }, 0);
+
+    const lengthMiles = lengthFeet / FEET_PER_MILE;
+
     return {
       coordinateCount: coordinates.length,
       minLat: Math.min(...lats),
       maxLat: Math.max(...lats),
       minLng: Math.min(...lngs),
       maxLng: Math.max(...lngs),
+      lengthMiles,
     };
   }, [coordinates]);
 
@@ -125,6 +138,49 @@ export default function AdminRiverImportPage() {
     if (!metadata.name.trim()) {
       alert("River name is required.");
       return;
+    }
+
+    if (coordinates.length < 10) {
+      alert("This KML has very few coordinates. Please verify it is a full river route.");
+      return;
+    }
+
+    const hasSomeFlowStats =
+      metadata.lowPercentile ||
+      metadata.median ||
+      metadata.highPercentile ||
+      metadata.max;
+
+    const hasAllFlowStats =
+      metadata.lowPercentile &&
+      metadata.median &&
+      metadata.highPercentile &&
+      metadata.max;
+
+    if (hasSomeFlowStats && !hasAllFlowStats) {
+      alert("Either fill in all flow thresholds or leave them all blank.");
+      return;
+    }
+
+    if (hasAllFlowStats) {
+      const flowValues = [
+        Number(metadata.lowPercentile),
+        Number(metadata.median),
+        Number(metadata.highPercentile),
+        Number(metadata.max),
+      ];
+
+      if (flowValues.some((value) => !Number.isFinite(value))) {
+        alert("Flow thresholds must be valid numbers.");
+        return;
+      }
+
+      const [low, median, high, max] = flowValues;
+
+      if (!(low <= median && median <= high && high <= max)) {
+        alert("Flow thresholds must be ordered: Low ≤ Median ≤ High ≤ Max.");
+        return;
+      }
     }
 
     setSaving(true);
@@ -222,6 +278,11 @@ export default function AdminRiverImportPage() {
                 <strong>
                   {stats.minLng.toFixed(4)} → {stats.maxLng.toFixed(4)}
                 </strong>
+              </div>
+
+              <div>
+                <span>Estimated Length</span>
+                <strong>{stats.lengthMiles.toFixed(1)} mi</strong>
               </div>
             </div>
           ) : null}
