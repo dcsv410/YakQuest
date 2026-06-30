@@ -7,7 +7,7 @@ from shapely.geometry import Point
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Contribution, Review, River, RiverPoint, User
+from app.models import Contribution, Review, River, RiverPoint, User, CompletedTrip, SavedTrip
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
 from app.models import User, Outfitter
@@ -564,3 +564,59 @@ def update_outfitter(
     db.refresh(outfitter)
 
     return serialize_outfitter(outfitter)
+
+
+@router.get("/dashboard")
+def get_admin_dashboard(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    return {
+        "rivers": db.query(River).count(),
+        "pendingContributions": db.query(Contribution)
+        .filter(Contribution.status == "pending")
+        .count(),
+        "users": db.query(User).count(),
+        "completedTrips": db.query(CompletedTrip).count(),
+    }
+
+
+@router.get("/users")
+def list_admin_users(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    users = db.query(User).order_by(User.email).all()
+
+    return [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "displayName": user.display_name,
+            "isAdmin": user.is_admin,
+            "trustScore": user.trust_score,
+        }
+        for user in users
+    ]
+
+
+@router.get("/analytics")
+def get_admin_analytics(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    return {
+        "rivers": db.query(River).count(),
+        "users": db.query(User).count(),
+        "pendingContributions": db.query(Contribution)
+        .filter(Contribution.status == "pending")
+        .count(),
+        "approvedContributions": db.query(Contribution)
+        .filter(Contribution.status == "approved")
+        .count(),
+        "rejectedContributions": db.query(Contribution)
+        .filter(Contribution.status == "rejected")
+        .count(),
+        "completedTrips": db.query(CompletedTrip).count(),
+        "savedTrips": db.query(SavedTrip).count(),
+    }

@@ -1644,3 +1644,31 @@ h1 {
   text-decoration: none;
   cursor: pointer;
 }
+
+.admin-table-card {
+  background: white;
+  border-radius: 22px;
+  padding: 18px;
+  border: 1px solid rgba(16, 32, 28, 0.08);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid rgba(16, 32, 28, 0.08);
+}
+
+.admin-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #61736e;
+  letter-spacing: 0.04em;
+}

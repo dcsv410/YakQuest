@@ -3,3 +3,4 @@ export * from "./savedTrips";
 export * from "./auth";
 export * from "./completedTrips";
 export * from "./contributions";
+export * from "./admin";

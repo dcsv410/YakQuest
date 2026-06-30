@@ -297,3 +297,21 @@ class OutfitterUpdate(BaseModel):
     lowestTakeOutPointId: Optional[str] = None
     accessPointIds: Optional[list[str]] = None
     isActive: Optional[bool] = None
+
+
+class AdminUserOut(BaseModel):
+    id: str
+    email: str
+    displayName: Optional[str] = None
+    isAdmin: bool
+    trustScore: int
+
+
+class AdminAnalyticsOut(BaseModel):
+    rivers: int
+    users: int
+    pendingContributions: int
+    approvedContributions: int
+    rejectedContributions: int
+    completedTrips: int
+    savedTrips: int

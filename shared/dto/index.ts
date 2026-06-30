@@ -4,3 +4,4 @@ export * from "./RiverDTO";
 export * from "./CompletedTripDTO";
 export * from "./ContributionDTO";
 export * from "./OutfitterDTO";
+export * from "./AdminDTO";
