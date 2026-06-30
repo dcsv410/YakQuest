@@ -5,6 +5,9 @@ import { River } from "../types";
 export const blankRiver: River = {
   id: "river_id",
   name: "River Name",
+  slug: "River Name",  
+  state: "AL",
+  stateName: "Alabama",
   difficulty: 3,
   cleanliness: 4,
   fishing: 5,
@@ -20,6 +23,7 @@ export const blankRiver: River = {
       {
         id: "public_id_1",
         name: "Name (Public Access)",
+        type: "public",
         latitude: 35.19238,
         longitude: -86.28018,
       },
@@ -29,6 +33,7 @@ export const blankRiver: River = {
       {
         id: "private_id_1",
         name: "Name (Private Access)",
+        type: "private",
         latitude: 35.12720,
         longitude: -86.40793,
       },
@@ -37,7 +42,7 @@ export const blankRiver: River = {
   pois: [
     {
       id: "poi_id_1",
-      type: "other",
+      type: "poi",
       name: "Name",
       latitude: 35.13061,
       longitude: -86.43705,

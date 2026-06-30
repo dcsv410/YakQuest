@@ -1,0 +1,18 @@
+{
+  "name": "yakquest",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "web",
+    "mobile"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck -w @yakquest/shared && npm run typecheck -w web && npm run typecheck -w mobile",
+    "typecheck:shared": "npm run typecheck -w @yakquest/shared",
+    "typecheck:web": "npm run typecheck -w web",
+    "typecheck:mobile": "npm run typecheck -w mobile",
+    "dev:web": "npm run dev -w web",
+    "dev:mobile": "npm run start -w mobile",
+    "check": "npm run typecheck"
+  }
+}

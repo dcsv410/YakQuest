@@ -1,10 +1,13 @@
 // go to https://waterdata.usgs.gov/ to find gauge IDs and flow stats for real rivers. 
 
-import { River } from "../types";
+import { River } from "../../types";
 
 export const buttahatcheeRiver: River = {
   id: "buttahatchee",
   name: "Buttahatchee River",
+  slug: "Buttahatchee River",  
+  state: "AL",
+  stateName: "Alabama",
   difficulty: 3,
   cleanliness: 4,
   fishing: 5,
@@ -20,18 +23,21 @@ export const buttahatcheeRiver: River = {
         {
         id: "buttahatchee-pa-1",
         name: "Munsingwear Canoe & Kayak Launch Area (Public Access)",
+        type: "public",
         latitude: 34.13099,
         longitude: -87.98129,
       },
       {
         id: "buttahatchee-pa-2",
         name: "Tree House Canoe & Kayak Launch (Public Access)",
+        type: "public",
         latitude: 34.09659,
         longitude: -87.99848,
       },
       {
         id: "buttahatchee-pa-3",
         name: "Henson Springs Rd (Public Access)",
+        type: "public",
         latitude: 34.01887,
         longitude: -88.05340,
       },

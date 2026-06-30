@@ -1,17 +1,41 @@
-.env
-.env.example
 todo.txt
 
+# dependencies
 node_modules/
+*/node_modules/
+
+# env
+.env
+.env.*
+!.env.example
+
+# builds
 dist/
 build/
+web/dist/
+shared/dist/
 
+# Expo / React Native
 .expo/
 .expo-shared/
+mobile/.expo/
+mobile/.expo-shared/
+android/
+ios/
 
+# Python
 __pycache__/
 *.pyc
+.venv/
+venv/
 
-backend/.env
-mobile/.env
-web/.env
+# Docker / db
+*.log
+pgdata/
+postgres-data/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

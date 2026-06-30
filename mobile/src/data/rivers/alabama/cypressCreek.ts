@@ -1,10 +1,13 @@
 // go to https://waterdata.usgs.gov/ to find gauge IDs and flow stats for real rivers. 
 
-import { River } from "../types";
+import { River } from "../../types";
 
 export const cypressCreek: River = {
   id: "cypress",
   name: "Cypress Creek",
+  slug: "Cypress Creek",  
+  state: "AL",
+  stateName: "Alabama",
   difficulty: 3,
   cleanliness: 4,
   fishing: 5,
@@ -20,18 +23,21 @@ export const cypressCreek: River = {
       {
         id: "cypress-pa-1",
         name: "Cox Creek Bridge Canoe Ramp (Public Access)",
+        type: "public",
         latitude: 34.83068,
         longitude: -87.70394,
       },
       {
         id: "cypress-pa-2",
         name: "Wildwood Park Canoe Ramp (Public Access)",
+        type: "public",
         latitude: 34.80348,
         longitude: -87.69462,
       },
       {
         id: "cypress-pa-3",
         name: "Coffee Rd (Public Access)",
+        type: "public",
         latitude: 34.78610,
         longitude: -87.69661,
       },
