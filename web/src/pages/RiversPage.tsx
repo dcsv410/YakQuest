@@ -8,7 +8,7 @@ import {
   TileLayer,
 } from "react-leaflet";
 
-import { fetchRivers } from "../services/riverService";
+import { fetchRivers, fetchRiverOutfitters } from "../services/riverService";
 import type { River } from "@yakquest/shared";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 import FitRiverBounds from "../components/FitRiverBounds";
@@ -123,6 +123,12 @@ export default function RiversPage() {
 
     return [35.1, -86.5];
   }, [userCenter, filteredRivers]);
+
+  const { data: outfitters = [] } = useQuery({
+    queryKey: ["riverOutfitters", selectedRiver?.id],
+    queryFn: () => fetchRiverOutfitters(selectedRiver?.id ?? ""),
+    enabled: !!selectedRiver?.id,
+  });
 
   if (isLoading) {
     return <p>Loading rivers...</p>;
@@ -341,6 +347,36 @@ export default function RiversPage() {
                 <p>No USGS gauge listed.</p>
               )}
             </div>
+
+            {outfitters.length ? (
+              <div className="river-info-card">
+                <strong>Rental Outfitters</strong>
+
+                <div className="outfitter-list">
+                  {outfitters.map((outfitter) => (
+                    <div key={outfitter.id} className="outfitter-card">
+                      <h3>{outfitter.name}</h3>
+
+                      {outfitter.description ? (
+                        <p>{outfitter.description}</p>
+                      ) : null}
+
+                      {outfitter.phone ? (
+                        <p>
+                          <strong>Phone:</strong> {outfitter.phone}
+                        </p>
+                      ) : null}
+
+                      {outfitter.website ? (
+                        <a href={outfitter.website} target="_blank" rel="noreferrer">
+                          Website
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="river-info-card">
               <strong>Public Access</strong>

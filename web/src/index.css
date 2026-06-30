@@ -1555,3 +1555,28 @@ h1 {
   padding-left: 10px;
   padding-right: 10px;
 }
+
+.outfitter-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.outfitter-card {
+  background: #f4f7f3;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.outfitter-card h3 {
+  margin: 0 0 6px;
+}
+
+.outfitter-card p {
+  margin: 6px 0;
+}
+
+.outfitter-card a {
+  color: #147473;
+  font-weight: 900;
+}

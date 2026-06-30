@@ -29,3 +29,6 @@ export const createRiver = (payload: CreateRiverRequestDTO) =>
 
 export const fetchAdminRiver = (id: string) =>
   riversApi.getAdmin(apiClient, id);
+
+export const fetchRiverOutfitters = (riverId: string) =>
+  riversApi.listOutfitters(apiClient, riverId);

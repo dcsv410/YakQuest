@@ -7,6 +7,7 @@ import type {
   RiverPointResponseDTO,
   CreateRiverPointRequestDTO,
   AdminRiverResponseDTO,
+  OutfitterResponseDTO,
 } from "../../dto";
 
 export const riversApi = {
@@ -18,6 +19,15 @@ export const riversApi = {
   },
   list(client: ApiClient): Promise<RiverResponseDTO[]> {
     return client.get<RiverResponseDTO[]>("/rivers");
+  },
+
+  listOutfitters(
+    client: ApiClient,
+    riverId: string
+  ): Promise<OutfitterResponseDTO[]> {
+    return client.get<OutfitterResponseDTO[]>(
+      `/rivers/${riverId}/outfitters`
+    );
   },
 
   updatePoint(
