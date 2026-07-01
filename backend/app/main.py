@@ -48,6 +48,7 @@ app.add_middleware(
         "http://localhost:3000",
         "https://yakquest.com",
         "https://admin.yakquest.com",
+        "https://yak-quest-web-one.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
