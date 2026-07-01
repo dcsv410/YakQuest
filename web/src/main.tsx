@@ -10,6 +10,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import "leaflet/dist/leaflet.css";
+import "./leafletIconFix";
 
 import AppLayout from "./components/AppLayout";
 import HomePage from "./pages/HomePage";
