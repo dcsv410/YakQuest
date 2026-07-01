@@ -1,17 +1,53 @@
 import { rivers, riverMap, riversByState } from "../../src/data/rivers";
 import { River } from "../../src/data/types";
 import { fetchRivers } from "./apiRiverService";
+import { saveRiversToCache, getCachedRivers } from "./riverCacheService";
+import { API_URL } from "../config";
 
 const USE_BACKEND_RIVERS = true;
 type StateCode = string;
 
-export const getAllRivers = async (): Promise<River[]> => {
-  if (USE_BACKEND_RIVERS) {
-    return fetchRivers();
-  }
+async function fetchWithTimeout(url: string, timeoutMs = 4000) {
+  const controller = new AbortController();
 
-  return rivers;
-};
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export async function getAllRivers(): Promise<River[]> {
+  try {
+    const response = await fetchWithTimeout(`${API_URL}/rivers`);
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const rivers = await response.json();
+
+    await saveRiversToCache(rivers);
+
+    return rivers;
+  } catch (error) {
+    console.warn("Backend unavailable. Loading cached rivers.", error);
+
+    const cachedRivers = await getCachedRivers();
+
+    if (cachedRivers.length) {
+      return cachedRivers;
+    }
+
+    throw error;
+  }
+}
 
 export const getRiverById = (riverId: string): River | undefined => {
   return riverMap[riverId];
