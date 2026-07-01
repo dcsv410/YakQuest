@@ -847,6 +847,8 @@ export default function AdminRiverEditorPage() {
               <label className="form-label">
                 Latitude
                 <input
+                  type="text"
+                  inputMode="decimal"
                   value={newPoint.latitude}
                   onChange={(event) =>
                     updateNewPoint("latitude", event.target.value)
@@ -857,6 +859,8 @@ export default function AdminRiverEditorPage() {
               <label className="form-label">
                 Longitude
                 <input
+                  type="text"
+                  inputMode="decimal"
                   value={newPoint.longitude}
                   onChange={(event) =>
                     updateNewPoint("longitude", event.target.value)
@@ -864,26 +868,6 @@ export default function AdminRiverEditorPage() {
                 />
               </label>
             </div>
-
-            <label className="form-label">
-              Website
-              <input
-                value={pointEditForm.website}
-                onChange={(event) =>
-                  updatePointEdit("website", event.target.value)
-                }
-              />
-            </label>
-
-            <label className="form-label">
-              Phone
-              <input
-                value={pointEditForm.phone}
-                onChange={(event) =>
-                  updatePointEdit("phone", event.target.value)
-                }
-              />
-            </label>
 
             <div className="admin-checkbox-row">
               <label>
