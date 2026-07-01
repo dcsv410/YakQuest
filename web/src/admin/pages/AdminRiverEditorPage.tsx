@@ -849,7 +849,7 @@ export default function AdminRiverEditorPage() {
                 <input
                   value={newPoint.latitude}
                   onChange={(event) =>
-                    updatePointEdit("latitude", event.target.value)
+                    updateNewPoint("latitude", event.target.value)
                   }
                 />
               </label>
@@ -859,7 +859,7 @@ export default function AdminRiverEditorPage() {
                 <input
                   value={newPoint.longitude}
                   onChange={(event) =>
-                    updatePointEdit("longitude", event.target.value)
+                    updateNewPoint("longitude", event.target.value)
                   }
                 />
               </label>
