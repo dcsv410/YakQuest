@@ -656,6 +656,13 @@ export default function AdminRiverEditorPage() {
     }
   }
 
+  const newPointLatitude = Number(newPoint.latitude);
+  const newPointLongitude = Number(newPoint.longitude);
+
+  const hasValidNewPointLocation =
+    Number.isFinite(newPointLatitude) &&
+    Number.isFinite(newPointLongitude);
+
   return (
     <section className="admin-editor-page">
       <div className="admin-editor-header">
@@ -1528,12 +1535,9 @@ export default function AdminRiverEditorPage() {
                 </Popup>
               </Marker>
             ))}
-            {markerFilters.newPoint && newPoint.latitude && newPoint.longitude ? (
+            {markerFilters.newPoint && hasValidNewPointLocation ? (
               <Marker
-                position={[
-                  Number(newPoint.latitude),
-                  Number(newPoint.longitude),
-                ]}
+                position={[newPointLatitude, newPointLongitude]}
                 icon={newPointIcon}
               >
                 <Popup>
