@@ -47,6 +47,7 @@ app.add_middleware(
         "http://localhost:19006",
         "http://localhost:3000",
         "https://yakquest.com",
+        "https://www.yakquest.com",
         "https://admin.yakquest.com",
         "https://yak-quest-web-one.vercel.app",
     ],

@@ -20,5 +20,8 @@
     "dev:web": "npm run dev -w web",
     "dev:mobile": "npm run start -w mobile",
     "check": "npm run typecheck"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }
