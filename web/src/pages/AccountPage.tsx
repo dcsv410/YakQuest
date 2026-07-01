@@ -4,8 +4,8 @@ import {
   fetchMe,
   getStoredUser,
   logout,
-  type AuthUser,
 } from "../services/authService";
+import type { AuthUser } from "@yakquest/shared";
 
 export default function AccountPage() {
   const navigate = useNavigate();

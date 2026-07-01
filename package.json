@@ -6,6 +6,12 @@
     "web",
     "mobile"
   ],
+  "overrides": {
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
   "scripts": {
     "typecheck": "npm run typecheck -w @yakquest/shared && npm run typecheck -w web && npm run typecheck -w mobile",
     "typecheck:shared": "npm run typecheck -w @yakquest/shared",
