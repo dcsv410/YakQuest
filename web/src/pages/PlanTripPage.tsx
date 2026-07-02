@@ -20,6 +20,7 @@ import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
 import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
 import { isLoggedIn } from "../services/authService";
+import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 
 type SelectionMode = "start" | "end";
 
@@ -71,6 +72,8 @@ export default function PlanTripPage() {
   const [tripSaved, setTripSaved] = useState(false);
   const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
   const [selectedState, setSelectedState] = useState("AL");
+  const [flowCfs, setFlowCfs] = useState<number | null>(null);
+  const [flowLoading, setFlowLoading] = useState(false);
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
@@ -262,6 +265,41 @@ export default function PlanTripPage() {
       }
     );
   }, []);
+
+  useEffect(() => {
+    if (!selectedRiver?.usgsGaugeId) {
+      setFlowCfs(null);
+      setFlowLoading(false);
+      return;
+    }
+
+    const gaugeId = selectedRiver.usgsGaugeId;
+    let cancelled = false;
+
+    async function loadFlow() {
+      setFlowLoading(true);
+
+      const flow = await fetchUSGSFlow(gaugeId);
+
+      if (!cancelled) {
+        setFlowCfs(flow);
+        setFlowLoading(false);
+      }
+    }
+
+    loadFlow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRiver?.usgsGaugeId]);
+
+  const flowPercentile =
+    flowCfs !== null && selectedRiver?.flowStats
+      ? getFlowPercentile(flowCfs, selectedRiver.flowStats)
+      : null;
+
+  const flowRating = getFlowRating(flowPercentile);
 
   if (isLoading) {
     return <p>Loading trip planner...</p>;
@@ -547,6 +585,24 @@ export default function PlanTripPage() {
                   USGS Gauge: {selectedRiver.usgsGaugeId}
                 </p>
               ) : null}
+              {selectedRiver.usgsGaugeId ? (
+              <div className="selected-river-flow">
+                {flowLoading ? (
+                  <p className="muted">Loading current flow...</p>
+                ) : flowCfs !== null ? (
+                  <>
+                    <p>
+                      <strong>Current Flow:</strong> {Math.round(flowCfs)} CFS
+                    </p>
+                    <p>
+                      <strong>Condition:</strong> {flowRating}
+                    </p>
+                  </>
+                ) : (
+                  <p className="muted">Current flow unavailable.</p>
+                )}
+              </div>
+            ) : null}
             </div>
 
             <div className="overview-card trip-print-area">
@@ -603,7 +659,7 @@ export default function PlanTripPage() {
                             <div>
                               <strong>{point.name}</strong>
                               <p>
-                                {type}
+                                {getPointLabel(point)}
                                 {point.description ? ` — ${point.description}` : ""}
                               </p>
                             </div>
