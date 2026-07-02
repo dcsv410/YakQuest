@@ -1672,3 +1672,21 @@ h1 {
   color: #61736e;
   letter-spacing: 0.04em;
 }
+
+.planner-right .metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.planner-right .metric-grid > div {
+  padding: 10px;
+  min-width: 0;
+}
+
+.planner-right .metric-grid span {
+  font-size: 11px;
+}
+
+.planner-right .metric-grid strong {
+  font-size: 16px;
+}
