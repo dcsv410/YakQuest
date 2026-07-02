@@ -21,6 +21,7 @@ import FitTripBounds from "../components/FitTripBounds";
 import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
 import { isLoggedIn } from "../services/authService";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
+import { fetchRiverOutfitters } from "../services/riverService";
 
 type SelectionMode = "start" | "end";
 
@@ -145,6 +146,12 @@ export default function PlanTripPage() {
 
     setEndId(point.id);
   };
+
+  const { data: outfitters = [] } = useQuery({
+    queryKey: ["riverOutfitters", selectedRiver?.id],
+    queryFn: () => fetchRiverOutfitters(selectedRiver?.id ?? ""),
+    enabled: !!selectedRiver?.id,
+  });
 
   useEffect(() => {
     async function loadSavedTripFromUrl() {
@@ -322,53 +329,57 @@ export default function PlanTripPage() {
           </p>
         </div>
 
-        <label className="form-label">
-          State
-          <select
-            value={selectedState}
-            onChange={(event) => {
-              setSelectedState(event.target.value);
-              setSelectedRiverId("");
-              setStartId("");
-              setEndId("");
-              setSelectionMode("start");
-            }}
-          >
-            {states.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="river-list">
-          {filteredRivers.map((river) => {
-            const selected = river.id === selectedRiverId;
-
-            return (
-              <button
-                key={river.id}
-                className={`river-list-item ${selected ? "selected" : ""}`}
-                onClick={() => {
-                  setSelectedRiverId(river.id);
+        {!selectedRiver ? (
+          <>
+            <label className="form-label">
+              State
+              <select
+                value={selectedState}
+                onChange={(event) => {
+                  setSelectedState(event.target.value);
+                  setSelectedRiverId("");
                   setStartId("");
                   setEndId("");
                   setSelectionMode("start");
                 }}
               >
-                <span>
-                  <strong>{river.name}</strong>
-                  <small>{river.state}</small>
-                </span>
+                {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-                <span className="river-list-meta">
-                  {river.accessPoints.public.length} launches
-                </span>
-              </button>
-            );
-          })}
-        </div>
+            <div className="river-list">
+              {filteredRivers.map((river) => {
+                const selected = river.id === selectedRiverId;
+
+                return (
+                  <button
+                    key={river.id}
+                    className={`river-list-item ${selected ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedRiverId(river.id);
+                      setStartId("");
+                      setEndId("");
+                      setSelectionMode("start");
+                    }}
+                  >
+                    <span>
+                      <strong>{river.name}</strong>
+                      <small>{river.state}</small>
+                    </span>
+
+                    <span className="river-list-meta">
+                      {river.accessPoints.public.length} launches
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
 
         {selectedRiver ? (
           <div className="planner-controls">
@@ -605,6 +616,40 @@ export default function PlanTripPage() {
               </div>
             ) : null}
             </div>
+
+            {outfitters.length ? (
+              <div className="overview-card">
+                <p className="eyebrow">Outfitters</p>
+
+                <div className="outfitter-list">
+                  {outfitters.map((outfitter) => (
+                    <div key={outfitter.id} className="outfitter-card">
+                      <strong>{outfitter.name}</strong>
+
+                      {outfitter.description ? (
+                        <p>{outfitter.description}</p>
+                      ) : null}
+
+                      {outfitter.phone ? (
+                        <p>
+                          <strong>Phone:</strong> {outfitter.phone}
+                        </p>
+                      ) : null}
+
+                      {outfitter.website ? (
+                        <a
+                          href={outfitter.website}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Website
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="overview-card trip-print-area">
               <p className="eyebrow">Trip Overview</p>   
