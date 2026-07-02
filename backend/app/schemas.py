@@ -21,6 +21,7 @@ ContributionKind = Literal[
     "new-river",
     "existing-river-point",
     "remove-existing-point",
+    "point-photo",
 ]
 
 ContributionStatus = Literal[
@@ -62,6 +63,8 @@ class ContributionCreate(BaseModel):
     targetPointId: str | None = None
     targetPointName: str | None = None
     removalReason: str | None = None
+    photoUri: str | None = None
+    photoCaption: str | None = None
 
 
 class ContributionOut(BaseModel):
@@ -76,6 +79,8 @@ class ContributionOut(BaseModel):
     target_point_id: UUID | None = None
     target_point_name: str | None = None
     removal_reason: str | None = None
+    photo_uri: str | None = None
+    photo_caption: str | None = None
     class Config:
         from_attributes = True
 

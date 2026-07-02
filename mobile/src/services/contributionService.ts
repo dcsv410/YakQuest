@@ -15,7 +15,8 @@ export type ContributionStatus =
 export type ContributionKind =
   | "new-river"
   | "existing-river-point"
-  | "remove-existing-point";
+  | "remove-existing-point"
+  | "point-photo";
 
 const toApiContribution = (contribution: Contribution) => ({
   kind: contribution.kind,
@@ -26,6 +27,8 @@ const toApiContribution = (contribution: Contribution) => ({
   targetPointId: contribution.targetPointId,
   targetPointName: contribution.targetPointName,
   removalReason: contribution.removalReason,
+  photoUri: contribution.photoUri ?? null,
+  photoCaption: contribution.photoCaption ?? null,
 });
 
 export type ContributionPoint = Coordinate & {
@@ -59,6 +62,8 @@ export type Contribution = {
   targetPointId?: string;
   targetPointName?: string;
   removalReason?: string;
+  photoUri?: string | null;
+  photoCaption?: string | null;
   backendId?: string;
 };
 

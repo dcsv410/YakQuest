@@ -40,6 +40,8 @@ def create_contribution(payload: ContributionCreate, db: Session = Depends(get_d
         target_point_id=payload.targetPointId,
         target_point_name=payload.targetPointName,
         removal_reason=payload.removalReason,
+        photo_uri=payload.photoUri,
+        photo_caption=payload.photoCaption,
     )
 
     db.add(contribution)

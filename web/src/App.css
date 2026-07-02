@@ -655,3 +655,15 @@
     display: none !important;
   }
 }
+
+.admin-photo-preview {
+  margin-top: 12px;
+}
+
+.admin-photo-preview img {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  border-radius: 12px;
+  margin-top: 8px;
+}

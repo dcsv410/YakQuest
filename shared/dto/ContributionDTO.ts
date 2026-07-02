@@ -28,6 +28,9 @@ export type ContributionResponseDTO = {
   target_point_name?: string | null;
   removal_reason?: string | null;
 
+  photo_uri?: string | null;
+  photo_caption?: string | null;
+
   review_notes?: string | null;
   reviewed_at?: string | null;
   reviewed_by?: string | null;
@@ -48,6 +51,8 @@ export type CreateContributionRequestDTO = {
   targetPointId?: string | null;
   targetPointName?: string | null;
   removalReason?: string | null;
+  photo_uri?: string | null;
+  photo_caption?: string | null;
 };
 
 export type ReviewContributionRequestDTO = {

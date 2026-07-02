@@ -45,6 +45,7 @@ import { useLocalContributionPoints } from "../src/features/contribute/hooks/use
 import SafetyStartScreen from "../src/features/trip-planning/components/SafetyStartScreen";
 import { setupNavigationNotifications } from "../src/services/notificationService";
 import { useApprovedRemovalPointIds } from "../src/features/contribute/hooks/useApprovedRemovalPointIds";
+import { submitPointPhotoContribution } from "../src/features/contribute/submitPointPhotoContribution";
 import {
   startBackgroundNavigation,
   stopBackgroundNavigation,
@@ -271,6 +272,17 @@ export default function PlanTrip() {
         : alertText,
       [
         { text: "Close", style: "cancel" },
+        {
+          text: "Add Photo",
+          onPress: () =>
+            submitPointPhotoContribution({
+              riverId: selectedRiver.id,
+              riverName: selectedRiver.name,
+              state: selectedRiver.state,
+              pointId: point.id,
+              pointName: point.name,
+            }),
+        },
         {
           text: "Suggest Removal",
           style: "destructive",

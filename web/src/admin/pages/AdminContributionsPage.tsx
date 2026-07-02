@@ -185,6 +185,19 @@ export default function AdminContributionsPage() {
                     </p>
                   ) : null}
 
+                  {contribution.photo_uri ? (
+                    <div className="admin-photo-preview">
+                      <strong>Photo preview</strong>
+                      <img
+                        src={contribution.photo_uri}
+                        alt={contribution.photo_caption ?? "Submitted point photo"}
+                      />
+                      {contribution.photo_caption ? (
+                        <p className="muted">{contribution.photo_caption}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   {contribution.points.length ? (
                     <div className="admin-contribution-points">
                       <strong>Points</strong>

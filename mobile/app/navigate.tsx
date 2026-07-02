@@ -30,6 +30,7 @@ import { setupNavigationNotifications } from "../src/services/notificationServic
 import { useApprovedRemovalPointIds } from "../src/features/contribute/hooks/useApprovedRemovalPointIds";
 import SafetyStartScreen from "../src/features/trip-planning/components/SafetyStartScreen";
 import { FEET_PER_MILE, getAverageSpeedMph, getAllRiverPoints } from "@yakquest/shared";
+import { submitPointPhotoContribution } from "../src/features/contribute/submitPointPhotoContribution";
 
 const POINT_ALERT_DISTANCE_FEET = 100;
 
@@ -161,6 +162,17 @@ export default function NavigateScreen() {
         .join("\n"),
       [
         { text: "Close", style: "cancel" },
+        {
+          text: "Add Photo",
+          onPress: () =>
+            submitPointPhotoContribution({
+              riverId: selectedRiver.id,
+              riverName: selectedRiver.name,
+              state: selectedRiver.state,
+              pointId: point.id,
+              pointName: point.name,
+            }),
+        },
         {
           text: "Suggest Removal",
           style: "destructive",

@@ -3,7 +3,8 @@ import type { RiverPointType } from "./RiverPoint";
 export type ContributionKind =
   | "new-river"
   | "existing-river-point"
-  | "remove-existing-point";
+  | "remove-existing-point"
+  | "point-photo";
 
 export type ContributionStatus =
   | "pending"
@@ -45,5 +46,7 @@ export type Contribution = {
   targetPointId?: string | null;
   targetPointName?: string | null;
   removalReason?: string | null;
+  photoUri?: string | null;
+  photoCaption?: string | null;
   backendId?: string | null;
 };

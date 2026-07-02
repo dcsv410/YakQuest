@@ -13,6 +13,7 @@ export const CONTRIBUTION_KIND_ENUM = {
   NEWRIVER: "new-river",
   EXISTINGRIVERPOINT: "existing-river-point",
   REMOVEEXISTINGPOINT: "remove-existing-point",
+  POINTPHOTO: "point-photo",
 } as const;
 
 export type CONTRIBUTION_KIND_ENUM = 

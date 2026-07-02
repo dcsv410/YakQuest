@@ -143,6 +143,43 @@ def deactivate_removed_point(
     river_point.is_active = False
 
 
+def add_photo_to_point(
+    contribution: Contribution,
+    db: Session,
+):
+    if not contribution.target_point_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Photo contribution is missing targetPointId",
+        )
+
+    if not contribution.photo_uri:
+        raise HTTPException(
+            status_code=400,
+            detail="Photo contribution is missing photoUri",
+        )
+
+    river_point = (
+        db.query(RiverPoint)
+        .filter(RiverPoint.id == contribution.target_point_id)
+        .first()
+    )
+
+    if not river_point:
+        raise HTTPException(status_code=404, detail="Target point not found")
+
+    photos = river_point.photos or []
+
+    if len(photos) >= 3:
+        raise HTTPException(
+            status_code=400,
+            detail="This point already has 3 photos. Remove one before adding another.",
+        )
+
+    photos.append(contribution.photo_uri)
+    river_point.photos = photos
+
+
 @router.post("/contributions/{contribution_id}/approve", response_model=ContributionOut)
 def approve_contribution(
     contribution_id: UUID,
@@ -163,6 +200,9 @@ def approve_contribution(
 
     elif contribution.kind == "remove-existing-point":
         deactivate_removed_point(contribution, db)
+
+    elif contribution.kind == "point-photo":
+        add_photo_to_point(contribution, db)
 
     else:
         raise HTTPException(
