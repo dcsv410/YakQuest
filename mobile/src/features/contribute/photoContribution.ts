@@ -16,12 +16,17 @@ export async function pickContributionPhoto(): Promise<string | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
     allowsEditing: true,
-    quality: 0.8,
+    quality: 0.45,
+    base64: true,
   });
 
-  if (result.canceled) {
-    return null;
-  }
+  if (result.canceled) return null;
 
-  return result.assets[0]?.uri ?? null;
+  const asset = result.assets[0];
+
+  if (!asset?.base64) return null;
+
+  const mimeType = asset.mimeType ?? "image/jpeg";
+
+  return `data:${mimeType};base64,${asset.base64}`;
 }

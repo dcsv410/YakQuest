@@ -7,7 +7,7 @@ import { API_URL } from "../config";
 const USE_BACKEND_RIVERS = true;
 type StateCode = string;
 
-async function fetchWithTimeout(url: string, timeoutMs = 4000) {
+async function fetchWithTimeout(url: string, timeoutMs = 30000) {
   const controller = new AbortController();
 
   const timeoutId = setTimeout(() => {
