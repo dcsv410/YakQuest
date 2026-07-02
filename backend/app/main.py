@@ -8,26 +8,22 @@ from app.routers import admin, admin_seed, auth, completed_trips, contributions,
 
 Base.metadata.create_all(bind=engine)
 
+from sqlalchemy import text
+
+with engine.begin() as conn:
+    conn.execute(text("""
+        ALTER TABLE contributions
+        ADD COLUMN IF NOT EXISTS photo_uri VARCHAR(1000)
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE contributions
+        ADD COLUMN IF NOT EXISTS photo_caption TEXT
+    """))
+
 app = FastAPI(
     title="YakQuest API",
     version="0.1.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8081",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:19006",
-        "http://localhost:3000",
-        "https://yakquest.com",
-        "https://admin.yakquest.com",
-        "https://yak-quest-web-one.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 app.include_router(contributions.router)
