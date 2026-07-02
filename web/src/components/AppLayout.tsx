@@ -78,7 +78,7 @@ export default function AppLayout() {
           </button>
         ) : null}
 
-        <nav className={`nav ${menuOpen ? "open" : ""}`}>
+        <nav className={`nav ${isMobileNav && menuOpen ? "open" : ""}`}>
           <Link to="/rivers" onClick={closeMenu}>Rivers</Link>
           <Link to="/plan" onClick={closeMenu}>Plan</Link>
 
