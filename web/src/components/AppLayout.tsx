@@ -50,7 +50,7 @@ export default function AppLayout() {
 
   return (
     <div className="app-shell">
-      <header className="site-header">
+      <header className="site-header" style={{ position: "relative" }}>
         <Link to="/" className="brand" onClick={closeMenu}>
           <div className="brand-mark">
             <img
@@ -79,7 +79,22 @@ export default function AppLayout() {
             </button>
 
             {menuOpen ? (
-              <nav className="mobile-nav">
+              <nav
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: 12,
+                  right: 12,
+                  zIndex: 9999,
+                  display: "grid",
+                  gap: 4,
+                  background: "rgba(15, 33, 29, 0.98)",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  borderRadius: 16,
+                  padding: 10,
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+                }}
+              >
                 <Link to="/rivers" onClick={closeMenu}>Rivers</Link>
                 <Link to="/plan" onClick={closeMenu}>Plan</Link>
 
