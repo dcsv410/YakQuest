@@ -359,16 +359,135 @@ export default function PlanTripPage() {
     };
   }, [start, plannedLaunchDateTime]);
 
+  function getTripPlanFileName() {
+    if (!selectedRiver) return "yakquest_trip.pdf";
+
+    const date =
+      plannedLaunchDateTime ||
+      new Date().toISOString().split("T")[0];
+
+    const formattedDate = date.split("T")[0];
+
+    return `${selectedRiver.name}_trip_${formattedDate}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") + ".pdf";
+  }
+
+  function waitForPrintRender() {
+    return new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+  }
+
+  async function downloadTripPdf() {
+    if (!selectedRiver || !start || !end) return;
+
+    setPrintMode(true);
+    await waitForPrintRender();
+
+    const printArea = document.querySelector(
+      ".trip-print-area"
+    ) as HTMLElement | null;
+
+    if (!printArea) {
+      setPrintMode(false);
+      return;
+    }
+
+    try {
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = html2pdfModule.default as any;
+
+      await html2pdf()
+        .set({
+          margin: 0.25,
+          filename: getTripPlanFileName(),
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+          },
+          jsPDF: {
+            unit: "in",
+            format: "letter",
+            orientation: "portrait",
+          },
+          pagebreak: {
+            mode: ["avoid-all", "css", "legacy"],
+          },
+        } as any)
+        .from(printArea)
+        .save();
+    } finally {
+      setPrintMode(false);
+    }
+  }
+
+  function emailTripPlan() {
+    if (!selectedRiver || !start || !end) return;
+
+    const subject = encodeURIComponent(
+      `YakQuest Trip Plan: ${selectedRiver.name}`
+    );
+
+    const body = encodeURIComponent(
+      [
+        `YakQuest Trip Plan`,
+        ``,
+        `River: ${selectedRiver.name}, ${selectedRiver.state}`,
+        `Launch: ${start.name}`,
+        `Takeout: ${end.name}`,
+        `Distance: ${tripDistanceMiles.toFixed(2)} mi`,
+        `Estimated Time: ${tripTime.label}`,
+        plannedLaunchDateTime
+          ? `Expected Launch: ${new Date(plannedLaunchDateTime).toLocaleString()}`
+          : null,
+        flowCfs !== null
+          ? `Flow: ${Math.round(flowCfs)} CFS — ${flowRating}`
+          : null,
+        ``,
+        `I attached or will send the PDF trip plan from YakQuest.`,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
+
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
   function printTripPlan() {
     setPrintMode(true);
 
     setTimeout(() => {
-      const printArea = document.querySelector(".trip-print-area");
+      const printArea = document.querySelector(
+        ".trip-print-area"
+      ) as HTMLElement | null;
 
       if (!printArea) {
         setPrintMode(false);
         return;
       }
+
+      const clonedPrintArea = printArea.cloneNode(true) as HTMLElement;
+
+      const originalCanvases = printArea.querySelectorAll("canvas");
+      const clonedCanvases = clonedPrintArea.querySelectorAll("canvas");
+
+      originalCanvases.forEach((canvas, index) => {
+        const clonedCanvas = clonedCanvases[index];
+        if (!clonedCanvas) return;
+
+        const image = document.createElement("img");
+        image.src = (canvas as HTMLCanvasElement).toDataURL("image/png");
+        image.className = clonedCanvas.className;
+        image.alt =
+          clonedCanvas.getAttribute("aria-label") ?? "Route map";
+
+        clonedCanvas.replaceWith(image);
+      });
 
       const printWindow = window.open("", "_blank", "width=1000,height=800");
 
@@ -484,7 +603,7 @@ export default function PlanTripPage() {
             </style>
           </head>
           <body>
-            ${printArea.innerHTML}
+            ${clonedPrintArea.innerHTML}
           </body>
         </html>
       `);
@@ -993,6 +1112,22 @@ export default function PlanTripPage() {
                     onClick={printTripPlan}
                   >
                     Print Trip Plan
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button button-reset"
+                    onClick={downloadTripPdf}
+                  >
+                    Download PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button button-reset"
+                    onClick={emailTripPlan}
+                  >
+                    Email Trip Plan
                   </button>
 
                   <button

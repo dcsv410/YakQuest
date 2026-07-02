@@ -1,5 +1,9 @@
+import { useEffect, useRef } from "react";
 import type { Coordinate, River, RiverPoint } from "@yakquest/shared";
-import { getTripSegmentCoordinates, getTripTimelinePoints } from "@yakquest/shared";
+import {
+  getTripSegmentCoordinates,
+  getTripTimelinePoints,
+} from "@yakquest/shared";
 
 type Props = {
   river: River;
@@ -7,25 +11,30 @@ type Props = {
   end: RiverPoint;
 };
 
+type Bounds = {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+};
+
 function projectPoint(
   point: Coordinate,
-  bounds: {
-    minLat: number;
-    maxLat: number;
-    minLng: number;
-    maxLng: number;
-  },
+  bounds: Bounds,
   width: number,
   height: number
 ) {
   const lngRange = bounds.maxLng - bounds.minLng || 1;
   const latRange = bounds.maxLat - bounds.minLat || 1;
 
+  // If the route is wider east/west than north/south,
+  // rotate the projection so the longest direction runs vertically.
   const shouldRotate = lngRange > latRange;
 
   if (shouldRotate) {
     const x = ((point.latitude - bounds.minLat) / latRange) * width;
-    const y = height - ((point.longitude - bounds.minLng) / lngRange) * height;
+    const y =
+      height - ((point.longitude - bounds.minLng) / lngRange) * height;
 
     return { x, y };
   }
@@ -36,94 +45,155 @@ function projectPoint(
   return { x, y };
 }
 
+function drawMarker(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  label: string,
+  color: string
+) {
+  ctx.beginPath();
+  ctx.arc(x, y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "white";
+  ctx.stroke();
+
+  ctx.font = "700 12px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillStyle = "#10201c";
+
+  const labelX = x + 11;
+  const labelY = y - 8;
+
+  ctx.fillText(label, labelX, labelY);
+}
+
 export default function PrintableRouteMap({ river, start, end }: Props) {
-  const width = 360;
-  const height = 760;
-  const padding = 30;
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const routePoints = getTripSegmentCoordinates(river, start, end);
-  const timelinePoints = getTripTimelinePoints(river, start, end);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  const routeMarkers = timelinePoints.map((item) => item.point);
+    const width = 360;
+    const height = 760;
+    const padding = 30;
 
-  const allCoords = [
-    ...routePoints,
-    start,
-    end,
-    ...routeMarkers,
-  ];
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  const bounds = {
-    minLat: Math.min(...allCoords.map((p) => p.latitude)),
-    maxLat: Math.max(...allCoords.map((p) => p.latitude)),
-    minLng: Math.min(...allCoords.map((p) => p.longitude)),
-    maxLng: Math.max(...allCoords.map((p) => p.longitude)),
-  };
+    const dpr = window.devicePixelRatio || 1;
 
-  const innerWidth = width - padding * 2;
-  const innerHeight = height - padding * 2;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = "100%";
+    canvas.style.height = "auto";
 
-  const routePath = routePoints
-    .map((coord) => {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const routePoints = getTripSegmentCoordinates(river, start, end);
+    const timelinePoints = getTripTimelinePoints(river, start, end);
+    const routeMarkers = timelinePoints.map((item) => item.point);
+
+    const allCoords = [
+      ...routePoints,
+      start,
+      end,
+      ...routeMarkers,
+    ];
+
+    if (!allCoords.length) return;
+
+    const bounds = {
+      minLat: Math.min(...allCoords.map((p) => p.latitude)),
+      maxLat: Math.max(...allCoords.map((p) => p.latitude)),
+      minLng: Math.min(...allCoords.map((p) => p.longitude)),
+      maxLng: Math.max(...allCoords.map((p) => p.longitude)),
+    };
+
+    const innerWidth = width - padding * 2;
+    const innerHeight = height - padding * 2;
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Background
+    ctx.fillStyle = "#f3faf9";
+    ctx.strokeStyle = "rgba(28, 167, 166, 0.28)";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.roundRect(0, 0, width, height, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    // Route line
+    ctx.beginPath();
+
+    routePoints.forEach((coord, index) => {
       const p = projectPoint(coord, bounds, innerWidth, innerHeight);
-      return `${p.x + padding},${p.y + padding}`;
-    })
-    .join(" ");
+      const x = p.x + padding;
+      const y = p.y + padding;
 
-  const renderMarker = (
-    point: RiverPoint,
-    label: string,
-    className: string
-  ) => {
-    const p = projectPoint(point, bounds, innerWidth, innerHeight);
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
 
-    return (
-      <g key={`${className}-${point.id}`}>
-        <circle
-          cx={p.x + padding}
-          cy={p.y + padding}
-          r="7"
-          className={className}
-        />
-        <text
-          x={p.x + padding + 10}
-          y={p.y + padding - 8}
-          className="print-map-label"
-        >
-          {label}
-        </text>
-      </g>
+    ctx.strokeStyle = "#1ca7a6";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+
+    // Route markers between launch and takeout
+    routeMarkers
+      .filter((point) => point.id !== start.id && point.id !== end.id)
+      .forEach((point) => {
+        const p = projectPoint(point, bounds, innerWidth, innerHeight);
+        const color = point.type === "hazard" ? "#9f1d1d" : "#3468c9";
+
+        drawMarker(
+          ctx,
+          p.x + padding,
+          p.y + padding,
+          point.name,
+          color
+        );
+      });
+
+    // Launch / takeout markers last so they stay on top
+    const launchPoint = projectPoint(start, bounds, innerWidth, innerHeight);
+    drawMarker(
+      ctx,
+      launchPoint.x + padding,
+      launchPoint.y + padding,
+      "Launch",
+      "#18a558"
     );
-  };
+
+    const takeoutPoint = projectPoint(end, bounds, innerWidth, innerHeight);
+    drawMarker(
+      ctx,
+      takeoutPoint.x + padding,
+      takeoutPoint.y + padding,
+      "Takeout",
+      "#d64545"
+    );
+  }, [river, start, end]);
 
   return (
     <div className="print-map-wrapper">
       <h3>Route Map</h3>
 
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
+      <canvas
+        ref={canvasRef}
         className="print-route-map"
-        role="img"
-      >
-        <rect width={width} height={height} rx="18" className="print-map-bg" />
-
-        <polyline points={routePath} className="print-route-line" />
-
-        {routeMarkers
-          .filter((point) => point.id !== start.id && point.id !== end.id)
-          .map((point) =>
-            renderMarker(
-              point,
-              point.name,
-              point.type === "hazard"
-                ? "print-marker-hazard"
-                : "print-marker-poi"
-            )
-          )}
-
-        {renderMarker(start, "Launch", "print-marker-start")}
-        {renderMarker(end, "Takeout", "print-marker-end")}
-      </svg>
+        aria-label="Printable route map"
+      />
     </div>
   );
 }

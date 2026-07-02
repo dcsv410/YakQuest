@@ -12,14 +12,15 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.1",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
     "@yakquest/shared": "*",
+    "html2pdf.js": "^0.14.0",
     "leaflet": "^1.9.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
-    "react-router-dom": "^7.18.0",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.0"
+    "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
