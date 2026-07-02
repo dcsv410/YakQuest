@@ -650,7 +650,7 @@ export default function PlanTripPage() {
                       <h3>Distance Timeline</h3>
 
                       <div className="timeline-list">
-                        {timelinePoints.map(({ point, distanceMiles, type }) => (
+                        {timelinePoints.map(({ point, distanceMiles }) => (
                           <div key={point.id} className="timeline-row">
                             <div className="timeline-distance">
                               {distanceMiles.toFixed(1)} mi
