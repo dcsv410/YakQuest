@@ -49,6 +49,8 @@ function getPointLabel(point: RiverPoint) {
   }
 }
 
+const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
+
 export default function PlanTripPage() {
   const {
     data: rivers = [],
@@ -67,12 +69,24 @@ export default function PlanTripPage() {
   const initialSavedTripId = searchParams.get("savedTripId");
   const [savingTrip, setSavingTrip] = useState(false);
   const [tripSaved, setTripSaved] = useState(false);
+  const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
+  const [selectedState, setSelectedState] = useState("AL");
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
   const selectedRiver = rivers.find(
     (river) => river.id === selectedRiverId
   );
+
+  const states = useMemo(() => {
+    return Array.from(new Set(rivers.map((river) => river.state))).sort();
+  }, [rivers]);
+
+  const filteredRivers = useMemo(() => {
+    return rivers
+      .filter((river) => river.state === selectedState)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rivers, selectedState]);
 
   useEffect(() => {
     if (!initialRiverId) return;
@@ -112,7 +126,7 @@ export default function PlanTripPage() {
         selectedRiver.coordinates[0].latitude,
         selectedRiver.coordinates[0].longitude,
       ]
-    : [35.1, -86.5];
+    : userCenter ?? HUNTSVILLE_CENTER;
 
   const selectPointFromMap = (point: RiverPoint) => {
     if (selectionMode === "start") {
@@ -229,6 +243,26 @@ export default function PlanTripPage() {
     setSelectionMode("start");
   };
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserCenter([
+          position.coords.latitude,
+          position.coords.longitude,
+        ]);
+      },
+      () => {
+        setUserCenter(null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+      }
+    );
+  }, []);
+
   if (isLoading) {
     return <p>Loading trip planner...</p>;
   }
@@ -249,8 +283,28 @@ export default function PlanTripPage() {
           </p>
         </div>
 
+        <label className="form-label">
+          State
+          <select
+            value={selectedState}
+            onChange={(event) => {
+              setSelectedState(event.target.value);
+              setSelectedRiverId("");
+              setStartId("");
+              setEndId("");
+              setSelectionMode("start");
+            }}
+          >
+            {states.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div className="river-list">
-          {rivers.map((river) => {
+          {filteredRivers.map((river) => {
             const selected = river.id === selectedRiverId;
 
             return (
@@ -293,6 +347,11 @@ export default function PlanTripPage() {
                 Pick Takeout
               </button>
             </div>
+
+            <p className="muted">
+              You may select launch and takeout from the dropdowns below or by clicking
+              access points on the map.
+            </p>
 
             <label className="form-label">
               Launch
@@ -347,6 +406,12 @@ export default function PlanTripPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          {userCenter ? (
+            <Marker position={userCenter}>
+              <Popup>Your approximate location</Popup>
+            </Marker>
+          ) : null}
+
           {rivers.map((river) => {
             const selected = river.id === selectedRiverId;
 
@@ -358,7 +423,7 @@ export default function PlanTripPage() {
                   coord.longitude,
                 ])}
                 pathOptions={{
-                  weight: selected ? 7 : 4,
+                  weight: selected ? 7 : 5,
                   opacity: selected ? 1 : 0.45,
                 }}
                 eventHandlers={{
