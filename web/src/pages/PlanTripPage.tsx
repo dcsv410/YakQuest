@@ -74,6 +74,7 @@ export default function PlanTripPage() {
   const [selectedState, setSelectedState] = useState("AL");
   const [flowCfs, setFlowCfs] = useState<number | null>(null);
   const [flowLoading, setFlowLoading] = useState(false);
+  const [plannedLaunchDateTime, setPlannedLaunchDateTime] = useState("");
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
@@ -606,14 +607,20 @@ export default function PlanTripPage() {
             </div>
 
             <div className="overview-card trip-print-area">
-              <p className="eyebrow">Trip Overview</p>
-
+              <p className="eyebrow">Trip Overview</p>   
               {start && end ? (
                 <>
+                  <label className="form-label no-print">
+                    Expected Launch Date/Time
+                    <input
+                      type="datetime-local"
+                      value={plannedLaunchDateTime}
+                      onChange={(event) => setPlannedLaunchDateTime(event.target.value)}
+                    />
+                  </label>
                   <h2>
                     {start.name} → {end.name}
                   </h2>
-
                   <div className="trip-metric">
                     <span>Distance</span>
                     <strong>{tripDistanceMiles.toFixed(2)} mi</strong>
@@ -626,14 +633,47 @@ export default function PlanTripPage() {
 
                   <div className="trip-detail-list">
                     <p>
-                      <strong>Launch:</strong> {start.name}
+                      <strong>River:</strong> {selectedRiver.name}, {selectedRiver.state}
                     </p>
+
                     <p>
-                      <strong>Takeout:</strong> {end.name}
+                      <strong>Difficulty:</strong> {selectedRiver.difficulty}/5
+                    </p>
+
+                    <p>
+                      <strong>Cleanliness:</strong> {selectedRiver.cleanliness}/5
+                    </p>
+
+                    <p>
+                      <strong>Fishing:</strong> {selectedRiver.fishing}/5
+                    </p>
+
+                    {selectedRiver.usgsGaugeId ? (
+                      <p>
+                        <strong>USGS Gauge:</strong> {selectedRiver.usgsGaugeId}
+                      </p>
+                    ) : null}
+
+                    {flowCfs !== null ? (
+                      <p>
+                        <strong>Flow:</strong> {Math.round(flowCfs)} CFS — {flowRating}
+                      </p>
+                    ) : null}
+                    {plannedLaunchDateTime ? (
+                      <p>
+                        <strong>Expected Launch:</strong>{" "}
+                        {new Date(plannedLaunchDateTime).toLocaleString()}
+                      </p>
+                    ) : null}
+                    <p>
+                      <strong>Launch:</strong> {start.name}
                     </p>
                     <p>
                       <strong>Launch Type:</strong> {getPointLabel(start)}
                     </p>
+                    <p>
+                      <strong>Takeout:</strong> {end.name}
+                    </p>                    
                     <p>
                       <strong>Takeout Type:</strong> {getPointLabel(end)}
                     </p>

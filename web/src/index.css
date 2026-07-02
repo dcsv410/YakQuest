@@ -1690,3 +1690,36 @@ h1 {
 .planner-right .metric-grid strong {
   font-size: 16px;
 }
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .site-header,
+  .planner-left,
+  .planner-center,
+  .no-print,
+  .primary-button,
+  .secondary-button {
+    display: none !important;
+  }
+
+  .planner-workspace {
+    display: block;
+  }
+
+  .planner-right {
+    width: 100%;
+  }
+
+  .overview-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+  }
+
+  .trip-print-area {
+    display: block;
+  }
+}
