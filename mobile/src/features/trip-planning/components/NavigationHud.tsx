@@ -10,6 +10,8 @@ type Props = {
   distanceToNextPointFeet: number | null;
   averageSpeedMph?: number;
   estimatedTimeRemainingMs?: number | null;
+  currentSpeedMph?: number;
+  currentSpeedEtaMs?: number | null;
 };
 
 const feetToMiles = (feet: number) => feet / FEET_PER_MILE;
@@ -20,7 +22,9 @@ export default function NavigationHud({
   nextPoint,
   distanceToNextPointFeet,
   averageSpeedMph,
-  estimatedTimeRemainingMs
+  estimatedTimeRemainingMs,
+  currentSpeedMph,
+  currentSpeedEtaMs,
 }: Props) {
   if (!navigationArmed) return null;
 
@@ -44,12 +48,22 @@ export default function NavigationHud({
       )}
 
       <Text style={styles.stat}>
+        Current Speed: {(currentSpeedMph ?? 0).toFixed(1)} mph
+      </Text>
+
+      <Text style={styles.stat}>
         Avg Speed: {(averageSpeedMph ?? 0).toFixed(1)} mph
       </Text>
 
+      {currentSpeedEtaMs != null && (
+        <Text style={styles.stat}>
+          ETA at Current Speed: {formatDuration(currentSpeedEtaMs)}
+        </Text>
+      )}
+
       {estimatedTimeRemainingMs != null && (
         <Text style={styles.stat}>
-          ETA at Current Pace: {formatDuration(estimatedTimeRemainingMs)}
+          ETA at Avg Speed: {formatDuration(estimatedTimeRemainingMs)}
         </Text>
       )}
     </View>

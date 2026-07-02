@@ -114,6 +114,8 @@ export default function PlanTrip() {
     distanceToNextPointFeet,
     averageSpeedMph,
     estimatedTimeRemainingMs,
+    currentSpeedMph,
+    currentSpeedEtaMs,
     resetNavigationAlerts,
   } = useTripNavigation({
     location,
@@ -312,19 +314,6 @@ export default function PlanTrip() {
       1000
     );
   };
-
-  // useEffect(() => {
-  //   async function testApi() {
-  //     try {
-  //       const rivers = await fetchRivers();
-  //       console.log("BACKEND RIVERS:", rivers);
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   }
-
-  //   testApi();
-  // }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
@@ -530,6 +519,8 @@ export default function PlanTrip() {
         distanceToNextPointFeet={distanceToNextPointFeet}
         averageSpeedMph={averageSpeedMph}
         estimatedTimeRemainingMs={estimatedTimeRemainingMs}
+        currentSpeedMph={currentSpeedMph}
+        currentSpeedEtaMs={currentSpeedEtaMs}
       />
 
       {selectedRiver && (

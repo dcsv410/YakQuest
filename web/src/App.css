@@ -182,3 +182,149 @@
     border-right-color: var(--border);
   }
 }
+
+/* Trip print overview */
+
+.print-map-wrapper {
+  display: none;
+  margin-top: 18px;
+}
+
+.print-map-wrapper h3,
+.print-section h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.print-route-map {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+}
+
+.print-map-bg {
+  fill: #f3faf9;
+  stroke: rgba(28, 167, 166, 0.28);
+  stroke-width: 2;
+}
+
+.print-route-line {
+  fill: none;
+  stroke: #1ca7a6;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.print-marker-start {
+  fill: #18a558;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.print-marker-end {
+  fill: #d64545;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.print-marker-poi {
+  fill: #3468c9;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.print-marker-hazard {
+  fill: #9f1d1d;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.print-map-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #10201c;
+}
+
+.print-section {
+  margin-top: 24px;
+  border-top: 1px solid rgba(16, 32, 28, 0.12);
+  padding-top: 16px;
+}
+
+.safety-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.safety-list li {
+  margin-bottom: 6px;
+}
+
+.trip-print-layout {
+  display: block;
+}
+
+.trip-print-details {
+  min-width: 0;
+}
+
+.trip-print-map-column {
+  margin-top: 18px;
+}
+
+.trip-print-map-column .print-route-map {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+}
+
+/* Print only the trip overview */
+
+@media print {
+  .site-header,
+  .planner-left,
+  .planner-center,
+  .overview-card:not(.trip-print-area),
+  .no-print,
+  .button-reset {
+    display: none !important;
+  }
+
+  .site-main,
+  .planner-workspace,
+  .planner-right {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .trip-print-area {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0.25in !important;
+  }
+
+  .trip-print-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 3.5in;
+    gap: 0.25in;
+  }
+
+  .trip-print-map-column .print-route-map {
+    height: 9in !important;
+    max-height: none !important;
+  }
+}
+
+.print-only {
+  display: none !important;
+}
+

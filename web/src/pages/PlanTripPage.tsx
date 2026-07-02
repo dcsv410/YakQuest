@@ -22,6 +22,11 @@ import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
 import { isLoggedIn } from "../services/authService";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 import { fetchRiverOutfitters } from "../services/riverService";
+import PrintableRouteMap from "../components/PrintableRouteMap";
+import {
+  fetchTripWeather,
+  type TripWeather,
+} from "../services/weatherService";
 
 type SelectionMode = "start" | "end";
 
@@ -63,6 +68,7 @@ export default function PlanTripPage() {
     queryFn: fetchRivers,
   });
 
+  const [printMode, setPrintMode] = useState(false);
   const [selectedRiverId, setSelectedRiverId] = useState("");
   const [startId, setStartId] = useState("");
   const [endId, setEndId] = useState("");
@@ -76,6 +82,9 @@ export default function PlanTripPage() {
   const [flowCfs, setFlowCfs] = useState<number | null>(null);
   const [flowLoading, setFlowLoading] = useState(false);
   const [plannedLaunchDateTime, setPlannedLaunchDateTime] = useState("");
+  const [tripWeather, setTripWeather] = useState<TripWeather | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
 
@@ -308,6 +317,187 @@ export default function PlanTripPage() {
       : null;
 
   const flowRating = getFlowRating(flowPercentile);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadWeather() {
+      if (!start || !plannedLaunchDateTime) {
+        setTripWeather(null);
+        setWeatherError(null);
+        setWeatherLoading(false);
+        return;
+      }
+
+      setWeatherLoading(true);
+      setWeatherError(null);
+
+      try {
+        const weather = await fetchTripWeather(start, plannedLaunchDateTime);
+
+        if (!cancelled) {
+          setTripWeather(weather);
+        }
+      } catch (error) {
+        console.error("Failed to load trip weather", error);
+
+        if (!cancelled) {
+          setTripWeather(null);
+          setWeatherError("Weather forecast unavailable.");
+        }
+      } finally {
+        if (!cancelled) {
+          setWeatherLoading(false);
+        }
+      }
+    }
+
+    loadWeather();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [start, plannedLaunchDateTime]);
+
+  function printTripPlan() {
+    setPrintMode(true);
+
+    setTimeout(() => {
+      const printArea = document.querySelector(".trip-print-area");
+
+      if (!printArea) {
+        setPrintMode(false);
+        return;
+      }
+
+      const printWindow = window.open("", "_blank", "width=1000,height=800");
+
+      if (!printWindow) {
+        setPrintMode(false);
+        alert("Popup blocked. Please allow popups to print the trip plan.");
+        return;
+      }
+
+      printWindow.document.write(`
+        <!doctype html>
+        <html>
+          <head>
+            <title>YakQuest Trip Plan</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                margin: 0;
+                padding: 0.25in;
+                color: #10201c;
+                background: white;
+              }
+
+              .no-print,
+              .button-reset {
+                display: none !important;
+              }
+
+              .trip-print-layout {
+                display: grid;
+                grid-template-columns: 1fr 3.5in;
+                gap: 0.25in;
+                align-items: start;
+              }
+
+              .trip-metric,
+              .metric-grid div {
+                border-radius: 14px;
+                background: #f4f7f3;
+                padding: 12px;
+                margin-top: 10px;
+              }
+
+              .trip-metric span {
+                display: block;
+                font-size: 12px;
+                color: #64756f;
+                font-weight: 800;
+                text-transform: uppercase;
+              }
+
+              .trip-metric strong {
+                display: block;
+                margin-top: 4px;
+                font-size: 18px;
+              }
+
+              .trip-detail-list p {
+                margin: 8px 0;
+              }
+
+              .print-section {
+                margin-top: 24px;
+                border-top: 1px solid rgba(16, 32, 28, 0.12);
+                padding-top: 16px;
+              }
+
+              .timeline-row {
+                display: grid;
+                grid-template-columns: 70px 1fr;
+                gap: 12px;
+                padding: 10px 0;
+                border-top: 1px solid rgba(16, 32, 28, 0.12);
+                break-inside: avoid;
+              }
+
+              .timeline-distance {
+                font-weight: 900;
+                color: #147473;
+              }
+
+              .print-route-map {
+                width: 100%;
+                height: 9in;
+                border: 1px solid #ddd;
+                border-radius: 14px;
+              }
+
+              .print-map-bg {
+                fill: #f3faf9;
+                stroke: rgba(28, 167, 166, 0.28);
+                stroke-width: 2;
+              }
+
+              .print-route-line {
+                fill: none;
+                stroke: #1ca7a6;
+                stroke-width: 5;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+              }
+
+              .print-marker-start { fill: #18a558; stroke: white; stroke-width: 2; }
+              .print-marker-end { fill: #d64545; stroke: white; stroke-width: 2; }
+              .print-marker-poi { fill: #3468c9; stroke: white; stroke-width: 2; }
+              .print-marker-hazard { fill: #9f1d1d; stroke: white; stroke-width: 2; }
+
+              .print-map-label {
+                font-size: 12px;
+                font-weight: 700;
+                fill: #10201c;
+              }
+            </style>
+          </head>
+          <body>
+            ${printArea.innerHTML}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+
+      printWindow.focus();
+      printWindow.print();
+
+      printWindow.close();
+      setPrintMode(false);
+    }, 100);
+  }
 
   if (isLoading) {
     return <p>Loading trip planner...</p>;
@@ -579,11 +769,11 @@ export default function PlanTripPage() {
 
               <div className="metric-grid">
                 <div>
-                  <span>Difficulty</span>
+                  <span>Difficult</span>
                   <strong>{selectedRiver.difficulty}/5</strong>
                 </div>
                 <div>
-                  <span>Cleanliness</span>
+                  <span>Clean</span>
                   <strong>{selectedRiver.cleanliness}/5</strong>
                 </div>
                 <div>
@@ -652,7 +842,8 @@ export default function PlanTripPage() {
             ) : null}
 
             <div className="overview-card trip-print-area">
-              <p className="eyebrow">Trip Overview</p>   
+              <p className="eyebrow">Trip Overview</p>
+
               {start && end ? (
                 <>
                   <label className="form-label no-print">
@@ -663,100 +854,143 @@ export default function PlanTripPage() {
                       onChange={(event) => setPlannedLaunchDateTime(event.target.value)}
                     />
                   </label>
-                  <h2>
-                    {start.name} → {end.name}
-                  </h2>
-                  <div className="trip-metric">
-                    <span>Distance</span>
-                    <strong>{tripDistanceMiles.toFixed(2)} mi</strong>
-                  </div>
 
-                  <div className="trip-metric">
-                    <span>Estimated Time</span>
-                    <strong>{tripTime.label}</strong>
-                  </div>
+                  <div className="trip-print-layout">
+                    <div className="trip-print-details">
+                      <h2>
+                        {start.name} → {end.name}
+                      </h2>
 
-                  <div className="trip-detail-list">
-                    <p>
-                      <strong>River:</strong> {selectedRiver.name}, {selectedRiver.state}
-                    </p>
+                      <div className="trip-metric">
+                        <span>Distance</span>
+                        <strong>{tripDistanceMiles.toFixed(2)} mi</strong>
+                      </div>
 
-                    <p>
-                      <strong>Difficulty:</strong> {selectedRiver.difficulty}/5
-                    </p>
+                      <div className="trip-metric">
+                        <span>Estimated Time</span>
+                        <strong>{tripTime.label}</strong>
+                      </div>
 
-                    <p>
-                      <strong>Cleanliness:</strong> {selectedRiver.cleanliness}/5
-                    </p>
+                      <div className="trip-detail-list">
+                        <p><strong>River:</strong> {selectedRiver.name}, {selectedRiver.state}</p>
+                        <p><strong>Difficulty:</strong> {selectedRiver.difficulty}/5</p>
+                        <p><strong>Cleanliness:</strong> {selectedRiver.cleanliness}/5</p>
+                        <p><strong>Fishing:</strong> {selectedRiver.fishing}/5</p>
 
-                    <p>
-                      <strong>Fishing:</strong> {selectedRiver.fishing}/5
-                    </p>
+                        {selectedRiver.usgsGaugeId ? (
+                          <p><strong>USGS Gauge:</strong> {selectedRiver.usgsGaugeId}</p>
+                        ) : null}
 
-                    {selectedRiver.usgsGaugeId ? (
-                      <p>
-                        <strong>USGS Gauge:</strong> {selectedRiver.usgsGaugeId}
-                      </p>
-                    ) : null}
+                        {flowCfs !== null ? (
+                          <p><strong>Flow:</strong> {Math.round(flowCfs)} CFS — {flowRating}</p>
+                        ) : null}
 
-                    {flowCfs !== null ? (
-                      <p>
-                        <strong>Flow:</strong> {Math.round(flowCfs)} CFS — {flowRating}
-                      </p>
-                    ) : null}
-                    {plannedLaunchDateTime ? (
-                      <p>
-                        <strong>Expected Launch:</strong>{" "}
-                        {new Date(plannedLaunchDateTime).toLocaleString()}
-                      </p>
-                    ) : null}
-                    <p>
-                      <strong>Launch:</strong> {start.name}
-                    </p>
-                    <p>
-                      <strong>Launch Type:</strong> {getPointLabel(start)}
-                    </p>
-                    <p>
-                      <strong>Takeout:</strong> {end.name}
-                    </p>                    
-                    <p>
-                      <strong>Takeout Type:</strong> {getPointLabel(end)}
-                    </p>
-                  </div>
+                        {plannedLaunchDateTime ? (
+                          <p>
+                            <strong>Expected Launch:</strong>{" "}
+                            {new Date(plannedLaunchDateTime).toLocaleString()}
+                          </p>
+                        ) : null}
 
-                  {/* <PrintableRouteMap
-                    river={selectedRiver}
-                    start={start}
-                    end={end}
-                  /> */}
+                        <p><strong>Launch:</strong> {start.name}</p>
+                        <p><strong>Launch Type:</strong> {getPointLabel(start)}</p>
+                        <p><strong>Takeout:</strong> {end.name}</p>
+                        <p><strong>Takeout Type:</strong> {getPointLabel(end)}</p>
+                      </div>
 
-                  {timelinePoints.length > 0 ? (
-                    <div className="print-section">
-                      <h3>Distance Timeline</h3>
+                      {plannedLaunchDateTime ? (
+                        <div className="print-section">
+                          <h3>Launch Weather Forecast</h3>
 
-                      <div className="timeline-list">
-                        {timelinePoints.map(({ point, distanceMiles }) => (
-                          <div key={point.id} className="timeline-row">
-                            <div className="timeline-distance">
-                              {distanceMiles.toFixed(1)} mi
-                            </div>
-
-                            <div>
-                              <strong>{point.name}</strong>
+                          {weatherLoading ? (
+                            <p className="muted">Loading weather forecast...</p>
+                          ) : weatherError ? (
+                            <p className="muted">{weatherError}</p>
+                          ) : tripWeather ? (
+                            <div className="trip-detail-list">
                               <p>
-                                {getPointLabel(point)}
-                                {point.description ? ` — ${point.description}` : ""}
+                                <strong>Forecast Time:</strong>{" "}
+                                {new Date(tripWeather.forecastTime).toLocaleString()}
+                              </p>
+
+                              <p>
+                                <strong>Temperature:</strong>{" "}
+                                {tripWeather.temperatureF !== null
+                                  ? `${Math.round(tripWeather.temperatureF)}°F`
+                                  : "Unknown"}
+                              </p>
+
+                              <p>
+                                <strong>Wind:</strong>{" "}
+                                {tripWeather.windMph !== null
+                                  ? `${Math.round(tripWeather.windMph)} mph`
+                                  : "Unknown"}
+                              </p>
+
+                              <p>
+                                <strong>Rain Chance:</strong>{" "}
+                                {tripWeather.rainChancePercent !== null
+                                  ? `${tripWeather.rainChancePercent}%`
+                                  : "Unknown"}
                               </p>
                             </div>
-                          </div>
-                        ))}
+                          ) : (
+                            <p className="muted">No weather forecast loaded.</p>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div className="print-section">
+                        <h3>Safety Reminders</h3>
+
+                        <ul className="safety-list">
+                          <li>Wear a properly fitted life jacket.</li>
+                          <li>Check water level, current, and weather before launching.</li>
+                          <li>Tell someone your route and expected takeout time.</li>
+                          <li>Pack drinking water, phone protection, and basic first aid.</li>
+                          <li>Leave no trash and avoid disturbing wildlife.</li>
+                        </ul>
                       </div>
+
+                      {timelinePoints.length > 0 ? (
+                        <div className="print-section">
+                          <h3>Distance Timeline</h3>
+
+                          <div className="timeline-list">
+                            {timelinePoints.map(({ point, distanceMiles }) => (
+                              <div key={point.id} className="timeline-row">
+                                <div className="timeline-distance">
+                                  {distanceMiles.toFixed(1)} mi
+                                </div>
+
+                                <div>
+                                  <strong>{point.name}</strong>
+                                  <p>
+                                    {getPointLabel(point)}
+                                    {point.description ? ` — ${point.description}` : ""}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+
+                    {printMode ? (
+                      <div className="trip-print-map-column">
+                        <PrintableRouteMap
+                          river={selectedRiver}
+                          start={start}
+                          end={end}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
 
                   <button
                     className="primary-button button-reset"
-                    onClick={() => window.print()}
+                    onClick={printTripPlan}
                   >
                     Print Trip Plan
                   </button>

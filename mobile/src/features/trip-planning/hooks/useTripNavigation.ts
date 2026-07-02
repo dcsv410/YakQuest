@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, AppState } from "react-native";
+import * as Location from "expo-location";
 
 import { River, RiverPoint, Coordinate } from "../../../data/types";
 import { distanceFeet } from "@yakquest/shared";
@@ -22,7 +23,7 @@ const NAV_ALERTS = {
 };
 
 type Params = {
-  location: Coordinate | null;
+  location: Location.LocationObjectCoords | null;
   selectedRiver: River | null;
   end: RiverPoint | null;
   tripActive: boolean;
@@ -66,6 +67,9 @@ export function useTripNavigation({
   const onTripCompleteRef = useRef(onTripComplete);
 
   const [averageSpeedMph, setAverageSpeedMph] = useState(0);
+  const [currentSpeedMph, setCurrentSpeedMph] = useState(0);
+  const [currentSpeedEtaMs, setCurrentSpeedEtaMs] =
+  useState<number | null>(null);
   const [estimatedTimeRemainingMs, setEstimatedTimeRemainingMs] =
     useState<number | null>(null);
 
@@ -99,6 +103,11 @@ export function useTripNavigation({
         actualDistanceFeetRef.current += movedFeet;
       }
     }
+
+    const gpsSpeedMetersPerSecond = location.speed ?? 0;
+    const gpsSpeedMph = Math.max(0, gpsSpeedMetersPerSecond * 2.23694);
+
+    setCurrentSpeedMph(gpsSpeedMph);
 
     previousLocationRef.current = location;
   }, [location, tripActive, navigationArmed]);
@@ -137,6 +146,10 @@ export function useTripNavigation({
 
     setEstimatedTimeRemainingMs(
       getEtaFromSpeed(riverDist, avgSpeed)
+    );
+
+    setCurrentSpeedEtaMs(
+      getEtaFromSpeed(riverDist, currentSpeedMph)
     );
 
     if (riverDist  < NAV_ALERTS.oneMileFeet && !mileAlertSent) {
@@ -236,6 +249,8 @@ export function useTripNavigation({
     actualDistanceFeetRef.current = 0;
     setAverageSpeedMph(0);
     setEstimatedTimeRemainingMs(null);
+    setCurrentSpeedMph(0);
+    setCurrentSpeedEtaMs(null);
   };
 
   return {
@@ -246,5 +261,7 @@ export function useTripNavigation({
     averageSpeedMph,
     estimatedTimeRemainingMs,
     resetNavigationAlerts,
+    currentSpeedMph,
+    currentSpeedEtaMs,
   };
 }

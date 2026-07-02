@@ -250,7 +250,8 @@ export default function RiversPage() {
             <h1>Choose a river</h1>
             <p className="muted">
               Click any highlighted river on the map to view details, access
-              points, flow information, and planning options.
+              points, flow information, and planning options, or choose from the
+              lists below.
             </p>
 
             <label className="form-label">

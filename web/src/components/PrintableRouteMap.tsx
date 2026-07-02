@@ -1,4 +1,5 @@
-import type { Coordinate, River, RiverPoint } from "../types/river";
+import type { Coordinate, River, RiverPoint } from "@yakquest/shared";
+import { getTripSegmentCoordinates, getTripTimelinePoints } from "@yakquest/shared";
 
 type Props = {
   river: River;
@@ -20,6 +21,15 @@ function projectPoint(
   const lngRange = bounds.maxLng - bounds.minLng || 1;
   const latRange = bounds.maxLat - bounds.minLat || 1;
 
+  const shouldRotate = lngRange > latRange;
+
+  if (shouldRotate) {
+    const x = ((point.latitude - bounds.minLat) / latRange) * width;
+    const y = height - ((point.longitude - bounds.minLng) / lngRange) * height;
+
+    return { x, y };
+  }
+
   const x = ((point.longitude - bounds.minLng) / lngRange) * width;
   const y = height - ((point.latitude - bounds.minLat) / latRange) * height;
 
@@ -27,18 +37,20 @@ function projectPoint(
 }
 
 export default function PrintableRouteMap({ river, start, end }: Props) {
-  const width = 900;
-  const height = 320;
+  const width = 360;
+  const height = 760;
   const padding = 30;
 
-  const routePoints = river.coordinates;
+  const routePoints = getTripSegmentCoordinates(river, start, end);
+  const timelinePoints = getTripTimelinePoints(river, start, end);
+
+  const routeMarkers = timelinePoints.map((item) => item.point);
 
   const allCoords = [
     ...routePoints,
     start,
     end,
-    ...river.pois,
-    ...(river.hazards ?? []),
+    ...routeMarkers,
   ];
 
   const bounds = {
@@ -97,13 +109,17 @@ export default function PrintableRouteMap({ river, start, end }: Props) {
 
         <polyline points={routePath} className="print-route-line" />
 
-        {river.pois.map((point) =>
-          renderMarker(point, point.name, "print-marker-poi")
-        )}
-
-        {(river.hazards ?? []).map((point) =>
-          renderMarker(point, point.name, "print-marker-hazard")
-        )}
+        {routeMarkers
+          .filter((point) => point.id !== start.id && point.id !== end.id)
+          .map((point) =>
+            renderMarker(
+              point,
+              point.name,
+              point.type === "hazard"
+                ? "print-marker-hazard"
+                : "print-marker-poi"
+            )
+          )}
 
         {renderMarker(start, "Launch", "print-marker-start")}
         {renderMarker(end, "Takeout", "print-marker-end")}

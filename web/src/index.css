@@ -406,12 +406,6 @@ h1 {
   margin-top: 12px;
 }
 
-/* Printable route map + timeline */
-
-.print-map-wrapper {
-  display: none;
-}
-
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -437,111 +431,6 @@ h1 {
 .timeline-row p {
   margin: 4px 0 0;
   color: #61736e;
-}
-
-.print-section {
-  margin-top: 24px;
-  border-top: 1px solid rgba(16, 32, 28, 0.12);
-  padding-top: 16px;
-}
-
-.print-section h3 {
-  margin: 0 0 10px;
-}
-
-/* Print */
-
-@media print {
-  body {
-    background: white;
-  }
-
-  .site-header,
-  .planner-left,
-  .planner-center,
-  .overview-card:not(.trip-print-area),
-  .button-reset {
-    display: none !important;
-  }
-
-  .site-main {
-    padding: 0;
-    max-width: none;
-  }
-
-  .planner-workspace {
-    display: block;
-  }
-
-  .planner-right {
-    display: block;
-  }
-
-  .trip-print-area {
-    box-shadow: none;
-    border: 0;
-    font-size: 16px;
-    page-break-inside: avoid;
-  }
-
-  .print-map-wrapper {
-    display: block;
-    margin: 18px 0 24px;
-    page-break-inside: avoid;
-  }
-
-  .print-route-map {
-    width: 100%;
-    height: auto;
-    border: 1px solid #ddd;
-    border-radius: 14px;
-  }
-
-  .print-map-bg {
-    fill: #f4f7f3;
-  }
-
-  .print-route-line {
-    fill: none;
-    stroke: #147473;
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .print-marker-start {
-    fill: #1ca7a6;
-    stroke: white;
-    stroke-width: 2;
-  }
-
-  .print-marker-end {
-    fill: #d64545;
-    stroke: white;
-    stroke-width: 2;
-  }
-
-  .print-marker-poi {
-    fill: #3468c9;
-    stroke: white;
-    stroke-width: 2;
-  }
-
-  .print-marker-hazard {
-    fill: #9f1d1d;
-    stroke: white;
-    stroke-width: 2;
-  }
-
-  .print-map-label {
-    font-size: 13px;
-    font-weight: 700;
-    fill: #10201c;
-  }
-
-  .timeline-row {
-    break-inside: avoid;
-  }
 }
 
 /* Responsive */
@@ -1674,8 +1563,8 @@ h1 {
 }
 
 .planner-right .metric-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .planner-right .metric-grid > div {
@@ -1689,37 +1578,4 @@ h1 {
 
 .planner-right .metric-grid strong {
   font-size: 16px;
-}
-
-@media print {
-  body {
-    background: white;
-  }
-
-  .site-header,
-  .planner-left,
-  .planner-center,
-  .no-print,
-  .primary-button,
-  .secondary-button {
-    display: none !important;
-  }
-
-  .planner-workspace {
-    display: block;
-  }
-
-  .planner-right {
-    width: 100%;
-  }
-
-  .overview-card {
-    box-shadow: none;
-    border: 1px solid #ddd;
-    page-break-inside: avoid;
-  }
-
-  .trip-print-area {
-    display: block;
-  }
 }
