@@ -67,35 +67,56 @@ export default function AppLayout() {
         </Link>
 
         {isMobileNav ? (
-          <button
-            type="button"
-            className="menu-toggle"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={menuOpen}
-          >
-            ☰
-          </button>
-        ) : null}
+          <>
+            <button
+              type="button"
+              className="menu-toggle"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={menuOpen}
+            >
+              ☰
+            </button>
 
-        <nav className={`nav ${isMobileNav && menuOpen ? "open" : ""}`}>
-          <Link to="/rivers" onClick={closeMenu}>Rivers</Link>
-          <Link to="/plan" onClick={closeMenu}>Plan</Link>
+            {menuOpen ? (
+              <nav className="mobile-nav">
+                <Link to="/rivers" onClick={closeMenu}>Rivers</Link>
+                <Link to="/plan" onClick={closeMenu}>Plan</Link>
 
-          {user ? (
-            <>
-              <Link to="/saved-trips" onClick={closeMenu}>Saved Trips</Link>
-              <Link to="/account" onClick={closeMenu}>
-                {user.display_name || "Account"}
-              </Link>
-              {user.is_admin ? (
-                <Link to="/admin" onClick={closeMenu}>Admin</Link>
-              ) : null}
-            </>
-          ) : (
-            <Link to="/login" onClick={closeMenu}>Login</Link>
-          )}
-        </nav>
+                {user ? (
+                  <>
+                    <Link to="/saved-trips" onClick={closeMenu}>Saved Trips</Link>
+                    <Link to="/account" onClick={closeMenu}>
+                      {user.display_name || "Account"}
+                    </Link>
+                    {user.is_admin ? (
+                      <Link to="/admin" onClick={closeMenu}>Admin</Link>
+                    ) : null}
+                  </>
+                ) : (
+                  <Link to="/login" onClick={closeMenu}>Login</Link>
+                )}
+              </nav>
+            ) : null}
+          </>
+        ) : (
+          <nav className="nav">
+            <Link to="/rivers">Rivers</Link>
+            <Link to="/plan">Plan</Link>
+
+            {user ? (
+              <>
+                <Link to="/saved-trips">Saved Trips</Link>
+                <Link to="/account">
+                  {user.display_name || "Account"}
+                </Link>
+                {user.is_admin ? <Link to="/admin">Admin</Link> : null}
+              </>
+            ) : (
+              <Link to="/login">Login</Link>
+            )}
+          </nav>
+        )}
       </header>
 
       <main className="site-main">

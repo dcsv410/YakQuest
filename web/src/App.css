@@ -588,3 +588,31 @@
     display: flex !important;
   }
 }
+
+.mobile-nav {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 12px;
+  right: 12px;
+  z-index: 3000;
+  display: grid;
+  gap: 4px;
+  background: rgba(15, 33, 29, 0.98);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+}
+
+.mobile-nav a {
+  display: block;
+  padding: 13px 14px;
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.site-header {
+  position: relative;
+}
