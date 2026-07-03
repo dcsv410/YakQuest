@@ -57,10 +57,13 @@ import {
   FAST_PADDLING_MPH,
   SLOW_PADDLING_MPH,
 } from "@yakquest/shared";
+import { PointDetailsModal } from "../src/features/trip-planning/components/PointDetailsModal";
 
 export default function PlanTrip() {
   const mapRef = useRef<MapView | null>(null);
   const router = useRouter();
+
+  const [selectedPointDetails, setSelectedPointDetails] = useState<RiverPoint | null>(null);
 
   const [rivers, setRivers] = useState<River[]>([]);
   const [riversLoading, setRiversLoading] = useState(true);
@@ -265,34 +268,7 @@ export default function PlanTrip() {
       .filter(Boolean)
       .join("\n");
 
-    Alert.alert(
-      point.name,
-      point.description
-        ? `${alertText}\n\n${point.description}`
-        : alertText,
-      [
-        { text: "Close", style: "cancel" },
-        {
-          text: "Add Photo",
-          onPress: () =>
-            submitPointPhotoContribution({
-              riverId: selectedRiver.id,
-              riverName: selectedRiver.name,
-              state: selectedRiver.state,
-              pointId: point.id,
-              pointName: point.name,
-            }),
-        },
-        {
-          text: "Suggest Removal",
-          style: "destructive",
-          onPress: () =>
-            router.push(
-              `/contribute?mode=remove-existing-point&riverId=${selectedRiver.id}&pointId=${point.id}&pointName=${encodeURIComponent(point.name)}`
-            ),
-        },
-      ]
-    );
+    setSelectedPointDetails(point);
   };
 
   const { completedTripId } = useLocalSearchParams<{
@@ -689,6 +665,21 @@ export default function PlanTrip() {
           }}
         />
       )}
+      <PointDetailsModal
+        visible={!!selectedPointDetails}
+        point={selectedPointDetails}
+        river={selectedRiver}
+        onClose={() => setSelectedPointDetails(null)}
+        onSuggestRemoval={() => {
+          if (!selectedPointDetails || !selectedRiver) return;
+
+          router.push(
+            `/contribute?mode=remove-existing-point&riverId=${selectedRiver.id}&pointId=${selectedPointDetails.id}&pointName=${encodeURIComponent(selectedPointDetails.name)}`
+          );
+
+          setSelectedPointDetails(null);
+        }}
+      />
     </View>
   );
 }

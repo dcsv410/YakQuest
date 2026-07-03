@@ -31,6 +31,7 @@ import { useApprovedRemovalPointIds } from "../src/features/contribute/hooks/use
 import SafetyStartScreen from "../src/features/trip-planning/components/SafetyStartScreen";
 import { FEET_PER_MILE, getAverageSpeedMph, getAllRiverPoints } from "@yakquest/shared";
 import { submitPointPhotoContribution } from "../src/features/contribute/submitPointPhotoContribution";
+import { PointDetailsModal } from "../src/features/trip-planning/components/PointDetailsModal";
 
 const POINT_ALERT_DISTANCE_FEET = 100;
 
@@ -103,6 +104,7 @@ export default function NavigateScreen() {
   const [selectedRiver, setSelectedRiver] = useState<River | null>(null);
   const { localPoints } = useLocalContributionPoints(selectedRiver?.id);
   const { removedPointIds } = useApprovedRemovalPointIds();
+  const [selectedPointDetails, setSelectedPointDetails] = useState<RiverPoint | null>(null);
 
   const visibleLocalPoints = localPoints.filter(
     (point) => !removedPointIds.includes(point.id)
@@ -149,40 +151,7 @@ export default function NavigateScreen() {
       point
     );  
 
-    Alert.alert(
-      point.name,
-      [
-        getPointTypeLabel(point.type),
-        pointDistance != null
-          ? `Distance: ${formatDistance(pointDistance)}`
-          : "This point appears to be behind you.",
-        point.description ? `\n${point.description}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      [
-        { text: "Close", style: "cancel" },
-        {
-          text: "Add Photo",
-          onPress: () =>
-            submitPointPhotoContribution({
-              riverId: selectedRiver.id,
-              riverName: selectedRiver.name,
-              state: selectedRiver.state,
-              pointId: point.id,
-              pointName: point.name,
-            }),
-        },
-        {
-          text: "Suggest Removal",
-          style: "destructive",
-          onPress: () =>
-            router.push(
-              `/contribute?mode=remove-existing-point&riverId=${selectedRiver.id}&pointId=${point.id}&pointName=${encodeURIComponent(point.name)}`
-            ),
-        },
-      ]
-    );
+    setSelectedPointDetails(point);
   };
 
   const recenterOnUser = () => {
@@ -427,6 +396,21 @@ export default function NavigateScreen() {
           setShowSafetyStart(false);
           setLiveNavigationEnabled(true);
           recenterOnUser();
+        }}
+      />
+      <PointDetailsModal
+        visible={!!selectedPointDetails}
+        point={selectedPointDetails}
+        river={selectedRiver}
+        onClose={() => setSelectedPointDetails(null)}
+        onSuggestRemoval={() => {
+          if (!selectedPointDetails || !selectedRiver) return;
+
+          router.push(
+            `/contribute?mode=remove-existing-point&riverId=${selectedRiver.id}&pointId=${selectedPointDetails.id}&pointName=${encodeURIComponent(selectedPointDetails.name)}`
+          );
+
+          setSelectedPointDetails(null);
         }}
       />
     </View>
