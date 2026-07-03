@@ -5,6 +5,7 @@ from geoalchemy2.shape import from_shape
 from geoalchemy2.elements import WKTElement
 from shapely.geometry import Point
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.database import get_db
 from app.models import Contribution, Review, River, RiverPoint, User, CompletedTrip, SavedTrip
@@ -168,7 +169,10 @@ def add_photo_to_point(
     if not river_point:
         raise HTTPException(status_code=404, detail="Target point not found")
 
-    photos = river_point.photos or []
+    photos = list(river_point.photos or [])
+
+    if contribution.photo_uri in photos:
+        return
 
     if len(photos) >= 3:
         raise HTTPException(
@@ -177,7 +181,9 @@ def add_photo_to_point(
         )
 
     photos.append(contribution.photo_uri)
+
     river_point.photos = photos
+    flag_modified(river_point, "photos")
 
 
 @router.post("/contributions/{contribution_id}/approve", response_model=ContributionOut)
