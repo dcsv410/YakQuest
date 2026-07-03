@@ -78,7 +78,7 @@ class Contribution(Base):
     target_point_id = Column(UUID(as_uuid=True), nullable=True)
     target_point_name = Column(String(255), nullable=True)
     removal_reason = Column(Text, nullable=True)
-    photo_uri = Column(String(1000), nullable=True)
+    photo_uri = Column(Text, nullable=True)
     photo_caption = Column(Text, nullable=True)
 
 class Review(Base):

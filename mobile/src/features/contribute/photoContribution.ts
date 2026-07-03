@@ -16,7 +16,7 @@ export async function pickContributionPhoto(): Promise<string | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
     allowsEditing: true,
-    quality: 0.45,
+    quality: 0.25,
     base64: true,
   });
 

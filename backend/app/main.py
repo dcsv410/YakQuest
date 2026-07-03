@@ -21,6 +21,11 @@ with engine.begin() as conn:
         ADD COLUMN IF NOT EXISTS photo_caption TEXT
     """))
 
+    conn.execute(text("""
+        ALTER TABLE contributions
+        ALTER COLUMN photo_uri TYPE TEXT
+    """))
+
 app = FastAPI(
     title="YakQuest API",
     version="0.1.0",
