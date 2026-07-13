@@ -1111,57 +1111,6 @@ export default function AdminRiverEditorPage() {
                         </button>
                       </div>
                     ))}
-                    {photoViewerIndex !== null && (
-                      <div
-                        className="photo-viewer-overlay"
-                        onClick={() => setPhotoViewerIndex(null)}
-                      >
-                        <div
-                          className="photo-viewer-content"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            className="photo-viewer-close"
-                            onClick={() => setPhotoViewerIndex(null)}
-                          >
-                            ✕
-                          </button>
-
-                          {editingPointPhotos.length > 1 && (
-                            <button
-                              className="photo-viewer-prev"
-                              onClick={() =>
-                                setPhotoViewerIndex(
-                                  (photoViewerIndex - 1 + editingPointPhotos.length) %
-                                    editingPointPhotos.length
-                                )
-                              }
-                            >
-                              ◀
-                            </button>
-                          )}
-
-                          <img
-                            src={editingPointPhotos[photoViewerIndex]}
-                            className="photo-viewer-image"
-                            alt=""
-                          />
-
-                          {editingPointPhotos.length > 1 && (
-                            <button
-                              className="photo-viewer-next"
-                              onClick={() =>
-                                setPhotoViewerIndex(
-                                  (photoViewerIndex + 1) % editingPointPhotos.length
-                                )
-                              }
-                            >
-                              ▶
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <p className="muted">No approved photos for this point.</p>
@@ -1713,6 +1662,80 @@ export default function AdminRiverEditorPage() {
           </MapContainer>
         </div>
       </div>
+      {photoViewerIndex !== null &&
+        editingPointPhotos[photoViewerIndex] && (
+          <div
+            className="admin-photo-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Point photo viewer"
+            onClick={() => setPhotoViewerIndex(null)}
+          >
+            <div
+              className="admin-photo-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="admin-photo-modal-header">
+                <span>
+                  Photo {photoViewerIndex + 1} of {editingPointPhotos.length}
+                </span>
+
+                <button
+                  type="button"
+                  className="admin-photo-modal-close"
+                  onClick={() => setPhotoViewerIndex(null)}
+                  aria-label="Close photo viewer"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="admin-photo-modal-image-area">
+                <img
+                  src={editingPointPhotos[photoViewerIndex]}
+                  alt={`${editingPoint?.name ?? "Point"} photo ${
+                    photoViewerIndex + 1
+                  }`}
+                  className="admin-photo-modal-image"
+                />
+              </div>
+
+              {editingPointPhotos.length > 1 && (
+                <div className="admin-photo-modal-controls">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPhotoViewerIndex((current) => {
+                        if (current === null) return null;
+
+                        return (
+                          current -
+                          1 +
+                          editingPointPhotos.length
+                        ) % editingPointPhotos.length;
+                      })
+                    }
+                  >
+                    ← Previous
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPhotoViewerIndex((current) => {
+                        if (current === null) return null;
+
+                        return (current + 1) % editingPointPhotos.length;
+                      })
+                    }
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
     </section>
   );
 }

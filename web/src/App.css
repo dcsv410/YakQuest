@@ -669,48 +669,106 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.photo-viewer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-
-.photo-viewer-content {
-  position: relative;
-}
-
-.photo-viewer-image {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
-  border-radius: 8px;
-}
-
-.photo-viewer-close {
-  position: absolute;
-  top: -45px;
-  right: 0;
-}
-
-.photo-viewer-prev,
-.photo-viewer-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.photo-viewer-prev {
-  left: -60px;
-}
-
-.photo-viewer-next {
-  right: -60px;
+.admin-point-photo-thumbnail-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
 }
 
 .admin-point-photo-thumbnail {
-  cursor: zoom-in;
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.admin-photo-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.admin-photo-modal {
+  width: min(800px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.admin-photo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 16px;
+  border-bottom: 1px solid #d9dee5;
+  font-weight: 600;
+}
+
+.admin-photo-modal-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+  background: #eef1f4;
+  color: #1f2933;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-photo-modal-image-area {
+  min-height: 0;
+  padding: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  background: #111820;
+}
+
+.admin-photo-modal-image {
+  display: block;
+
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(65vh, 650px);
+
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.admin-photo-modal-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 16px;
+  border-top: 1px solid #d9dee5;
 }
