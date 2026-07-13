@@ -1111,6 +1111,57 @@ export default function AdminRiverEditorPage() {
                         </button>
                       </div>
                     ))}
+                    {photoViewerIndex !== null && (
+                      <div
+                        className="photo-viewer-overlay"
+                        onClick={() => setPhotoViewerIndex(null)}
+                      >
+                        <div
+                          className="photo-viewer-content"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="photo-viewer-close"
+                            onClick={() => setPhotoViewerIndex(null)}
+                          >
+                            ✕
+                          </button>
+
+                          {editingPointPhotos.length > 1 && (
+                            <button
+                              className="photo-viewer-prev"
+                              onClick={() =>
+                                setPhotoViewerIndex(
+                                  (photoViewerIndex - 1 + editingPointPhotos.length) %
+                                    editingPointPhotos.length
+                                )
+                              }
+                            >
+                              ◀
+                            </button>
+                          )}
+
+                          <img
+                            src={editingPointPhotos[photoViewerIndex]}
+                            className="photo-viewer-image"
+                            alt=""
+                          />
+
+                          {editingPointPhotos.length > 1 && (
+                            <button
+                              className="photo-viewer-next"
+                              onClick={() =>
+                                setPhotoViewerIndex(
+                                  (photoViewerIndex + 1) % editingPointPhotos.length
+                                )
+                              }
+                            >
+                              ▶
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="muted">No approved photos for this point.</p>
@@ -1660,57 +1711,6 @@ export default function AdminRiverEditorPage() {
               </Marker>
             ) : null}
           </MapContainer>
-          {photoViewerIndex !== null && (
-            <div
-              className="photo-viewer-overlay"
-              onClick={() => setPhotoViewerIndex(null)}
-            >
-              <div
-                className="photo-viewer-content"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="photo-viewer-close"
-                  onClick={() => setPhotoViewerIndex(null)}
-                >
-                  ✕
-                </button>
-
-                {editingPointPhotos.length > 1 && (
-                  <button
-                    className="photo-viewer-prev"
-                    onClick={() =>
-                      setPhotoViewerIndex(
-                        (photoViewerIndex - 1 + editingPointPhotos.length) %
-                          editingPointPhotos.length
-                      )
-                    }
-                  >
-                    ◀
-                  </button>
-                )}
-
-                <img
-                  src={editingPointPhotos[photoViewerIndex]}
-                  className="photo-viewer-image"
-                  alt=""
-                />
-
-                {editingPointPhotos.length > 1 && (
-                  <button
-                    className="photo-viewer-next"
-                    onClick={() =>
-                      setPhotoViewerIndex(
-                        (photoViewerIndex + 1) % editingPointPhotos.length
-                      )
-                    }
-                  >
-                    ▶
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>
