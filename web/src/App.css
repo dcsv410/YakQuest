@@ -700,8 +700,8 @@
 }
 
 .admin-photo-modal {
-  width: min(800px, calc(100vw - 48px));
-  max-height: calc(100vh - 48px);
+  width: 700px;
+  height: 600px;
 
   display: flex;
   flex-direction: column;
@@ -743,11 +743,13 @@
 .admin-photo-modal-image-area {
   min-height: 0;
   padding: 16px;
+  flex: 1;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
+  padding: 20px;
   overflow: hidden;
   background: #111820;
 }
@@ -757,8 +759,8 @@
 
   width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: min(65vh, 650px);
+  max-width: 90%;
+  max-height: 85%;
 
   object-fit: contain;
   border-radius: 6px;
