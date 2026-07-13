@@ -129,6 +129,7 @@ export default function AdminRiverEditorPage() {
   const [saving, setSaving] = useState(false);
   const editPointRef = useRef<HTMLDivElement | null>(null);
   const addPointRef = useRef<HTMLDivElement | null>(null);
+  const [photoViewerIndex, setPhotoViewerIndex] = useState<number | null>(null);
 
   const { data: rivers = [], isLoading, error } = useQuery({
     queryKey: ["rivers"],
@@ -1078,20 +1079,6 @@ export default function AdminRiverEditorPage() {
                 />
               </label>
 
-              <pre style={{ whiteSpace: "pre-wrap", fontSize: "12px" }}>
-                {JSON.stringify(
-                  {
-                    editingPointId: editingPoint.id,
-                    editingPointPhotos: editingPoint.photos,
-                    adminPoint: adminRiver?.points.find(
-                      (point) => point.id === editingPoint.id
-                    ),
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-
               <div className="admin-point-photo-section">
                 <div className="admin-section-title-row">
                   <h3>Point Photos</h3>
@@ -1108,21 +1095,12 @@ export default function AdminRiverEditorPage() {
                         key={`${editingPoint.id}-photo-${index}`}
                         className="admin-point-photo-card"
                       >
-                        <a
-                          href={photo}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="admin-point-photo-link"
-                        >
-                          <img
-                            src={photo}
-                            alt={`${editingPoint.name} photo ${index + 1}`}
-                            onError={(event) => {
-                              console.error("Point photo failed to load:", photo);
-                              event.currentTarget.style.display = "none";
-                            }}
-                          />
-                        </a>
+                        <img
+                          src={photo}
+                          alt={`${editingPoint.name} photo ${index + 1}`}
+                          className="admin-point-photo-thumbnail"
+                          onClick={() => setPhotoViewerIndex(index)}
+                        />
 
                         <button
                           type="button"
@@ -1682,6 +1660,57 @@ export default function AdminRiverEditorPage() {
               </Marker>
             ) : null}
           </MapContainer>
+          {photoViewerIndex !== null && (
+            <div
+              className="photo-viewer-overlay"
+              onClick={() => setPhotoViewerIndex(null)}
+            >
+              <div
+                className="photo-viewer-content"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="photo-viewer-close"
+                  onClick={() => setPhotoViewerIndex(null)}
+                >
+                  ✕
+                </button>
+
+                {editingPointPhotos.length > 1 && (
+                  <button
+                    className="photo-viewer-prev"
+                    onClick={() =>
+                      setPhotoViewerIndex(
+                        (photoViewerIndex - 1 + editingPointPhotos.length) %
+                          editingPointPhotos.length
+                      )
+                    }
+                  >
+                    ◀
+                  </button>
+                )}
+
+                <img
+                  src={editingPointPhotos[photoViewerIndex]}
+                  className="photo-viewer-image"
+                  alt=""
+                />
+
+                {editingPointPhotos.length > 1 && (
+                  <button
+                    className="photo-viewer-next"
+                    onClick={() =>
+                      setPhotoViewerIndex(
+                        (photoViewerIndex + 1) % editingPointPhotos.length
+                      )
+                    }
+                  >
+                    ▶
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

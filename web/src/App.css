@@ -668,3 +668,49 @@
   margin-top: 8px;
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
+
+.photo-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.photo-viewer-content {
+  position: relative;
+}
+
+.photo-viewer-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.photo-viewer-close {
+  position: absolute;
+  top: -45px;
+  right: 0;
+}
+
+.photo-viewer-prev,
+.photo-viewer-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.photo-viewer-prev {
+  left: -60px;
+}
+
+.photo-viewer-next {
+  right: -60px;
+}
+
+.admin-point-photo-thumbnail {
+  cursor: zoom-in;
+}
