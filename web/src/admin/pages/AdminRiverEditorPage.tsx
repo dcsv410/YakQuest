@@ -194,6 +194,13 @@ export default function AdminRiverEditorPage() {
     phone: "",
   });
 
+  const editingAdminPoint = editingPoint
+    ? adminRiver?.points.find((point) => point.id === editingPoint.id)
+    : undefined;
+
+  const editingPointPhotos =
+    editingAdminPoint?.photos ?? editingPoint?.photos ?? [];
+
   const [markerFilters, setMarkerFilters] = useState({
     access: true,
     poi: true,
@@ -312,26 +319,28 @@ export default function AdminRiverEditorPage() {
     if (!confirmed) return;
 
     try {
-      await deleteRiverPointPhoto(editingPoint.id, photoIndex);
-
-      await queryClient.invalidateQueries({
-        queryKey: ["rivers"],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: ["adminRiver", riverId],
-      });
+      const result = await deleteRiverPointPhoto(
+        editingPoint.id,
+        photoIndex
+      );
 
       setEditingPoint((current) => {
         if (!current) return current;
 
         return {
           ...current,
-          photos: (current.photos ?? []).filter(
-            (_, index) => index !== photoIndex
-          ),
+          photos: result.photos,
         };
       });
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["rivers"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["adminRiver", riverId],
+        }),
+      ]);
 
       alert("Photo removed.");
     } catch (error) {
@@ -1086,14 +1095,15 @@ export default function AdminRiverEditorPage() {
               <div className="admin-point-photo-section">
                 <div className="admin-section-title-row">
                   <h3>Point Photos</h3>
+
                   <span className="muted">
-                    {(editingPoint.photos ?? []).length} / 3
+                    {editingPointPhotos.length} / 3
                   </span>
                 </div>
 
-                {(editingPoint.photos ?? []).length ? (
+                {editingPointPhotos.length > 0 ? (
                   <div className="admin-point-photo-grid">
-                    {(editingPoint.photos ?? []).map((photo, index) => (
+                    {editingPointPhotos.map((photo, index) => (
                       <div
                         key={`${editingPoint.id}-photo-${index}`}
                         className="admin-point-photo-card"
@@ -1107,6 +1117,10 @@ export default function AdminRiverEditorPage() {
                           <img
                             src={photo}
                             alt={`${editingPoint.name} photo ${index + 1}`}
+                            onError={(event) => {
+                              console.error("Point photo failed to load:", photo);
+                              event.currentTarget.style.display = "none";
+                            }}
                           />
                         </a>
 
