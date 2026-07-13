@@ -93,11 +93,7 @@ export const rejectContribution = async (
 };
 
 export const getReviewableContributions = async () => {
-  try {
-    await syncContributionStatusesFromBackend();
-  } catch (error) {
-    console.error("Failed to sync contribution statuses", error);
-  }
+  await syncContributionStatusesFromBackend();
 
   const contributions = await getContributions();
 
@@ -249,38 +245,55 @@ export const submitContributionForReview = async (
   }
 };
 
+// export const syncContributionStatusesFromBackend = async () => {
+//   const localContributions = await getContributions();
+
+//   const res = await fetch(`${API_URL}/admin/contributions`);
+
+//   if (!res.ok) {
+//     throw new Error("Failed to fetch backend contributions");
+//   }
+
+//   const backendContributions = await res.json();
+
+//   const updated = localContributions.map((local) => {
+//     if (!local.backendId) return local;
+
+//     const backend = backendContributions.find(
+//       (item: any) => item.id === local.backendId
+//     );
+
+//     if (!backend) return local;
+
+//     return {
+//       ...local,
+//       status: backend.status,
+//       reviewedAt:
+//         backend.status === "approved" || backend.status === "rejected"
+//           ? backend.reviewed_at ?? new Date().toISOString()
+//           : local.reviewedAt,
+//       updatedAt: new Date().toISOString(),
+//     };
+//   });
+
+//   await AsyncStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(updated));
+// };
+
 export const syncContributionStatusesFromBackend = async () => {
   const localContributions = await getContributions();
 
-  const res = await fetch(`${API_URL}/admin/contributions`);
+  const submittedContributions = localContributions.filter(
+    (contribution) => contribution.backendId
+  );
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch backend contributions");
+  // Nothing has reached the backend yet, so there is nothing to synchronize.
+  if (submittedContributions.length === 0) {
+    return;
   }
 
-  const backendContributions = await res.json();
-
-  const updated = localContributions.map((local) => {
-    if (!local.backendId) return local;
-
-    const backend = backendContributions.find(
-      (item: any) => item.id === local.backendId
-    );
-
-    if (!backend) return local;
-
-    return {
-      ...local,
-      status: backend.status,
-      reviewedAt:
-        backend.status === "approved" || backend.status === "rejected"
-          ? backend.reviewed_at ?? new Date().toISOString()
-          : local.reviewedAt,
-      updatedAt: new Date().toISOString(),
-    };
-  });
-
-  await AsyncStorage.setItem(CONTRIBUTIONS_KEY, JSON.stringify(updated));
+  // Do not call /admin/contributions from the mobile client.
+  // We will replace this with a user-scoped endpoint.
+  return;
 };
 
 export const saveAndSubmitContribution = async (

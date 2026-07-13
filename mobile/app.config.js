@@ -33,6 +33,10 @@ module.exports = {
         foregroundImage: "./images/icon.png",
         backgroundColor: "#EAF7F7",
       },
+      "navigationBar": {
+        "backgroundColor": "#00000000",
+        "barStyle": "light-content"
+      },
       permissions: [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",

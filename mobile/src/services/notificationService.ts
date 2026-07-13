@@ -34,8 +34,6 @@ export const setupNavigationNotifications = async () => {
       ? existing
       : await Notifications.requestPermissionsAsync();
 
-  console.log("Notification permission:", permission.status);
-
   return permission.status === "granted";
 };
 

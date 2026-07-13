@@ -129,9 +129,10 @@ const styles = {
     maxHeight: "75%" as const,
     backgroundColor: "#172033",
     padding: 18,
+    paddingBottom: 42,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-  },
+    },
   title: {
     color: "white",
     fontSize: 20,
@@ -188,22 +189,22 @@ const styles = {
     right: 0,
     zIndex: 10,
     padding: 8,
-    },
-    closeIconText: {
+  },
+  closeIconText: {
     color: "white",
     fontSize: 22,
     fontWeight: "700" as const,
-    },
-    fullImageBackdrop: {
+  },
+  fullImageBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.92)",
     justifyContent: "center" as const,
     alignItems: "center" as const,
     padding: 16,
-    },
-
-    fullImage: {
+    paddingBottom: 48,
+  },
+  fullImage: {
     width: "100%" as const,
     height: "85%" as const,
-    },
+  },
 };

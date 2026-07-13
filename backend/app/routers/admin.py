@@ -398,6 +398,48 @@ def update_river_point(
     }
 
 
+@router.delete("/river-points/{point_id}/photos/{photo_index}")
+def delete_river_point_photo(
+    point_id: str,
+    photo_index: int,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    point = (
+        db.query(RiverPoint)
+        .filter(RiverPoint.id == point_id)
+        .first()
+    )
+
+    if not point:
+        raise HTTPException(
+            status_code=404,
+            detail="River point not found",
+        )
+
+    photos = list(point.photos or [])
+
+    if photo_index < 0 or photo_index >= len(photos):
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not found",
+        )
+
+    removed_photo = photos.pop(photo_index)
+
+    point.photos = photos
+    flag_modified(point, "photos")
+
+    db.commit()
+    db.refresh(point)
+
+    return {
+        "id": str(point.id),
+        "photos": point.photos or [],
+        "removedPhoto": removed_photo,
+    }
+
+
 @router.post("/rivers/{river_id}/points")
 def create_river_point(
     river_id: str,

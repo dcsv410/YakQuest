@@ -1,6 +1,7 @@
 import { Alert } from "react-native";
 import { pickContributionPhoto } from "./photoContribution";
 import { saveAndSubmitContribution } from "../../services/contributionService";
+import { getCurrentUser } from "../../services/authService";
 
 type SubmitPointPhotoContributionArgs = {
   riverId: string;
@@ -17,6 +18,15 @@ export async function submitPointPhotoContribution({
   pointId,
   pointName,
 }: SubmitPointPhotoContributionArgs) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    Alert.alert(
+      "Login Required",
+      "Please sign in before uploading photos."
+    );
+    return;
+  }
   const photoUri = await pickContributionPhoto();
 
   if (!photoUri) return;
