@@ -209,22 +209,23 @@ export default function AdminRiverEditorPage() {
   }
 
   function startEditingPoint(point: RiverPoint) {
-    const adminPoint =
-      adminRiver?.points.find((candidate) => candidate.id === point.id) ?? point;
+    const pointWithAdminData =
+      adminRiver?.points.find((adminPoint) => adminPoint.id === point.id) ??
+      point;
 
-    setEditingPoint(adminPoint);
+    setEditingPoint(pointWithAdminData);
 
     setPointEditForm({
-      name: adminPoint.name,
-      type: adminPoint.type,
-      description: adminPoint.description ?? "",
-      latitude: adminPoint.latitude.toFixed(6),
-      longitude: adminPoint.longitude.toFixed(6),
-      parking: !!adminPoint.parking,
-      restroom: !!adminPoint.restroom,
-      camping: !!adminPoint.camping,
-      website: adminPoint.website ?? "",
-      phone: adminPoint.phone ?? "",
+      name: pointWithAdminData.name,
+      type: pointWithAdminData.type,
+      description: pointWithAdminData.description ?? "",
+      latitude: pointWithAdminData.latitude.toFixed(6),
+      longitude: pointWithAdminData.longitude.toFixed(6),
+      parking: !!pointWithAdminData.parking,
+      restroom: !!pointWithAdminData.restroom,
+      camping: !!pointWithAdminData.camping,
+      website: pointWithAdminData.website ?? "",
+      phone: pointWithAdminData.phone ?? "",
     });
 
     setTimeout(() => {
@@ -234,6 +235,26 @@ export default function AdminRiverEditorPage() {
       });
     }, 50);
   }
+
+  useEffect(() => {
+    if (!editingPoint || !adminRiver) return;
+
+    const refreshedPoint = adminRiver.points.find(
+      (point) => point.id === editingPoint.id
+    );
+
+    if (!refreshedPoint) return;
+
+    setEditingPoint((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        ...refreshedPoint,
+        photos: refreshedPoint.photos ?? [],
+      };
+    });
+  }, [adminRiver, editingPoint?.id]);
 
   function updatePointEdit<K extends keyof typeof pointEditForm>(
     key: K,
@@ -1047,6 +1068,20 @@ export default function AdminRiverEditorPage() {
                   }
                 />
               </label>
+
+              <pre style={{ whiteSpace: "pre-wrap", fontSize: "12px" }}>
+                {JSON.stringify(
+                  {
+                    editingPointId: editingPoint.id,
+                    editingPointPhotos: editingPoint.photos,
+                    adminPoint: adminRiver?.points.find(
+                      (point) => point.id === editingPoint.id
+                    ),
+                  },
+                  null,
+                  2
+                )}
+              </pre>
 
               <div className="admin-point-photo-section">
                 <div className="admin-section-title-row">
