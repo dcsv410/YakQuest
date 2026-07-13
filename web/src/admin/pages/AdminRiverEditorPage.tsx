@@ -20,6 +20,7 @@ import {
   updateOutfitter,
   updateRiver,
   updateRiverPoint,
+  deleteRiverPointPhoto,
 } from "../../services/riverService";
 import type {
   AdminRiverPointDTO,
@@ -273,6 +274,44 @@ export default function AdminRiverEditorPage() {
     } catch (error) {
       console.error(error);
       alert("Failed to update point.");
+    }
+  }
+
+  async function removePointPhoto(photoIndex: number) {
+    if (!editingPoint) return;
+
+    const confirmed = window.confirm(
+      "Remove this photo from the point? This cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteRiverPointPhoto(editingPoint.id, photoIndex);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["adminRiver", riverId],
+      });
+
+      setEditingPoint((current) => {
+        if (!current) return current;
+
+        return {
+          ...current,
+          photos: (current.photos ?? []).filter(
+            (_, index) => index !== photoIndex
+          ),
+        };
+      });
+
+      alert("Photo removed.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to remove photo.");
     }
   }
 
@@ -1004,6 +1043,48 @@ export default function AdminRiverEditorPage() {
                   }
                 />
               </label>
+
+              <div className="admin-point-photo-section">
+                <div className="admin-section-title-row">
+                  <h3>Point Photos</h3>
+                  <span className="muted">
+                    {(editingPoint.photos ?? []).length} / 3
+                  </span>
+                </div>
+
+                {(editingPoint.photos ?? []).length ? (
+                  <div className="admin-point-photo-grid">
+                    {(editingPoint.photos ?? []).map((photo, index) => (
+                      <div
+                        key={`${editingPoint.id}-photo-${index}`}
+                        className="admin-point-photo-card"
+                      >
+                        <a
+                          href={photo}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="admin-point-photo-link"
+                        >
+                          <img
+                            src={photo}
+                            alt={`${editingPoint.name} photo ${index + 1}`}
+                          />
+                        </a>
+
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() => removePointPhoto(index)}
+                        >
+                          Remove Photo
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted">No approved photos for this point.</p>
+                )}
+              </div>
 
               <div className="admin-checkbox-row">
                 <label>

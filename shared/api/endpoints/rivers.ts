@@ -104,4 +104,20 @@ export const riversApi = {
       payload
     );
   },
+
+  deletePointPhoto(
+    client: ApiClient,
+    pointId: string,
+    photoIndex: number
+  ): Promise<{
+    id: string;
+    photos: string[];
+    removedPhoto: string;
+  }> {
+    return client.delete<{
+      id: string;
+      photos: string[];
+      removedPhoto: string;
+    }>(`/admin/river-points/${pointId}/photos/${photoIndex}`);
+  },
 };

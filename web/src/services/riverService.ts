@@ -45,3 +45,8 @@ export const updateOutfitter = (
   outfitterId: string,
   payload: UpdateOutfitterRequestDTO
 ) => riversApi.updateOutfitter(apiClient, outfitterId, payload);
+
+export const deleteRiverPointPhoto = (
+  pointId: string,
+  photoIndex: number
+) => riversApi.deletePointPhoto(apiClient, pointId, photoIndex);

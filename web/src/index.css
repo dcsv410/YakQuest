@@ -989,6 +989,43 @@ h1 {
   min-height: 0;
 }
 
+.admin-point-photo-section {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-point-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.admin-point-photo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-point-photo-link {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-point-photo-card img {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.admin-point-photo-card .danger-button {
+  width: 100%;
+}
+
 .admin-point-row {
   display: flex;
   align-items: center;
