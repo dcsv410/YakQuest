@@ -209,18 +209,22 @@ export default function AdminRiverEditorPage() {
   }
 
   function startEditingPoint(point: RiverPoint) {
-    setEditingPoint(point);
+    const adminPoint =
+      adminRiver?.points.find((candidate) => candidate.id === point.id) ?? point;
+
+    setEditingPoint(adminPoint);
+
     setPointEditForm({
-      name: point.name,
-      type: point.type,
-      description: point.description ?? "",
-      latitude: point.latitude.toFixed(6),
-      longitude: point.longitude.toFixed(6),
-      parking: !!point.parking,
-      restroom: !!point.restroom,
-      camping: !!point.camping,
-      website: point.website ?? "",
-      phone: point.phone ?? "",
+      name: adminPoint.name,
+      type: adminPoint.type,
+      description: adminPoint.description ?? "",
+      latitude: adminPoint.latitude.toFixed(6),
+      longitude: adminPoint.longitude.toFixed(6),
+      parking: !!adminPoint.parking,
+      restroom: !!adminPoint.restroom,
+      camping: !!adminPoint.camping,
+      website: adminPoint.website ?? "",
+      phone: adminPoint.phone ?? "",
     });
 
     setTimeout(() => {
