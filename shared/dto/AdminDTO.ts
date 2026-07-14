@@ -13,6 +13,7 @@ export type AdminUserDTO = {
   trustScore: number;
   approvedContributions: number;
   rejectedContributions: number;
+  approvalRate?: number | null;
 };
 
 export type AdminUserUpdateDTO = {

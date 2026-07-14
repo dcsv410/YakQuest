@@ -724,30 +724,63 @@ def list_admin_users(
             Contribution.user_id == User.id,
         )
         .group_by(User.id)
-        .order_by(User.email)
+        .order_by(
+            User.trust_score.desc(),
+            User.is_admin.desc(),
+            User.email.asc(),
+        )
         .all()
     )
 
-    return [
-        {
-            "id": str(user.id),
-            "email": user.email,
-            "displayName": user.display_name,
-            "isAdmin": user.is_admin,
-            "trustScore": user.trust_score,
-            "approvedContributions": int(
-                approved_contributions
-            ),
-            "rejectedContributions": int(
-                rejected_contributions
-            ),
-        }
-        for (
-            user,
-            approved_contributions,
-            rejected_contributions,
-        ) in user_rows
-    ]
+    users = []
+
+    for (
+        user,
+        approved_contributions,
+        rejected_contributions,
+    ) in user_rows:
+        approved_count = int(
+            approved_contributions
+        )
+
+        rejected_count = int(
+            rejected_contributions
+        )
+
+        total_reviewed = (
+            approved_count + rejected_count
+        )
+
+        approval_rate = (
+            round(
+                approved_count
+                / total_reviewed
+                * 100,
+                1,
+            )
+            if total_reviewed > 0
+            else None
+        )
+
+        users.append(
+            {
+                "id": str(user.id),
+                "email": user.email,
+                "displayName":
+                    user.display_name,
+                "isAdmin": user.is_admin,
+                "trustScore":
+                    user.trust_score,
+                "approvedContributions":
+                    approved_count,
+                "rejectedContributions":
+                    rejected_count,
+                "approvalRate":
+                    approval_rate,
+            }
+        )
+
+    return users
 
 
 @router.patch("/users/{user_id}")

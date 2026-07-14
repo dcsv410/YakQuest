@@ -272,9 +272,10 @@ export default function AdminUsersPage() {
               <th>Email</th>
               <th>Name</th>
               <th>Admin</th>
+              <th>Trust Score</th>
+              <th>Approval</th>
               <th>Approved</th>
               <th>Rejected</th>
-              <th>Trust Score</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -337,18 +338,6 @@ export default function AdminUsersPage() {
                     </label>
                   </td>
 
-                  <td data-label="Approved">
-                    <span className="admin-user-contribution-count admin-user-contribution-count-approved">
-                      {user.approvedContributions}
-                    </span>
-                  </td>
-
-                  <td data-label="Rejected">
-                    <span className="admin-user-contribution-count admin-user-contribution-count-rejected">
-                      {user.rejectedContributions}
-                    </span>
-                  </td>
-
                   <td data-label="Trust Score">
                     <input
                       className="admin-user-trust-input"
@@ -375,6 +364,47 @@ export default function AdminUsersPage() {
                       }
                       aria-label={`Trust score for ${user.email}`}
                     />
+                  </td>
+
+                  <td data-label="Approval">
+                    {user.approvalRate == null ? (
+                      <span className="admin-user-no-history">
+                        —
+                      </span>
+                    ) : (
+                      <div className="admin-user-approval">
+                        <span
+                          className={[
+                            "admin-user-approval-rate",
+                            user.approvalRate >= 90
+                              ? "admin-user-approval-rate-good"
+                              : user.approvalRate >= 70
+                                ? "admin-user-approval-rate-medium"
+                                : "admin-user-approval-rate-poor",
+                          ].join(" ")}
+                        >
+                          {user.approvalRate.toFixed(1)}%
+                        </span>
+
+                        <span className="admin-user-approval-detail">
+                          {user.approvedContributions} /{" "}
+                          {user.approvedContributions +
+                            user.rejectedContributions}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+
+                  <td data-label="Approved">
+                    <span className="admin-user-contribution-count admin-user-contribution-count-approved">
+                      {user.approvedContributions}
+                    </span>
+                  </td>
+
+                  <td data-label="Rejected">
+                    <span className="admin-user-contribution-count admin-user-contribution-count-rejected">
+                      {user.rejectedContributions}
+                    </span>
                   </td>
 
                   <td data-label="Actions">
@@ -417,7 +447,7 @@ export default function AdminUsersPage() {
             {users.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="admin-users-empty"
                 >
                   No users were found.

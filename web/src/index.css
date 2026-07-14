@@ -1967,6 +1967,42 @@ h1 {
   color: #9b3030;
 }
 
+.admin-user-approval {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.admin-user-approval-rate {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-user-approval-rate-good {
+  color: #237247;
+}
+
+.admin-user-approval-rate-medium {
+  color: #a86700;
+}
+
+.admin-user-approval-rate-poor {
+  color: #a92e2e;
+}
+
+.admin-user-approval-detail {
+  color: #737d85;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-user-no-history {
+  color: #9aa2a8;
+  font-weight: 700;
+}
+
 .admin-users-empty {
   padding: 24px !important;
   color: #6d7780;

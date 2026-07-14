@@ -323,6 +323,7 @@ class AdminUserOut(BaseModel):
     trustScore: int
     approvedContributions: int = 0
     rejectedContributions: int = 0
+    approvalRate: Optional[float] = None
 
 
 class AdminUserUpdate(BaseModel):
