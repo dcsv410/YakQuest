@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Contribution
-from app.schemas import ContributionCreate, ContributionOut
+from app.models import Contribution, User
+from app.schemas import (
+    ContributionCreate,
+    ContributionOut,
+)
+from app.security import get_current_user
 
 router = APIRouter(prefix="/contributions", tags=["contributions"])
 
@@ -23,9 +27,19 @@ def normalize_point_type(point_type: str) -> str:
 
     return POINT_TYPE_MAP[point_type]
 
-@router.post("", response_model=ContributionOut)
-def create_contribution(payload: ContributionCreate, db: Session = Depends(get_db)):
+@router.post(
+    "",
+    response_model=ContributionOut,
+)
+def create_contribution(
+    payload: ContributionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
     contribution = Contribution(
+        user_id=current_user.id,
         kind=payload.kind,
         river_id=payload.riverId,
         river_name=payload.riverName,
@@ -33,7 +47,9 @@ def create_contribution(payload: ContributionCreate, db: Session = Depends(get_d
         points=[
             {
                 **point.model_dump(),
-                "type": normalize_point_type(point.type),
+                "type": normalize_point_type(
+                    point.type
+                ),
             }
             for point in payload.points
         ],

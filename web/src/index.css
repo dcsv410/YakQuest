@@ -1478,6 +1478,101 @@ h1 {
   cursor: pointer;
 }
 
+.admin-contribution-submitter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  margin: 12px 0;
+  padding: 11px 12px;
+
+  border: 1px solid #dce3e7;
+  border-radius: 11px;
+
+  background: #f7f9fa;
+}
+
+.admin-contribution-submitter > div:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-contribution-submitter-label {
+  margin-bottom: 3px;
+
+  color: #6b757d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-contribution-submitter strong {
+  color: #263139;
+  font-size: 14px;
+}
+
+.admin-contribution-submitter-email {
+  margin-top: 2px;
+
+  overflow: hidden;
+  color: #68737b;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-contribution-trust {
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  min-width: 72px;
+  padding: 7px 10px;
+
+  border: 1px solid
+    rgba(28, 167, 166, 0.3);
+  border-radius: 9px;
+
+  background: rgba(28, 167, 166, 0.08);
+}
+
+.admin-contribution-trust span {
+  color: #537078;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-contribution-trust strong {
+  margin-top: 2px;
+  color: #0b7285;
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (max-width: 520px) {
+  .admin-contribution-submitter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-contribution-trust {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .admin-contribution-trust strong {
+    margin-top: 0;
+  }
+}
+
 .site-main:has(.admin-contributions-page) {
   height: calc(100vh - 76px);
   max-width: none;

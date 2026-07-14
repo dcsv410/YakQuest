@@ -18,6 +18,11 @@ export type ContributionResponseDTO = {
   kind: ContributionKind;
   status: ContributionStatus;
 
+  user_id?: string | null;
+  submitter_name?: string | null;
+  submitter_email?: string | null;
+  submitter_trust_score?: number | null;
+
   river_id?: string | null;
   river_name: string;
   state?: string | null;

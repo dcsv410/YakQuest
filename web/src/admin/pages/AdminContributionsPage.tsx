@@ -163,7 +163,39 @@ export default function AdminContributionsPage() {
                 <div>
                   <p className="eyebrow">{contribution.status}</p>
                   <h2>{contribution.river_name}</h2>
-                  <p className="muted">{contribution.kind}</p>
+                  <p className="muted">
+                    {contribution.kind}
+                  </p>
+
+                  <div className="admin-contribution-submitter">
+                    <div>
+                      <span className="admin-contribution-submitter-label">
+                        Submitted by
+                      </span>
+
+                      <strong>
+                        {contribution.submitter_name ??
+                          "Unknown user"}
+                      </strong>
+
+                      {contribution.submitter_email &&
+                      contribution.submitter_email !==
+                        contribution.submitter_name ? (
+                        <span className="admin-contribution-submitter-email">
+                          {contribution.submitter_email}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="admin-contribution-trust">
+                      <span>Trust Score</span>
+
+                      <strong>
+                        {contribution.submitter_trust_score ??
+                          "—"}
+                      </strong>
+                    </div>
+                  </div>
 
                   {contribution.state ? (
                     <p>

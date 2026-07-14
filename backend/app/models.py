@@ -62,24 +62,107 @@ class RiverPoint(Base):
 class Contribution(Base):
     __tablename__ = "contributions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
 
-    kind = Column(String(50), nullable=False)
-    status = Column(String(50), default="pending")
+    kind = Column(
+        String(50),
+        nullable=False,
+    )
 
-    river_id = Column(UUID(as_uuid=True), nullable=True)
-    river_name = Column(String(255), nullable=True)
-    state = Column(String(50), nullable=True)
+    status = Column(
+        String(50),
+        default="pending",
+    )
 
-    points = Column(JSON, default=list)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
 
-    target_point_id = Column(UUID(as_uuid=True), nullable=True)
-    target_point_name = Column(String(255), nullable=True)
-    removal_reason = Column(Text, nullable=True)
-    photo_uri = Column(Text, nullable=True)
-    photo_caption = Column(Text, nullable=True)
+    river_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+
+    river_name = Column(
+        String(255),
+        nullable=True,
+    )
+
+    state = Column(
+        String(50),
+        nullable=True,
+    )
+
+    points = Column(
+        JSON,
+        default=list,
+    )
+
+    target_point_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+
+    target_point_name = Column(
+        String(255),
+        nullable=True,
+    )
+
+    removal_reason = Column(
+        Text,
+        nullable=True,
+    )
+
+    photo_uri = Column(
+        Text,
+        nullable=True,
+    )
+
+    photo_caption = Column(
+        Text,
+        nullable=True,
+    )
+
+    submitter = relationship(
+        "User",
+        foreign_keys=[user_id],
+    )
+
+    @property
+    def submitter_name(self):
+        if not self.submitter:
+            return None
+
+        return (
+            self.submitter.display_name
+            or self.submitter.email
+        )
+
+    @property
+    def submitter_email(self):
+        if not self.submitter:
+            return None
+
+        return self.submitter.email
+
+    @property
+    def submitter_trust_score(self):
+        if not self.submitter:
+            return None
+
+        return self.submitter.trust_score
 
 class Review(Base):
     __tablename__ = "reviews"

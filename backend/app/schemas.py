@@ -70,17 +70,28 @@ class ContributionCreate(BaseModel):
 class ContributionOut(BaseModel):
     id: UUID
     created_at: datetime
+
     kind: str
     status: str
+
+    user_id: UUID | None = None
+    submitter_name: str | None = None
+    submitter_email: str | None = None
+    submitter_trust_score: int | None = None
+
     river_id: UUID | None = None
     river_name: str | None = None
     state: str | None = None
+
     points: list = Field(default_factory=list)
+
     target_point_id: UUID | None = None
     target_point_name: str | None = None
     removal_reason: str | None = None
+
     photo_uri: str | None = None
     photo_caption: str | None = None
+
     class Config:
         from_attributes = True
 
