@@ -218,15 +218,16 @@ export default function AdminContributionsPage() {
                   ) : null}
 
                   {contribution.photo_uri ? (
-                    <div className="admin-photo-preview">
-                      <strong>Photo preview</strong>
+                    <div className="admin-contribution-photo-preview">
                       <img
                         src={contribution.photo_uri}
-                        alt={contribution.photo_caption ?? "Submitted point photo"}
+                        alt={`Submitted photo for ${
+                          contribution.target_point_name ??
+                          contribution.river_name ??
+                          "contribution"
+                        }`}
+                        className="admin-contribution-photo-image"
                       />
-                      {contribution.photo_caption ? (
-                        <p className="muted">{contribution.photo_caption}</p>
-                      ) : null}
                     </div>
                   ) : null}
 

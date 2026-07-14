@@ -1618,6 +1618,32 @@ h1 {
     0 12px 34px rgba(0, 0, 0, 0.08);
 }
 
+.admin-contribution-photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  max-width: 520px;
+  height: 280px;
+
+  margin-top: 12px;
+  overflow: hidden;
+
+  border: 1px solid #d8dfe3;
+  border-radius: 12px;
+  background: #eef2f4;
+}
+
+.admin-contribution-photo-image {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

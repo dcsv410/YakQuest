@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Coordinate, RiverPointType } from "../data/types";
 import { API_URL } from "../config";
+import { getToken } from "./authService";
 
 const CONTRIBUTIONS_KEY = "yakquest:contributions";
 const CONTRIBUTIONS_ENDPOINT = `${API_URL}/contributions`;
@@ -213,34 +214,77 @@ export const submitContributionForReview = async (
   contribution: Contribution
 ): Promise<boolean> => {
   try {
-    const res = await fetch(CONTRIBUTIONS_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(toApiContribution(contribution)),
-    });
+    const token = await getToken();
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Contribution submission failed:", errorText);
+    if (!token) {
+      console.error(
+        "Contribution submission failed: no authentication token was found."
+      );
 
-      await updateContributionStatus(contribution.id, "failed");
+      await updateContributionStatus(
+        contribution.id,
+        "failed"
+      );
+
       return false;
     }
 
-    const backendContribution = await res.json();
+    const res = await fetch(
+      CONTRIBUTIONS_ENDPOINT,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          toApiContribution(contribution)
+        ),
+      }
+    );
 
-    await updateContribution(contribution.id, {
-      status: "submitted",
-      submittedAt: new Date().toISOString(),
-      backendId: backendContribution.id,
-    });
+    if (!res.ok) {
+      const errorText = await res.text();
+
+      console.error(
+        "Contribution submission failed:",
+        errorText
+      );
+
+      await updateContributionStatus(
+        contribution.id,
+        "failed"
+      );
+
+      return false;
+    }
+
+    const backendContribution =
+      await res.json();
+
+    await updateContribution(
+      contribution.id,
+      {
+        status: "submitted",
+        submittedAt:
+          new Date().toISOString(),
+        backendId:
+          backendContribution.id,
+      }
+    );
+
     return true;
   } catch (error) {
-    console.error("Contribution submission error:", error);
+    console.error(
+      "Contribution submission error:",
+      error
+    );
 
-    await updateContributionStatus(contribution.id, "failed");
+    await updateContributionStatus(
+      contribution.id,
+      "failed"
+    );
+
     return false;
   }
 };
