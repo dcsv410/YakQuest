@@ -1624,8 +1624,8 @@ h1 {
   justify-content: center;
 
   width: 100%;
-  max-width: 520px;
-  height: 280px;
+  max-width: 100px;
+  height: 100px;
 
   margin-top: 12px;
   overflow: hidden;
