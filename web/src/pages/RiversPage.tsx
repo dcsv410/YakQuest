@@ -9,7 +9,10 @@ import {
 } from "react-leaflet";
 
 import { fetchRivers, fetchRiverOutfitters } from "../services/riverService";
-import type { River } from "@yakquest/shared";
+import type {
+  River,
+  RiverPoint,
+} from "@yakquest/shared";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 import FitRiverBounds from "../components/FitRiverBounds";
 
@@ -25,6 +28,109 @@ function getRiverCenter(river: River): [number, number] {
 
 function getAccessCount(river: River) {
   return river.accessPoints.public.length + river.accessPoints.private.length;
+}
+
+type RiverPointPopupProps = {
+  point: RiverPoint;
+  typeLabel: string;
+};
+
+function RiverPointPopup({
+  point,
+  typeLabel,
+}: RiverPointPopupProps) {
+  const photos = point.photos ?? [];
+
+  return (
+    <div className="river-point-popup">
+      <strong className="river-point-popup-name">
+        {point.name}
+      </strong>
+
+      <div className="river-point-popup-type">
+        {typeLabel}
+      </div>
+
+      {point.description ? (
+        <p className="river-point-popup-description">
+          {point.description}
+        </p>
+      ) : null}
+
+      {point.parking ||
+      point.restroom ||
+      point.camping ? (
+        <div className="river-point-popup-amenities">
+          {point.parking ? (
+            <span>Parking</span>
+          ) : null}
+
+          {point.restroom ? (
+            <span>Restroom</span>
+          ) : null}
+
+          {point.camping ? (
+            <span>Camping</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {point.phone ? (
+        <p className="river-point-popup-contact">
+          <strong>Phone:</strong>{" "}
+          <a href={`tel:${point.phone}`}>
+            {point.phone}
+          </a>
+        </p>
+      ) : null}
+
+      {point.website ? (
+        <p className="river-point-popup-contact">
+          <a
+            href={point.website}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Visit website
+          </a>
+        </p>
+      ) : null}
+
+      {photos.length > 0 ? (
+        <div className="river-point-popup-photo-section">
+          <div className="river-point-popup-photo-heading">
+            {photos.length === 1
+              ? "Photo"
+              : `${photos.length} Photos`}
+          </div>
+
+          <div className="river-point-popup-photo-grid">
+            {photos.map((photo, index) => (
+              <a
+                key={`${point.id}-photo-${index}`}
+                href={photo}
+                target="_blank"
+                rel="noreferrer"
+                className="river-point-popup-photo-link"
+                aria-label={`Open photo ${index + 1} of ${point.name}`}
+              >
+                <img
+                  src={photo}
+                  alt={`${point.name} photo ${index + 1}`}
+                  className="river-point-popup-photo"
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
+
+          <div className="river-point-popup-photo-hint">
+            Select a photo to view it full size.
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function RiversPage() {
@@ -196,48 +302,76 @@ export default function RiversPage() {
               {[
                 ...selectedRiver.accessPoints.public,
                 ...selectedRiver.accessPoints.private,
-              ].map((point) => (
-                <Marker
-                  key={point.id}
-                  position={[point.latitude, point.longitude]}
-                >
-                  <Popup>
-                    <strong>{point.name}</strong>
-                    <br />
-                    {point.type === "public_access"
-                      ? "Public Access"
-                      : point.type === "private_access"
+              ].map((point) => {
+                const typeLabel =
+                  point.type === "public_access" 
+                    ? "Public Access"
+                    : point.type === "private_access" 
                       ? "Private Access"
-                      : point.type}
-                  </Popup>
-                </Marker>
-              ))}
+                      : point.type;
+
+                return (
+                  <Marker
+                    key={point.id}
+                    position={[
+                      point.latitude,
+                      point.longitude,
+                    ]}
+                  >
+                    <Popup
+                      minWidth={240}
+                      maxWidth={340}
+                    >
+                      <RiverPointPopup
+                        point={point}
+                        typeLabel={typeLabel}
+                      />
+                    </Popup>
+                  </Marker>
+                );
+              })}
 
               {selectedRiver.pois.map((point) => (
                 <Marker
                   key={point.id}
-                  position={[point.latitude, point.longitude]}
+                  position={[
+                    point.latitude,
+                    point.longitude,
+                  ]}
                 >
-                  <Popup>
-                    <strong>{point.name}</strong>
-                    <br />
-                    Point of Interest
+                  <Popup
+                    minWidth={240}
+                    maxWidth={340}
+                  >
+                    <RiverPointPopup
+                      point={point}
+                      typeLabel="Point of Interest"
+                    />
                   </Popup>
                 </Marker>
               ))}
 
-              {(selectedRiver.hazards ?? []).map((point) => (
-                <Marker
-                  key={point.id}
-                  position={[point.latitude, point.longitude]}
-                >
-                  <Popup>
-                    <strong>{point.name}</strong>
-                    <br />
-                    Hazard
-                  </Popup>
-                </Marker>
-              ))}
+              {(selectedRiver.hazards ?? []).map(
+                (point) => (
+                  <Marker
+                    key={point.id}
+                    position={[
+                      point.latitude,
+                      point.longitude,
+                    ]}
+                  >
+                    <Popup
+                      minWidth={240}
+                      maxWidth={340}
+                    >
+                      <RiverPointPopup
+                        point={point}
+                        typeLabel="Hazard"
+                      />
+                    </Popup>
+                  </Marker>
+                )
+              )}
             </>
           ) : null}
         </MapContainer>
