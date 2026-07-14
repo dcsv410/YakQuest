@@ -272,6 +272,8 @@ export default function AdminUsersPage() {
               <th>Email</th>
               <th>Name</th>
               <th>Admin</th>
+              <th>Approved</th>
+              <th>Rejected</th>
               <th>Trust Score</th>
               <th>Actions</th>
             </tr>
@@ -333,6 +335,18 @@ export default function AdminUsersPage() {
                           : "User"}
                       </span>
                     </label>
+                  </td>
+
+                  <td data-label="Approved">
+                    <span className="admin-user-contribution-count admin-user-contribution-count-approved">
+                      {user.approvedContributions}
+                    </span>
+                  </td>
+
+                  <td data-label="Rejected">
+                    <span className="admin-user-contribution-count admin-user-contribution-count-rejected">
+                      {user.rejectedContributions}
+                    </span>
                   </td>
 
                   <td data-label="Trust Score">
@@ -403,7 +417,7 @@ export default function AdminUsersPage() {
             {users.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="admin-users-empty"
                 >
                   No users were found.

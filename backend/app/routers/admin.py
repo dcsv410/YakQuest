@@ -5,6 +5,7 @@ from geoalchemy2.shape import from_shape
 from geoalchemy2.elements import WKTElement
 from shapely.geometry import Point
 from sqlalchemy.orm import Session
+from sqlalchemy import case, func
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.database import get_db
@@ -680,9 +681,52 @@ def get_admin_dashboard(
 @router.get("/users")
 def list_admin_users(
     db: Session = Depends(get_db),
-    admin_user: User = Depends(require_admin_user),
+    admin_user: User = Depends(
+        require_admin_user
+    ),
 ):
-    users = db.query(User).order_by(User.email).all()
+    user_rows = (
+        db.query(
+            User,
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            Contribution.status
+                            == "approved",
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label(
+                "approved_contributions"
+            ),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            Contribution.status
+                            == "rejected",
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label(
+                "rejected_contributions"
+            ),
+        )
+        .outerjoin(
+            Contribution,
+            Contribution.user_id == User.id,
+        )
+        .group_by(User.id)
+        .order_by(User.email)
+        .all()
+    )
 
     return [
         {
@@ -691,8 +735,18 @@ def list_admin_users(
             "displayName": user.display_name,
             "isAdmin": user.is_admin,
             "trustScore": user.trust_score,
+            "approvedContributions": int(
+                approved_contributions
+            ),
+            "rejectedContributions": int(
+                rejected_contributions
+            ),
         }
-        for user in users
+        for (
+            user,
+            approved_contributions,
+            rejected_contributions,
+        ) in user_rows
     ]
 
 

@@ -1940,6 +1940,33 @@ h1 {
   cursor: not-allowed;
 }
 
+.admin-user-contribution-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 36px;
+  padding: 5px 9px;
+
+  border: 1px solid;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-user-contribution-count-approved {
+  border-color: #80bea0;
+  background: #edf8f2;
+  color: #226b45;
+}
+
+.admin-user-contribution-count-rejected {
+  border-color: #dc9999;
+  background: #fff0f0;
+  color: #9b3030;
+}
+
 .admin-users-empty {
   padding: 24px !important;
   color: #6d7780;

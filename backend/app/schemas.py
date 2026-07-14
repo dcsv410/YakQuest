@@ -321,6 +321,8 @@ class AdminUserOut(BaseModel):
     displayName: Optional[str] = None
     isAdmin: bool
     trustScore: int
+    approvedContributions: int = 0
+    rejectedContributions: int = 0
 
 
 class AdminUserUpdate(BaseModel):

@@ -11,6 +11,8 @@ export type AdminUserDTO = {
   displayName?: string | null;
   isAdmin: boolean;
   trustScore: number;
+  approvedContributions: number;
+  rejectedContributions: number;
 };
 
 export type AdminUserUpdateDTO = {
