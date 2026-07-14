@@ -13,7 +13,15 @@ from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
 from app.models import User, Outfitter
 from app.security import get_current_user
-from app.schemas import RiverUpdate, RiverPointUpdate, RiverPointCreate, RiverCreate, OutfitterCreate, OutfitterUpdate
+from app.schemas import (
+    AdminUserUpdate,
+    RiverUpdate,
+    RiverPointUpdate,
+    RiverPointCreate,
+    RiverCreate,
+    OutfitterCreate,
+    OutfitterUpdate,
+)
 from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point, serialize_outfitter
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -686,6 +694,92 @@ def list_admin_users(
         }
         for user in users
     ]
+
+
+@router.patch("/users/{user_id}")
+def update_admin_user(
+    user_id: UUID,
+    payload: AdminUserUpdate,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(
+        require_admin_user
+    ),
+):
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    updates = payload.model_dump(
+        exclude_unset=True
+    )
+
+    if not updates:
+        raise HTTPException(
+            status_code=400,
+            detail="No user updates were provided",
+        )
+
+    if "trustScore" in updates:
+        trust_score = updates["trustScore"]
+
+        if trust_score is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Trust score cannot be null",
+            )
+
+        if trust_score < 0 or trust_score > 100:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Trust score must be between "
+                    "0 and 100"
+                ),
+            )
+
+        user.trust_score = trust_score
+
+    if "isAdmin" in updates:
+        is_admin = updates["isAdmin"]
+
+        if is_admin is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Admin status cannot be null",
+            )
+
+        if (
+            user.id == current_admin.id
+            and not is_admin
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "You cannot remove your own "
+                    "administrator access"
+                ),
+            )
+
+        user.is_admin = is_admin
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "displayName": user.display_name,
+        "isAdmin": user.is_admin,
+        "trustScore": user.trust_score,
+    }
 
 
 @router.get("/analytics")

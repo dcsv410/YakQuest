@@ -312,6 +312,11 @@ class AdminUserOut(BaseModel):
     trustScore: int
 
 
+class AdminUserUpdate(BaseModel):
+    isAdmin: Optional[bool] = None
+    trustScore: Optional[int] = None
+
+
 class AdminAnalyticsOut(BaseModel):
     rivers: int
     users: int

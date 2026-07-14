@@ -1,4 +1,8 @@
-import { adminApi } from "@yakquest/shared";
+import {
+  adminApi,
+  type AdminUserUpdateDTO,
+} from "@yakquest/shared";
+
 import { apiClient } from "./apiClient";
 
 export const fetchAdminDashboard = () =>
@@ -6,6 +10,16 @@ export const fetchAdminDashboard = () =>
 
 export const fetchAdminUsers = () =>
   adminApi.users(apiClient);
+
+export const updateAdminUser = (
+  userId: string,
+  updates: AdminUserUpdateDTO
+) =>
+  adminApi.updateUser(
+    apiClient,
+    userId,
+    updates
+  );
 
 export const fetchAdminAnalytics = () =>
   adminApi.analytics(apiClient);

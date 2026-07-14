@@ -13,6 +13,11 @@ export type AdminUserDTO = {
   trustScore: number;
 };
 
+export type AdminUserUpdateDTO = {
+  isAdmin?: boolean;
+  trustScore?: number;
+};
+
 export type AdminAnalyticsDTO = {
   rivers: number;
   users: number;
