@@ -26,6 +26,18 @@ with engine.begin() as conn:
         ALTER COLUMN photo_uri TYPE TEXT
     """))
 
+    conn.execute(text("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS
+        password_reset_token_hash VARCHAR(255)
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS
+        password_reset_expires_at TIMESTAMP
+    """))
+
 app = FastAPI(
     title="YakQuest API",
     version="0.1.0",

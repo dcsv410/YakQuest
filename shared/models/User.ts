@@ -22,3 +22,26 @@ export type RegisterRequest = {
   password: string;
   displayName?: string;
 };
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  token: string;
+  newPassword: string;
+};
+
+export type DeleteAccountRequest = {
+  password: string;
+  confirmation: "DELETE";
+};
+
+export type MessageResponse = {
+  message: string;
+};

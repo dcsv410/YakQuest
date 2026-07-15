@@ -19,6 +19,7 @@ import PlanTripPage from "./pages/PlanTripPage";
 import SavedTripsPage from "./pages/SavedTripsPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminDashboardPage from "./admin/pages/AdminDashboardPage";
@@ -44,6 +45,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/plan" element={<PlanTripPage />} />
             <Route path="/saved-trips" element={<SavedTripsPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />}/>
             <Route path="/account" element={<AccountPage />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />

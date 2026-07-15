@@ -38,6 +38,19 @@ export class ApiClient {
     return this.request<TResponse>("DELETE", path);
   }
 
+  async deleteWithBody<
+    TResponse = void,
+    TBody = unknown,
+  >(
+    path: string,
+    body: TBody
+  ): Promise<TResponse> {
+    return this.request<
+      TResponse,
+      TBody
+    >("DELETE", path, body);
+  }
+
   private async request<TResponse, TBody = unknown>(
     method: string,
     path: string,

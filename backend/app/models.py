@@ -184,12 +184,35 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     display_name = Column(String(255), nullable=True)
 
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(
+        String(255),
+        nullable=False,
+    )
 
-    is_admin = Column(Boolean, default=False)
-    trust_score = Column(Integer, default=0)
+    is_admin = Column(
+        Boolean,
+        default=False,
+    )
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    trust_score = Column(
+        Integer,
+        default=0,
+    )
+
+    password_reset_token_hash = Column(
+        String(255),
+        nullable=True,
+    )
+
+    password_reset_expires_at = Column(
+        DateTime,
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
 
 class SavedTrip(Base):
     __tablename__ = "saved_trips"

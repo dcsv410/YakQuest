@@ -2075,3 +2075,39 @@ h1 {
 .planner-right .metric-grid strong {
   font-size: 16px;
 }
+
+.form-success {
+  padding: 10px 12px;
+  border: 1px solid #75b995;
+  border-radius: 9px;
+  background: #edf8f2;
+  color: #216a43;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.account-danger-card {
+  border-color: #df9b9b;
+  background: #fffafa;
+}
+
+.account-delete-button {
+  border: 1px solid #b72e2e;
+  border-radius: 10px;
+  padding: 11px 15px;
+  background: #b72e2e;
+  color: white;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.account-delete-button:hover {
+  background: #982525;
+}
+
+.account-delete-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

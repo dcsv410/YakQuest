@@ -1,41 +1,87 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, register } from "../services/authService";
+
+import {
+  forgotPassword,
+  login,
+  register,
+} from "../services/authService";
+
+type AuthMode =
+  | "login"
+  | "register"
+  | "forgot-password";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] =
+    useState<AuthMode>("login");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] =
+    useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [password, setPassword] =
+    useState("");
 
-  const title = mode === "login" ? "Log in" : "Create account";
+  const [displayName, setDisplayName] =
+    useState("");
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
+
+  const title =
+    mode === "login"
+      ? "Log in"
+      : mode === "register"
+        ? "Create account"
+        : "Reset password";
+
+  async function handleSubmit(
+    event:
+      React.FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
       if (mode === "login") {
         await login(email, password);
-      } else {
-        await register(email, password, displayName || undefined);
+        navigate("/account");
+        return;
       }
 
-      navigate("/account");
+      if (mode === "register") {
+        await register(
+          email,
+          password,
+          displayName || undefined
+        );
+
+        navigate("/account");
+        return;
+      }
+
+      const response =
+        await forgotPassword(email);
+
+      setMessage(response.message);
     } catch (err) {
       console.error(err);
+
       setError(
-        mode === "login"
-          ? "Login failed. Check your email and password."
-          : "Registration failed. This email may already be registered."
+        err instanceof Error
+          ? err.message
+          : "Unable to complete request."
       );
     } finally {
       setLoading(false);
@@ -45,31 +91,49 @@ export default function LoginPage() {
   return (
     <section className="auth-page">
       <div className="auth-card">
-        <p className="eyebrow">YakQuest Account</p>
+        <p className="eyebrow">
+          YakQuest Account
+        </p>
+
         <h1>{title}</h1>
 
         <p className="muted">
-          Accounts are optional. You only need one to sync saved trips,
-          completed trips, and contributions across mobile and web.
+          {mode === "forgot-password"
+            ? "Enter your email address and YakQuest will send you a secure, one-time password-reset link."
+            : "Accounts sync saved trips, completed trips, and contributions across mobile and web."}
         </p>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form
+          className="auth-form"
+          onSubmit={handleSubmit}
+        >
           {mode === "register" ? (
             <label className="form-label">
               Display Name
+
               <input
                 value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
+                onChange={(event) =>
+                  setDisplayName(
+                    event.target.value
+                  )
+                }
                 placeholder="Your name"
+                autoComplete="name"
               />
             </label>
           ) : null}
 
           <label className="form-label">
             Email
+
             <input
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(
+                  event.target.value
+                )
+              }
               placeholder="you@example.com"
               type="email"
               autoComplete="email"
@@ -77,37 +141,87 @@ export default function LoginPage() {
             />
           </label>
 
-          <label className="form-label">
-            Password
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              type="password"
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              required
-            />
-          </label>
+          {mode !== "forgot-password" ? (
+            <label className="form-label">
+              Password
 
-          {error ? <div className="form-error">{error}</div> : null}
+              <input
+                value={password}
+                onChange={(event) =>
+                  setPassword(
+                    event.target.value
+                  )
+                }
+                placeholder="Password"
+                type="password"
+                minLength={8}
+                autoComplete={
+                  mode === "login"
+                    ? "current-password"
+                    : "new-password"
+                }
+                required
+              />
+            </label>
+          ) : null}
 
-          <button className="primary-button auth-submit" disabled={loading}>
-            {loading ? "Please wait..." : title}
+          {error ? (
+            <div className="form-error">
+              {error}
+            </div>
+          ) : null}
+
+          {message ? (
+            <div className="form-success">
+              {message}
+            </div>
+          ) : null}
+
+          <button
+            className="primary-button auth-submit"
+            disabled={loading}
+          >
+            {loading
+              ? "Please wait..."
+              : mode === "forgot-password"
+                ? "Send Reset Link"
+                : title}
           </button>
         </form>
 
+        {mode === "login" ? (
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => {
+              setError("");
+              setMessage("");
+              setMode(
+                "forgot-password"
+              );
+            }}
+          >
+            Forgot your password?
+          </button>
+        ) : null}
+
         <button
+          type="button"
           className="text-button"
           onClick={() => {
             setError("");
-            setMode(mode === "login" ? "register" : "login");
+            setMessage("");
+
+            setMode(
+              mode === "login"
+                ? "register"
+                : "login"
+            );
           }}
         >
           {mode === "login"
             ? "Need an account? Create one"
-            : "Already have an account? Log in"}
+            : "Return to login"}
         </button>
       </div>
     </section>

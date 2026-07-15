@@ -121,6 +121,29 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    currentPassword: str
+    newPassword: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    newPassword: str
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str
+    confirmation: str
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
 class AuthResponse(BaseModel):
     accessToken: str
     tokenType: str = "bearer"

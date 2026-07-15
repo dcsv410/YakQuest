@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import bcrypt
+import hashlib
+import secrets
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -27,6 +29,18 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     password_bytes = plain_password.encode("utf-8")[:72]
     return bcrypt.checkpw(password_bytes, hashed_password.encode("utf-8"))
+
+
+def generate_password_reset_token() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def hash_password_reset_token(
+    token: str,
+) -> str:
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
 
 
 def create_access_token(user: User) -> str:

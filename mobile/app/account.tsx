@@ -9,6 +9,9 @@ import {
   View,
 } from "react-native";
 import {
+  changePassword,
+  deleteAccount,
+  forgotPassword,
   getCurrentUser,
   login,
   logout,
@@ -26,6 +29,31 @@ export default function AccountScreen() {
 
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+
+  const [
+    currentPassword,
+    setCurrentPassword,
+  ] = useState("");
+
+  const [
+    newPassword,
+    setNewPassword,
+  ] = useState("");
+
+  const [
+    confirmNewPassword,
+    setConfirmNewPassword,
+  ] = useState("");
+
+  const [
+    deletePassword,
+    setDeletePassword,
+  ] = useState("");
+
+  const [
+    deleteConfirmation,
+    setDeleteConfirmation,
+  ] = useState("");
 
   const loadUser = async () => {
     const currentUser = await getCurrentUser();
@@ -99,6 +127,170 @@ export default function AccountScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert(
+        "Email Required",
+        "Enter your account email first."
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const message =
+        await forgotPassword(
+          email.trim()
+        );
+
+      Alert.alert(
+        "Check Your Email",
+        message
+      );
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        "Unable to Send Reset Link",
+        error instanceof Error
+          ? error.message
+          : "Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleChangePassword = async () => {
+    if (
+      !currentPassword ||
+      !newPassword
+    ) {
+      Alert.alert(
+        "Missing Information",
+        "Enter your current and new password."
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      Alert.alert(
+        "Password Too Short",
+        "The new password must contain at least 8 characters."
+      );
+      return;
+    }
+
+    if (
+      newPassword !==
+      confirmNewPassword
+    ) {
+      Alert.alert(
+        "Passwords Do Not Match",
+        "Re-enter the new password."
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const message =
+        await changePassword(
+          currentPassword,
+          newPassword
+        );
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+
+      Alert.alert(
+        "Password Changed",
+        message
+      );
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        "Unable to Change Password",
+        error instanceof Error
+          ? error.message
+          : "Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleDeleteAccount = () => {
+    if (!deletePassword) {
+      Alert.alert(
+        "Password Required",
+        "Enter your current password."
+      );
+      return;
+    }
+
+    if (
+      deleteConfirmation !== "DELETE"
+    ) {
+      Alert.alert(
+        "Confirmation Required",
+        'Type "DELETE" exactly.'
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Delete YakQuest Account?",
+      "This permanently deletes your account, saved trips, trip history, and pending contributions. Approved contributions will remain anonymously.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              const message =
+                await deleteAccount(
+                  deletePassword
+                );
+
+              setUser(null);
+              setDeletePassword("");
+              setDeleteConfirmation("");
+
+              Alert.alert(
+                "Account Deleted",
+                message
+              );
+            } catch (error) {
+              console.error(error);
+
+              Alert.alert(
+                "Unable to Delete Account",
+                error instanceof Error
+                  ? error.message
+                  : "Please try again."
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleLogout = async () => {
     await logout();
     setUser(null);
@@ -133,6 +325,100 @@ export default function AccountScreen() {
             {syncing ? "Syncing..." : "Sync Saved Trips"}
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            Change Password
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Current password"
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="New password"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm new password"
+            value={confirmNewPassword}
+            onChangeText={setConfirmNewPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleChangePassword}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              Change Password
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View
+          style={[
+            styles.card,
+            styles.dangerCard,
+          ]}
+        >
+          <Text style={styles.sectionTitle}>
+            Delete Account
+          </Text>
+
+          <Text style={styles.dangerText}>
+            This permanently deletes your
+            account, saved trips, trip history,
+            and pending contributions.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Current password"
+            value={deletePassword}
+            onChangeText={setDeletePassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder='Type "DELETE"'
+            value={deleteConfirmation}
+            onChangeText={setDeleteConfirmation}
+            autoCapitalize="characters"
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.deleteButton,
+              deleteConfirmation !== "DELETE" &&
+                styles.disabledButton,
+            ]}
+            onPress={handleDeleteAccount}
+            disabled={
+              loading ||
+              deleteConfirmation !== "DELETE"
+            }
+          >
+            <Text style={styles.deleteButtonText}>
+              Delete Account
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.secondaryButton} onPress={handleLogout}>
           <Text style={styles.secondaryButtonText}>Log Out</Text>
@@ -175,6 +461,16 @@ export default function AccountScreen() {
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? "Please wait..." : "Log In"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.textButton}
+        onPress={handleForgotPassword}
+        disabled={loading}
+      >
+        <Text style={styles.textButtonText}>
+          Forgot Password?
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -246,5 +542,52 @@ const styles = StyleSheet.create({
     color: "#1f6f4a",
     fontWeight: "700",
     fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: 6,
+  },
+
+  textButton: {
+    paddingVertical: 6,
+    alignItems: "center",
+  },
+
+  textButtonText: {
+    color: "#1f6f4a",
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+
+  dangerCard: {
+    borderWidth: 1,
+    borderColor: "#d78b8b",
+    backgroundColor: "#fff6f6",
+  },
+
+  dangerText: {
+    color: "#7f3030",
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 6,
+  },
+
+  deleteButton: {
+    backgroundColor: "#b72e2e",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "800",
+    fontSize: 16,
+  },
+
+  disabledButton: {
+    opacity: 0.45,
   },
 });

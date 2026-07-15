@@ -10,6 +10,26 @@ import type {
 export const AUTH_TOKEN_KEY = "yakquest:authToken";
 export const AUTH_USER_KEY = "yakquest:user";
 
+async function readApiError(
+  response: Response,
+  fallback: string
+): Promise<string> {
+  try {
+    const data = await response.json();
+
+    if (
+      data &&
+      typeof data.detail === "string"
+    ) {
+      return data.detail;
+    }
+  } catch {
+    // Use fallback.
+  }
+
+  return fallback;
+}
+
 export async function register(
   email: string,
   password: string,
@@ -80,6 +100,117 @@ export async function login(
   );
 
   return data;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<string> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error("Not logged in");
+  }
+
+  const response = await fetch(
+    `${API_URL}/auth/change-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        "Unable to change password."
+      )
+    );
+  }
+
+  const data = await response.json();
+
+  return data.message;
+}
+
+
+export async function forgotPassword(
+  email: string
+): Promise<string> {
+  const response = await fetch(
+    `${API_URL}/auth/forgot-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({ email }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Unable to request a password reset."
+    );
+  }
+
+  const data = await response.json();
+
+  return data.message;
+}
+
+
+export async function deleteAccount(
+  password: string
+): Promise<string> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error("Not logged in");
+  }
+
+  const response = await fetch(
+    `${API_URL}/auth/account`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        password,
+        confirmation: "DELETE",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        "Unable to delete account."
+      )
+    );
+  }
+
+  const data = await response.json();
+
+  await logout();
+
+  return data.message;
 }
 
 export async function logout() {
