@@ -107,13 +107,33 @@ export default function AdminContributionsPage() {
   }
 
   async function approve(contribution: ContributionResponseDTO) {
-    await approveContribution(contribution.id);
-    await refresh();
+    try {
+      await approveContribution(contribution.id);
+      await refresh();
+    } catch (error) {
+      console.error("Failed to approve contribution:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to approve the contribution."
+      );
+    }
   }
 
   async function reject(contribution: ContributionResponseDTO) {
-    await rejectContribution(contribution.id);
-    await refresh();
+    try {
+      await rejectContribution(contribution.id);
+      await refresh();
+    } catch (error) {
+      console.error("Failed to reject contribution:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to reject the contribution."
+      );
+    }
   }
 
   if (isLoading) {

@@ -210,19 +210,37 @@ def approve_contribution(
     if contribution.status != "pending":
         raise HTTPException(status_code=400, detail="Contribution already reviewed")
 
-    if contribution.kind in ["new-river", "existing-river-point"]:
-        add_contribution_points_to_river(contribution, db)
+    if contribution.kind == "new-river":
+        # A new-river request is informational only.
+        # Approval acknowledges the request without creating a River
+        # or requiring an existing river_id.
+        pass
+
+    elif contribution.kind == "existing-river-point":
+        add_contribution_points_to_river(
+            contribution,
+            db,
+        )
 
     elif contribution.kind == "remove-existing-point":
-        deactivate_removed_point(contribution, db)
+        deactivate_removed_point(
+            contribution,
+            db,
+        )
 
     elif contribution.kind == "point-photo":
-        add_photo_to_point(contribution, db)
+        add_photo_to_point(
+            contribution,
+            db,
+        )
 
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported contribution kind: {contribution.kind}",
+            detail=(
+                "Unsupported contribution kind: "
+                f"{contribution.kind}"
+            ),
         )
 
     contribution.status = "approved"
