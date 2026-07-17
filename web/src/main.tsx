@@ -17,6 +17,7 @@ import HomePage from "./pages/HomePage";
 import RiversPage from "./pages/RiversPage";
 import PlanTripPage from "./pages/PlanTripPage";
 import SavedTripsPage from "./pages/SavedTripsPage";
+import ContributionsPage from "./pages/ContributionsPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -45,7 +46,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/rivers" element={<RiversPage />} />
             <Route path="/plan" element={<PlanTripPage />} />
             <Route path="/saved-trips" element={<SavedTripsPage />} />
-            <Route path="/completed-trips" element={<CompletedTripsPage />}/>
+            <Route path="/completed-trips" element={<CompletedTripsPage />} />
+            <Route path="/contributions" element={<ContributionsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />}/>
             <Route path="/account" element={<AccountPage />} />

@@ -27,6 +27,30 @@ def normalize_point_type(point_type: str) -> str:
 
     return POINT_TYPE_MAP[point_type]
 
+
+@router.get(
+    "",
+    response_model=list[ContributionOut],
+)
+def list_my_contributions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+    return (
+        db.query(Contribution)
+        .filter(
+            Contribution.user_id
+            == current_user.id
+        )
+        .order_by(
+            Contribution.created_at.desc()
+        )
+        .all()
+    )
+
+
 @router.post(
     "",
     response_model=ContributionOut,

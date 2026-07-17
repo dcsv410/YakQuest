@@ -2461,3 +2461,179 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.contribution-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(150px, 1fr)
+    );
+  gap: 14px;
+  margin: 24px 0 28px;
+}
+
+.contribution-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 18px;
+  border: 1px solid
+    rgba(16, 32, 28, 0.12);
+  border-radius: 16px;
+
+  background: white;
+  box-shadow:
+    0 8px 24px
+    rgba(16, 32, 28, 0.06);
+}
+
+.contribution-stat span {
+  color: #65736e;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contribution-stat strong {
+  color: #147473;
+  font-size: 24px;
+}
+
+.contributions-empty {
+  max-width: 600px;
+  margin-top: 24px;
+  padding: 28px;
+
+  border: 1px dashed
+    rgba(20, 116, 115, 0.35);
+  border-radius: 18px;
+
+  background:
+    rgba(20, 116, 115, 0.05);
+  text-align: center;
+}
+
+.contributions-empty h2 {
+  margin-top: 0;
+}
+
+.contribution-list {
+  display: grid;
+  gap: 18px;
+}
+
+.contribution-card {
+  padding: 22px;
+  border: 1px solid
+    rgba(16, 32, 28, 0.12);
+  border-radius: 18px;
+
+  background: white;
+  box-shadow:
+    0 10px 28px
+    rgba(16, 32, 28, 0.07);
+}
+
+.contribution-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.contribution-card-header h2 {
+  margin: 4px 0;
+}
+
+.contribution-card-header p {
+  margin-bottom: 0;
+}
+
+.contribution-status {
+  flex-shrink: 0;
+
+  border-radius: 999px;
+  padding: 7px 11px;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.contribution-status-pending,
+.contribution-status-submitted {
+  background: #fff5cc;
+  color: #7a5a00;
+}
+
+.contribution-status-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.contribution-status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.contribution-status-failed {
+  background: #f1f1f1;
+  color: #444;
+}
+
+.contribution-summary {
+  margin: 18px 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.contribution-detail {
+  margin: 10px 0;
+}
+
+.contribution-review-notes {
+  margin-top: 18px;
+  padding: 14px;
+
+  border-left: 4px solid #147473;
+  border-radius: 8px;
+
+  background:
+    rgba(20, 116, 115, 0.06);
+}
+
+.contribution-review-notes p {
+  margin: 7px 0 0;
+  white-space: pre-wrap;
+}
+
+.contribution-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+
+  margin-top: 20px;
+  padding-top: 14px;
+
+  border-top: 1px solid
+    rgba(16, 32, 28, 0.1);
+
+  color: #65736e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .contribution-stats {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .contribution-card-header {
+    flex-direction: column;
+  }
+
+  .contribution-status {
+    align-self: flex-start;
+  }
+}

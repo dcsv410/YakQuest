@@ -8,6 +8,9 @@ export const submitContribution = (
   payload: CreateContributionRequestDTO
 ) => contributionsApi.submit(apiClient, payload);
 
+export const fetchMyContributions = () =>
+  contributionsApi.listMine(apiClient);
+
 export const fetchAdminContributions = () =>
   contributionsApi.listAdmin(apiClient);
 

@@ -5,6 +5,13 @@ import type {
 } from "../../dto";
 
 export const contributionsApi = {
+  listMine(
+    client: ApiClient
+  ): Promise<ContributionResponseDTO[]> {
+    return client.get<
+      ContributionResponseDTO[]
+    >("/contributions");
+  },
   listAdmin(client: ApiClient): Promise<ContributionResponseDTO[]> {
     return client.get<ContributionResponseDTO[]>("/admin/contributions");
   },
