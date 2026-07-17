@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
-import { divIcon } from "leaflet";
+import { divIcon, Icon } from "leaflet";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
@@ -47,6 +47,9 @@ function getPointLabel(point: RiverPoint) {
 }
 
 const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
+
+const defaultAccessPointIcon =
+  new Icon.Default();
 
 const selectedLaunchIcon = divIcon({
   className: "selected-trip-marker-wrapper",
@@ -1047,12 +1050,12 @@ export default function PlanTripPage() {
                 const isEnd =
                   point.id === endId;
 
-                const selectedIcon =
+                const markerIcon =
                   isStart
                     ? selectedLaunchIcon
                     : isEnd
                       ? selectedTakeoutIcon
-                      : undefined;
+                      : defaultAccessPointIcon;
 
                 return (
                   <Marker
@@ -1061,11 +1064,7 @@ export default function PlanTripPage() {
                       point.latitude,
                       point.longitude,
                     ]}
-                    {...(
-                      selectedIcon
-                        ? { icon: selectedIcon }
-                        : {}
-                    )}
+                    icon={markerIcon}
                     zIndexOffset={
                       isStart || isEnd
                         ? 1000
