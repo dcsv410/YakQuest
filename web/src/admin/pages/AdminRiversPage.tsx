@@ -221,10 +221,6 @@ export default function AdminRiversPage() {
             >
               Edit River
             </Link>
-
-            <button className="secondary-button admin-action-button">
-              Upload / Replace KML
-            </button>
           </>
         ) : (
           <>
