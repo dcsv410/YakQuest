@@ -54,6 +54,10 @@ export type CreateRiverRequestDTO = {
   coordinates: Coordinate[];
 };
 
+export type ReplaceRiverRouteRequestDTO = {
+  coordinates: Coordinate[];
+};
+
 export type AdminRiverPointDTO = RiverPoint & {
   isActive: boolean;
 };

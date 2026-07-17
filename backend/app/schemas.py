@@ -270,6 +270,10 @@ class CoordinateIn(BaseModel):
     longitude: float
 
 
+class RiverRouteReplace(BaseModel):
+    coordinates: List[CoordinateIn]
+
+
 class FlowStatsIn(BaseModel):
     lowPercentile: float
     median: float

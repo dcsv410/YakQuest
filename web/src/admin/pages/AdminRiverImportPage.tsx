@@ -8,39 +8,40 @@ import type { Coordinate } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
 import { distanceFeet } from "@yakquest/shared";
 import { FEET_PER_MILE } from "@yakquest/shared";
+import { parseKmlCoordinates } from "../../utils/kml";
 
-function parseKmlCoordinates(kmlText: string): Coordinate[] {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(kmlText, "application/xml");
+// function parseKmlCoordinates(kmlText: string): Coordinate[] {
+//   const parser = new DOMParser();
+//   const doc = parser.parseFromString(kmlText, "application/xml");
 
-  const coordinatesNodes = Array.from(
-    doc.getElementsByTagName("coordinates")
-  );
+//   const coordinatesNodes = Array.from(
+//     doc.getElementsByTagName("coordinates")
+//   );
 
-  const coordinates: Coordinate[] = [];
+//   const coordinates: Coordinate[] = [];
 
-  for (const node of coordinatesNodes) {
-    const raw = node.textContent ?? "";
+//   for (const node of coordinatesNodes) {
+//     const raw = node.textContent ?? "";
 
-    const parsed = raw
-      .trim()
-      .split(/\s+/)
-      .map((chunk) => {
-        const [longitude, latitude] = chunk.split(",").map(Number);
+//     const parsed = raw
+//       .trim()
+//       .split(/\s+/)
+//       .map((chunk) => {
+//         const [longitude, latitude] = chunk.split(",").map(Number);
 
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-          return null;
-        }
+//         if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+//           return null;
+//         }
 
-        return { latitude, longitude };
-      })
-      .filter((coord): coord is Coordinate => coord !== null);
+//         return { latitude, longitude };
+//       })
+//       .filter((coord): coord is Coordinate => coord !== null);
 
-    coordinates.push(...parsed);
-  }
+//     coordinates.push(...parsed);
+//   }
 
-  return coordinates;
-}
+//   return coordinates;
+// }
 
 export default function AdminRiverImportPage() {
   const navigate = useNavigate();
@@ -117,16 +118,20 @@ export default function AdminRiverImportPage() {
       return;
     }
 
-    const text = await file.text();
-    const parsed = parseKmlCoordinates(text);
+    try {
+      const text = await file.text();
+      const parsed = parseKmlCoordinates(text);
 
-    if (!parsed.length) {
+      setCoordinates(parsed);
+    } catch (error) {
+      console.error(error);
       setCoordinates([]);
-      setError("No coordinates found in this KML file.");
-      return;
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to read this KML file."
+      );
     }
-
-    setCoordinates(parsed);
   }
 
   async function saveRiver() {

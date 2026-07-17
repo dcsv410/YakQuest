@@ -6,6 +6,7 @@ import type {
   UpdateRiverRequestDTO,
   CreateOutfitterRequestDTO,
   UpdateOutfitterRequestDTO,
+  ReplaceRiverRouteRequestDTO,
 } from "@yakquest/shared";
 import { apiClient } from "./apiClient";
 
@@ -15,6 +16,11 @@ export const updateRiver = (
   id: string,
   payload: UpdateRiverRequestDTO
 ) => riversApi.update(apiClient, id, payload);
+
+export const replaceRiverRoute = (
+  id: string,
+  payload: ReplaceRiverRouteRequestDTO
+) => riversApi.replaceRoute(apiClient, id, payload);
 
 export const updateRiverPoint = (
   pointId: string,

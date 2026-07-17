@@ -20,6 +20,7 @@ from app.schemas import (
     RiverPointUpdate,
     RiverPointCreate,
     RiverCreate,
+    RiverRouteReplace,
     OutfitterCreate,
     OutfitterUpdate,
 )
@@ -321,6 +322,62 @@ def update_river(
 
     if "flowStats" in updates:
         river.flow_stats = updates["flowStats"]
+
+    db.commit()
+    db.refresh(river)
+
+    return serialize_river(river)
+
+
+@router.put("/rivers/{river_id}/route")
+def replace_river_route(
+    river_id: str,
+    payload: RiverRouteReplace,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    river = db.query(River).filter(River.id == river_id).first()
+
+    if not river:
+        raise HTTPException(
+            status_code=404,
+            detail="River not found",
+        )
+
+    if len(payload.coordinates) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="River route must contain at least two coordinates",
+        )
+
+    for index, coordinate in enumerate(payload.coordinates):
+        if not -90 <= coordinate.latitude <= 90:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Coordinate {index + 1} has an invalid latitude: "
+                    f"{coordinate.latitude}"
+                ),
+            )
+
+        if not -180 <= coordinate.longitude <= 180:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Coordinate {index + 1} has an invalid longitude: "
+                    f"{coordinate.longitude}"
+                ),
+            )
+
+    line_coordinates = ", ".join(
+        f"{coordinate.longitude} {coordinate.latitude}"
+        for coordinate in payload.coordinates
+    )
+
+    river.route = WKTElement(
+        f"LINESTRING({line_coordinates})",
+        srid=4326,
+    )
 
     db.commit()
     db.refresh(river)

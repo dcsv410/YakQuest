@@ -27,6 +27,13 @@ export class ApiClient {
     return this.request<TResponse, TBody>("POST", path, body);
   }
 
+  async put<TResponse, TBody = unknown>(
+    path: string,
+    body?: TBody
+  ): Promise<TResponse> {
+    return this.request<TResponse, TBody>("PUT", path, body);
+  }
+
   async patch<TResponse, TBody = unknown>(
     path: string,
     body?: TBody

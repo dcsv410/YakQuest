@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +17,7 @@ import {
   fetchAdminRiver,
   fetchAdminRiverOutfitters,
   fetchRivers,
+  replaceRiverRoute,
   updateOutfitter,
   updateRiver,
   updateRiverPoint,
@@ -24,6 +25,7 @@ import {
 } from "../../services/riverService";
 import type {
   AdminRiverPointDTO,
+  Coordinate,
   Outfitter,
   River,
   RiverPoint,
@@ -31,6 +33,8 @@ import type {
 } from "@yakquest/shared";
 import FitRiverBounds from "../../components/FitRiverBounds";
 import { distanceFeet } from "@yakquest/shared";
+import { parseKmlCoordinates } from "../../utils/kml";
+import { FEET_PER_MILE } from "@yakquest/shared";
 
 type RiverEditForm = {
   name: string;
@@ -115,6 +119,34 @@ function getPointIcon(type: string) {
   });
 }
 
+function getRouteLengthMiles(coordinates: Coordinate[]): number {
+  const lengthFeet = coordinates.reduce((total, coordinate, index) => {
+    const nextCoordinate = coordinates[index + 1];
+
+    if (!nextCoordinate) {
+      return total;
+    }
+
+    return total + distanceFeet(coordinate, nextCoordinate);
+  }, 0);
+
+  return lengthFeet / FEET_PER_MILE;
+}
+
+function getClosestDistanceToRouteFeet(
+  point: Coordinate,
+  route: Coordinate[]
+): number {
+  if (!route.length) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return route.reduce((closest, coordinate) => {
+    const distance = distanceFeet(point, coordinate);
+    return Math.min(closest, distance);
+  }, Number.POSITIVE_INFINITY);
+}
+
 const newPointIcon = L.divIcon({
   className: "admin-map-marker admin-marker-new",
   html: "",
@@ -127,6 +159,10 @@ export default function AdminRiverEditorPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [routeFileName, setRouteFileName] = useState("");
+  const [replacementCoordinates, setReplacementCoordinates] = useState<Coordinate[]>([]);
+  const [routeFileError, setRouteFileError] = useState("");
+  const [replacingRoute, setReplacingRoute] = useState(false);
   const editPointRef = useRef<HTMLDivElement | null>(null);
   const addPointRef = useRef<HTMLDivElement | null>(null);
   const [photoViewerIndex, setPhotoViewerIndex] = useState<number | null>(null);
@@ -165,6 +201,45 @@ export default function AdminRiverEditorPage() {
   const [showInactivePoints, setShowInactivePoints] = useState(false);
 
   const river = rivers.find((item) => item.id === riverId);
+
+  const replacementRouteStats = useMemo(() => {
+    if (!replacementCoordinates.length) {
+      return null;
+    }
+
+    const currentLengthMiles = river
+      ? getRouteLengthMiles(river.coordinates)
+      : 0;
+
+    const replacementLengthMiles = getRouteLengthMiles(
+      replacementCoordinates
+    );
+
+    const points = adminRiver?.points ?? [];
+
+    const distantPoints = points.filter((point) => {
+      const distance = getClosestDistanceToRouteFeet(
+        {
+          latitude: point.latitude,
+          longitude: point.longitude,
+        },
+        replacementCoordinates
+      );
+
+      /*
+      * This is only a warning. It does not remove, move, or modify
+      * the point.
+      */
+      return distance > FEET_PER_MILE;
+    });
+
+    return {
+      currentLengthMiles,
+      replacementLengthMiles,
+      coordinateCount: replacementCoordinates.length,
+      distantPoints,
+    };
+  }, [replacementCoordinates, river, adminRiver]);
 
   const [form, setForm] = useState<RiverEditForm | null>(null);
   const [pickingPoint, setPickingPoint] = useState(false);
@@ -682,6 +757,100 @@ export default function AdminRiverEditorPage() {
     }
   }
 
+  async function handleReplacementKml(file: File) {
+    setRouteFileName(file.name);
+    setRouteFileError("");
+    setReplacementCoordinates([]);
+
+    if (!file.name.toLowerCase().endsWith(".kml")) {
+      setRouteFileError("Please upload a .kml file.");
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsedCoordinates = parseKmlCoordinates(text);
+
+      if (parsedCoordinates.length < 10) {
+        setRouteFileError(
+          "This KML contains very few route coordinates. Verify that it contains the complete river route."
+        );
+      }
+
+      setReplacementCoordinates(parsedCoordinates);
+    } catch (error) {
+      console.error(error);
+
+      setRouteFileError(
+        error instanceof Error
+          ? error.message
+          : "Unable to read this KML file."
+      );
+    }
+  }
+
+  async function saveReplacementRoute() {
+    if (!river) {
+      return;
+    }
+
+    if (replacementCoordinates.length < 2) {
+      alert("Select a valid KML file before replacing the route.");
+      return;
+    }
+
+    const currentLength = getRouteLengthMiles(river.coordinates);
+    const newLength = getRouteLengthMiles(replacementCoordinates);
+
+    const confirmed = window.confirm(
+      [
+        `Replace the stored route for "${river.name}"?`,
+        "",
+        `Current route: ${currentLength.toFixed(2)} miles`,
+        `New route: ${newLength.toFixed(2)} miles`,
+        `New coordinate count: ${replacementCoordinates.length}`,
+        "",
+        "Existing launch points, takeouts, POIs, hazards, photos, and outfitters will remain unchanged.",
+        "",
+        "This action replaces only the river line.",
+      ].join("\n")
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setReplacingRoute(true);
+
+    try {
+      await replaceRiverRoute(river.id, {
+        coordinates: replacementCoordinates,
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["rivers"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["adminRiver", river.id],
+        }),
+      ]);
+
+      setReplacementCoordinates([]);
+      setRouteFileName("");
+      setRouteFileError("");
+
+      alert(
+        "River route replaced successfully. Existing points were preserved."
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Failed to replace the river route.");
+    } finally {
+      setReplacingRoute(false);
+    }
+  }
+
   const visibleEditorPoints = [
     ...river.accessPoints.public,
     ...river.accessPoints.private,
@@ -870,6 +1039,104 @@ export default function AdminRiverEditorPage() {
                 />
               </label>
             </div>
+          </div>
+
+          <div className="admin-editor-section admin-route-replacement-section">
+            <h2>Replace River Route</h2>
+
+            <p className="muted">
+              Upload a new KML to completely replace the river line. Existing
+              launch points, takeouts, POIs, hazards, photos, and outfitter
+              associations will not be changed.
+            </p>
+
+            <label className="kml-drop-zone">
+              <input
+                type="file"
+                accept=".kml,application/vnd.google-earth.kml+xml"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (file) {
+                    void handleReplacementKml(file);
+                  }
+
+                  /*
+                  * Allow the same file to be selected again after an error or
+                  * after replacing the route.
+                  */
+                  event.target.value = "";
+                }}
+              />
+
+              <strong>Select replacement KML</strong>
+
+              <span>
+                {routeFileName ||
+                  "Choose the complete and authoritative river route"}
+              </span>
+            </label>
+
+            {routeFileError ? (
+              <p className="admin-form-error">{routeFileError}</p>
+            ) : null}
+
+            {replacementRouteStats ? (
+              <div className="admin-route-comparison">
+                <div>
+                  <span>Current route</span>
+                  <strong>
+                    {replacementRouteStats.currentLengthMiles.toFixed(2)} miles
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Replacement route</span>
+                  <strong>
+                    {replacementRouteStats.replacementLengthMiles.toFixed(2)} miles
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Coordinates</span>
+                  <strong>
+                    {replacementRouteStats.coordinateCount.toLocaleString()}
+                  </strong>
+                </div>
+              </div>
+            ) : null}
+
+            {replacementRouteStats?.distantPoints.length ? (
+              <div className="admin-route-warning">
+                <strong>Review existing point locations</strong>
+
+                <p>
+                  The following points appear unusually far from the replacement
+                  route. They will still be preserved:
+                </p>
+
+                <ul>
+                  {replacementRouteStats.distantPoints.map((point) => (
+                    <li key={point.id}>
+                      {point.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {replacementCoordinates.length ? (
+              <button
+                type="button"
+                className="danger-button"
+                disabled={replacingRoute}
+                onClick={() => void saveReplacementRoute()}
+              >
+                {replacingRoute
+                  ? "Replacing Route..."
+                  : "Replace Stored River Route"}
+              </button>
+            ) : null}
           </div>
 
           <div ref={addPointRef} className="admin-editor-section">
@@ -1495,6 +1762,19 @@ export default function AdminRiverEditorPage() {
 
         <div className="admin-editor-map-panel">
           <div className="admin-map-legend">
+            {replacementCoordinates.length ? (
+              <>
+                <span className="admin-route-legend-item">
+                  <span className="admin-route-line admin-route-line-current" />
+                  Current route
+                </span>
+
+                <span className="admin-route-legend-item">
+                  <span className="admin-route-line admin-route-line-replacement" />
+                  Replacement
+                </span>
+              </>
+            ) : null}
             <button
               type="button"
               className={!markerFilters.access ? "disabled" : ""}
@@ -1563,7 +1843,13 @@ export default function AdminRiverEditorPage() {
 
             
 
-            <FitRiverBounds coordinates={river.coordinates} />
+            <FitRiverBounds
+              coordinates={
+                replacementCoordinates.length
+                  ? replacementCoordinates
+                  : river.coordinates
+              }
+            />
 
             <Polyline
               positions={river.coordinates.map((coord) => [
@@ -1571,10 +1857,24 @@ export default function AdminRiverEditorPage() {
                 coord.longitude,
               ])}
               pathOptions={{
-                weight: 6,
-                opacity: 0.9,
+                weight: replacementCoordinates.length ? 4 : 6,
+                opacity: replacementCoordinates.length ? 0.4 : 0.9,
+                dashArray: replacementCoordinates.length ? "8 8" : undefined,
               }}
             />
+
+            {replacementCoordinates.length ? (
+              <Polyline
+                positions={replacementCoordinates.map((coord) => [
+                  coord.latitude,
+                  coord.longitude,
+                ])}
+                pathOptions={{
+                  weight: 7,
+                  opacity: 0.95,
+                }}
+              />
+            ) : null}
 
             
 

@@ -10,6 +10,7 @@ import type {
   CreateOutfitterRequestDTO,
   OutfitterResponseDTO,
   UpdateOutfitterRequestDTO,
+  ReplaceRiverRouteRequestDTO,
 } from "../../dto";
 
 export const riversApi = {
@@ -80,6 +81,17 @@ export const riversApi = {
   ): Promise<RiverResponseDTO> {
     return client.patch<RiverResponseDTO, UpdateRiverRequestDTO>(
       `/admin/rivers/${id}`,
+      payload
+    );
+  },
+
+  replaceRoute(
+    client: ApiClient,
+    id: string,
+    payload: ReplaceRiverRouteRequestDTO
+  ): Promise<RiverResponseDTO> {
+    return client.put<RiverResponseDTO, ReplaceRiverRouteRequestDTO>(
+      `/admin/rivers/${id}/route`,
       payload
     );
   },
