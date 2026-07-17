@@ -4,7 +4,16 @@ from sqlalchemy import text
 
 from app.models import Contribution, River, RiverPoint, SavedTrip, User
 from app.database import Base, engine, SessionLocal
-from app.routers import admin, admin_seed, auth, completed_trips, contributions, rivers, saved_trips
+from app.routers import (
+    admin,
+    admin_seed,
+    auth,
+    completed_trips,
+    contributions,
+    rivers,
+    saved_trips,
+    trip_plans,
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -50,6 +59,7 @@ app.include_router(rivers.router)
 app.include_router(auth.router)
 app.include_router(saved_trips.router)
 app.include_router(completed_trips.router)
+app.include_router(trip_plans.router)
 
 app.add_middleware(
     CORSMiddleware,

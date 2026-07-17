@@ -1,33 +1,21 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  MapContainer,
-  Marker,
-  Polyline,
-  Popup,
-  TileLayer,
-} from "react-leaflet";
+import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
 import type { River, RiverPoint } from "@yakquest/shared";
-import {
-  getTripDistanceMiles,
-  getTripTimeRange,
-  getTripTimelinePoints,
-} from "@yakquest/shared";
+import { getTripDistanceMiles, getTripTimeRange, getTripTimelinePoints } from "@yakquest/shared";
 import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
 import CenterMapOnState from "../components/CenterMapOnState";
 import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
-import { isLoggedIn } from "../services/authService";
+import { getStoredUser, isLoggedIn } from "../services/authService";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 import { fetchRiverOutfitters } from "../services/riverService";
 import PrintableRouteMap from "../components/PrintableRouteMap";
-import {
-  fetchTripWeather,
-  type TripWeather,
-} from "../services/weatherService";
+import { fetchTripWeather, type TripWeather } from "../services/weatherService";
+import { sendTripPlanEmail } from "../services/tripPlanService";
 
 type SelectionMode = "start" | "end";
 
@@ -102,6 +90,42 @@ export default function PlanTripPage() {
       .filter((river) => river.state === selectedState)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [rivers, selectedState]);
+
+  const storedUser = getStoredUser();
+
+  const [
+    emailTripDialogOpen,
+    setEmailTripDialogOpen,
+  ] = useState(false);
+
+  const [
+    emailRecipientMode,
+    setEmailRecipientMode,
+  ] = useState<
+    "account" | "manual"
+  >(
+    storedUser ? "account" : "manual"
+  );
+
+  const [
+    manualEmailAddress,
+    setManualEmailAddress,
+  ] = useState("");
+
+  const [
+    emailingTripPlan,
+    setEmailingTripPlan,
+  ] = useState(false);
+
+  const [
+    emailTripError,
+    setEmailTripError,
+  ] = useState("");
+
+  const [
+    emailTripSuccess,
+    setEmailTripSuccess,
+  ] = useState("");
 
   useEffect(() => {
     if (!initialRiverId) return;
@@ -383,30 +407,54 @@ export default function PlanTripPage() {
     });
   }
 
-  async function downloadTripPdf() {
-    if (!selectedRiver || !start || !end) return;
+  async function createTripPdfBlob():
+    Promise<Blob> {
+    if (
+      !selectedRiver ||
+      !start ||
+      !end
+    ) {
+      throw new Error(
+        "Select a launch and takeout first."
+      );
+    }
 
     setPrintMode(true);
+
     await waitForPrintRender();
 
-    const printArea = document.querySelector(
-      ".trip-print-area"
-    ) as HTMLElement | null;
+    const printArea =
+      document.querySelector(
+        ".trip-print-area"
+      ) as HTMLElement | null;
 
     if (!printArea) {
       setPrintMode(false);
-      return;
+
+      throw new Error(
+        "The printable trip plan "
+        + "could not be found."
+      );
     }
 
     try {
-      const html2pdfModule = await import("html2pdf.js");
-      const html2pdf = html2pdfModule.default as any;
+      const html2pdfModule =
+        await import(
+          "html2pdf.js"
+        );
 
-      await html2pdf()
+      const html2pdf =
+        html2pdfModule.default as any;
+
+      const worker = html2pdf()
         .set({
           margin: 0.25,
-          filename: getTripPlanFileName(),
-          image: { type: "jpeg", quality: 0.98 },
+          filename:
+            getTripPlanFileName(),
+          image: {
+            type: "jpeg",
+            quality: 0.98,
+          },
           html2canvas: {
             scale: 2,
             useCORS: true,
@@ -417,46 +465,191 @@ export default function PlanTripPage() {
             orientation: "portrait",
           },
           pagebreak: {
-            mode: ["avoid-all", "css", "legacy"],
+            mode: [
+              "avoid-all",
+              "css",
+              "legacy",
+            ],
           },
         } as any)
         .from(printArea)
-        .save();
+        .toPdf();
+
+      return await worker.outputPdf(
+        "blob"
+      );
     } finally {
       setPrintMode(false);
     }
   }
 
-  function emailTripPlan() {
-    if (!selectedRiver || !start || !end) return;
 
-    const subject = encodeURIComponent(
-      `YakQuest Trip Plan: ${selectedRiver.name}`
+  async function downloadTripPdf() {
+    try {
+      const pdfBlob =
+        await createTripPdfBlob();
+
+      const objectUrl =
+        URL.createObjectURL(
+          pdfBlob
+        );
+
+      const downloadLink =
+        document.createElement("a");
+
+      downloadLink.href =
+        objectUrl;
+
+      downloadLink.download =
+        getTripPlanFileName();
+
+      document.body.appendChild(
+        downloadLink
+      );
+
+      downloadLink.click();
+      downloadLink.remove();
+
+      URL.revokeObjectURL(
+        objectUrl
+      );
+    } catch (error) {
+      console.error(
+        "Unable to generate trip PDF:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate the PDF."
+      );
+    }
+  }
+
+  function openEmailTripDialog() {
+    setEmailTripError("");
+    setEmailTripSuccess("");
+
+    setEmailRecipientMode(
+      storedUser
+        ? "account"
+        : "manual"
     );
 
-    const body = encodeURIComponent(
-      [
-        `YakQuest Trip Plan`,
-        ``,
-        `River: ${selectedRiver.name}, ${selectedRiver.state}`,
-        `Launch: ${start.name}`,
-        `Takeout: ${end.name}`,
-        `Distance: ${tripDistanceMiles.toFixed(2)} mi`,
-        `Estimated Time: ${tripTime.label}`,
-        plannedLaunchDateTime
-          ? `Expected Launch: ${new Date(plannedLaunchDateTime).toLocaleString()}`
-          : null,
-        flowCfs !== null
-          ? `Flow: ${Math.round(flowCfs)} CFS — ${flowRating}`
-          : null,
-        ``,
-        `I attached or will send the PDF trip plan from YakQuest.`,
-      ]
-        .filter(Boolean)
-        .join("\n")
-    );
+    setEmailTripDialogOpen(true);
+  }
 
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+
+  function closeEmailTripDialog() {
+    if (emailingTripPlan) {
+      return;
+    }
+
+    setEmailTripDialogOpen(false);
+    setEmailTripError("");
+    setEmailTripSuccess("");
+  }
+
+
+  function isValidEmail(
+    email: string
+  ) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      email
+    );
+  }
+
+
+  async function emailTripPlan() {
+    if (
+      !selectedRiver ||
+      !start ||
+      !end
+    ) {
+      return;
+    }
+
+    const recipientEmail =
+      emailRecipientMode === "account"
+        ? storedUser?.email ?? ""
+        : manualEmailAddress
+            .trim()
+            .toLowerCase();
+
+    if (!recipientEmail) {
+      setEmailTripError(
+        "Enter an email address."
+      );
+
+      return;
+    }
+
+    if (
+      !isValidEmail(
+        recipientEmail
+      )
+    ) {
+      setEmailTripError(
+        "Enter a valid email address."
+      );
+
+      return;
+    }
+
+    setEmailingTripPlan(true);
+    setEmailTripError("");
+    setEmailTripSuccess("");
+
+    try {
+      const pdfBlob =
+        await createTripPdfBlob();
+
+      await sendTripPlanEmail({
+        recipientEmail,
+        riverName:
+          selectedRiver.name,
+        state:
+          selectedRiver.state,
+        launchName:
+          start.name,
+        takeoutName:
+          end.name,
+        distanceMiles:
+          tripDistanceMiles,
+        estimatedTime:
+          tripTime.label,
+        plannedLaunch:
+          plannedLaunchDateTime
+            ? new Date(
+                plannedLaunchDateTime
+              ).toLocaleString()
+            : null,
+        pdfBlob,
+        pdfFilename:
+          getTripPlanFileName(),
+      });
+
+      setEmailTripSuccess(
+        `Trip plan sent to ${recipientEmail}.`
+      );
+    } catch (error) {
+      console.error(
+        "Unable to email trip plan:",
+        error
+      );
+
+      setEmailTripError(
+        error instanceof Error
+          ? error.message
+          : (
+              "Unable to email the "
+              + "trip plan."
+            )
+      );
+    } finally {
+      setEmailingTripPlan(false);
+    }
   }
 
   function printTripPlan() {
@@ -1131,7 +1324,7 @@ export default function PlanTripPage() {
                   <button
                     type="button"
                     className="secondary-button button-reset"
-                    onClick={emailTripPlan}
+                    onClick={openEmailTripDialog}
                   >
                     Email Trip Plan
                   </button>
@@ -1178,6 +1371,204 @@ export default function PlanTripPage() {
           </div>
         )}
       </aside>
+      {emailTripDialogOpen ? (
+        <div
+          className="email-trip-modal-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (
+              event.target
+              === event.currentTarget
+            ) {
+              closeEmailTripDialog();
+            }
+          }}
+        >
+          <div
+            className="email-trip-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="email-trip-title"
+          >
+            <div className="email-trip-modal-header">
+              <div>
+                <p className="eyebrow">
+                  Trip Plan
+                </p>
+
+                <h2 id="email-trip-title">
+                  Email Trip Plan
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="email-trip-modal-close"
+                onClick={
+                  closeEmailTripDialog
+                }
+                aria-label="Close email dialog"
+                disabled={emailingTripPlan}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="email-trip-modal-body">
+              <p className="muted">
+                YakQuest will generate the
+                printable trip plan and send it
+                as a PDF attachment from
+                trips@yakquest.com.
+              </p>
+
+              {storedUser ? (
+                <label className="email-trip-recipient-option">
+                  <input
+                    type="radio"
+                    name="trip-email-recipient"
+                    value="account"
+                    checked={
+                      emailRecipientMode
+                      === "account"
+                    }
+                    onChange={() =>
+                      setEmailRecipientMode(
+                        "account"
+                      )
+                    }
+                    disabled={
+                      emailingTripPlan
+                    }
+                  />
+
+                  <span>
+                    <strong>
+                      Send to the email
+                      registered to my account
+                    </strong>
+
+                    <small>
+                      {storedUser.email}
+                    </small>
+                  </span>
+                </label>
+              ) : null}
+
+              <label className="email-trip-recipient-option">
+                <input
+                  type="radio"
+                  name="trip-email-recipient"
+                  value="manual"
+                  checked={
+                    emailRecipientMode
+                    === "manual"
+                  }
+                  onChange={() =>
+                    setEmailRecipientMode(
+                      "manual"
+                    )
+                  }
+                  disabled={
+                    emailingTripPlan
+                  }
+                />
+
+                <span>
+                  <strong>
+                    Send to another email
+                    address
+                  </strong>
+
+                  <small>
+                    No YakQuest account is
+                    required.
+                  </small>
+                </span>
+              </label>
+
+              {emailRecipientMode
+                === "manual" ? (
+                <label className="form-label email-trip-address-field">
+                  Email address
+
+                  <input
+                    type="email"
+                    value={
+                      manualEmailAddress
+                    }
+                    onChange={(event) =>
+                      setManualEmailAddress(
+                        event.target.value
+                      )
+                    }
+                    placeholder="name@example.com"
+                    autoComplete="email"
+                    disabled={
+                      emailingTripPlan
+                    }
+                  />
+                </label>
+              ) : null}
+
+              {emailTripError ? (
+                <p
+                  className="email-trip-error"
+                  role="alert"
+                >
+                  {emailTripError}
+                </p>
+              ) : null}
+
+              {emailTripSuccess ? (
+                <p
+                  className="email-trip-success"
+                  role="status"
+                >
+                  {emailTripSuccess}
+                </p>
+              ) : null}
+
+              <div className="email-trip-actions">
+                <button
+                  type="button"
+                  className="secondary-button button-reset"
+                  onClick={
+                    closeEmailTripDialog
+                  }
+                  disabled={
+                    emailingTripPlan
+                  }
+                >
+                  {emailTripSuccess
+                    ? "Close"
+                    : "Cancel"}
+                </button>
+
+                {!emailTripSuccess ? (
+                  <button
+                    type="button"
+                    className="primary-button button-reset"
+                    onClick={() => {
+                      void emailTripPlan();
+                    }}
+                    disabled={
+                      emailingTripPlan
+                    }
+                  >
+                    {emailingTripPlan
+                      ? (
+                          "Generating and "
+                          + "Sending..."
+                        )
+                      : "Send Trip Plan"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
