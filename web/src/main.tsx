@@ -29,6 +29,7 @@ import AdminUsersPage from "./admin/pages/AdminUsersPage";
 import AdminAnalyticsPage from "./admin/pages/AdminAnalyticsPage";
 import AdminRiverEditorPage from "./admin/pages/AdminRiverEditorPage";
 import AdminRiverImportPage from "./admin/pages/AdminRiverImportPage";
+import CompletedTripsPage from "./pages/CompletedTripsPage";
 
 import "./index.css";
 
@@ -44,6 +45,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/rivers" element={<RiversPage />} />
             <Route path="/plan" element={<PlanTripPage />} />
             <Route path="/saved-trips" element={<SavedTripsPage />} />
+            <Route path="/completed-trips" element={<CompletedTripsPage />}/>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />}/>
             <Route path="/account" element={<AccountPage />} />
