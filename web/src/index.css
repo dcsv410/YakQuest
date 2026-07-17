@@ -2807,3 +2807,37 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.selected-trip-marker-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.selected-trip-marker {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  border: 4px solid white;
+  border-radius: 50%;
+
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.45),
+    0 0 0 3px rgba(0, 0, 0, 0.18);
+}
+
+.selected-trip-marker-launch {
+  background: #16a34a;
+}
+
+.selected-trip-marker-takeout {
+  background: #dc2626;
+}

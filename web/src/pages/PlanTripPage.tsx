@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
+import { divIcon } from "leaflet";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
@@ -46,6 +47,30 @@ function getPointLabel(point: RiverPoint) {
 }
 
 const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
+
+const selectedLaunchIcon = divIcon({
+  className: "selected-trip-marker-wrapper",
+  html: `
+    <div class="selected-trip-marker selected-trip-marker-launch">
+      L
+    </div>
+  `,
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -20],
+});
+
+const selectedTakeoutIcon = divIcon({
+  className: "selected-trip-marker-wrapper",
+  html: `
+    <div class="selected-trip-marker selected-trip-marker-takeout">
+      T
+    </div>
+  `,
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -20],
+});
 
 export default function PlanTripPage() {
   const {
@@ -1016,39 +1041,79 @@ export default function PlanTripPage() {
               /> */}
 
               {accessPoints.map((point) => {
-                const isStart = point.id === startId;
-                const isEnd = point.id === endId;
+                const isStart =
+                  point.id === startId;
+
+                const isEnd =
+                  point.id === endId;
+
+                const selectedIcon =
+                  isStart
+                    ? selectedLaunchIcon
+                    : isEnd
+                      ? selectedTakeoutIcon
+                      : undefined;
 
                 return (
                   <Marker
                     key={point.id}
-                    position={[point.latitude, point.longitude]}
+                    position={[
+                      point.latitude,
+                      point.longitude,
+                    ]}
+                    {...(
+                      selectedIcon
+                        ? { icon: selectedIcon }
+                        : {}
+                    )}
+                    zIndexOffset={
+                      isStart || isEnd
+                        ? 1000
+                        : 0
+                    }
                     eventHandlers={{
-                      click: () => selectPointFromMap(point),
+                      click: () =>
+                        selectPointFromMap(point),
                     }}
                   >
                     <Popup>
                       <strong>{point.name}</strong>
+
                       <br />
+
                       {getPointLabel(point)}
+
                       <br />
+
                       <button
                         className="popup-button"
                         onClick={() => {
                           setStartId(point.id);
-                          if (!endId) setSelectionMode("end");
+
+                          if (!endId) {
+                            setSelectionMode("end");
+                          }
                         }}
                       >
                         Set as launch
                       </button>
+
                       <button
                         className="popup-button"
-                        onClick={() => setEndId(point.id)}
+                        onClick={() =>
+                          setEndId(point.id)
+                        }
                       >
                         Set as takeout
                       </button>
-                      {isStart ? <p>Selected launch</p> : null}
-                      {isEnd ? <p>Selected takeout</p> : null}
+
+                      {isStart ? (
+                        <p>Selected launch</p>
+                      ) : null}
+
+                      {isEnd ? (
+                        <p>Selected takeout</p>
+                      ) : null}
                     </Popup>
                   </Marker>
                 );
