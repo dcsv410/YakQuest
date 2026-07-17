@@ -203,6 +203,13 @@ export default function AdminContributionsPage() {
                     </p>
                   ) : null}
 
+                  {contribution.description ? (
+                    <div className="admin-contribution-description">
+                      <strong>Request details:</strong>
+                      <p>{contribution.description}</p>
+                    </div>
+                  ) : null}
+
                   {contribution.target_point_name ? (
                     <p>
                       <strong>Target:</strong>{" "}

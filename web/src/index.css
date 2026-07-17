@@ -1749,6 +1749,12 @@ h1 {
   }
 }
 
+.admin-contribution-description p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
 .site-main:has(.admin-contributions-page) {
   height: calc(100vh - 76px);
   max-width: none;
