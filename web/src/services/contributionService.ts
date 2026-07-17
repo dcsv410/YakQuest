@@ -1,5 +1,12 @@
-import { contributionsApi } from "@yakquest/shared";
+import {
+  contributionsApi,
+  type CreateContributionRequestDTO,
+} from "@yakquest/shared";
 import { apiClient } from "./apiClient";
+
+export const submitContribution = (
+  payload: CreateContributionRequestDTO
+) => contributionsApi.submit(apiClient, payload);
 
 export const fetchAdminContributions = () =>
   contributionsApi.listAdmin(apiClient);

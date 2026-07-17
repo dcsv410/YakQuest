@@ -59,6 +59,7 @@ class ContributionCreate(BaseModel):
     riverId: str | None = None
     riverName: str | None = None
     state: str | None = None
+    description: str | None = None
     points: list[RiverPointCreate] = Field(default_factory=list)
     targetPointId: str | None = None
     targetPointName: str | None = None
@@ -82,6 +83,7 @@ class ContributionOut(BaseModel):
     river_id: UUID | None = None
     river_name: str | None = None
     state: str | None = None
+    description: str | None = None
 
     points: list = Field(default_factory=list)
 

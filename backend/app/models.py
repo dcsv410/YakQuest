@@ -83,6 +83,11 @@ class Contribution(Base):
         default="pending",
     )
 
+    description = Column(
+        Text,
+        nullable=True,
+    )
+
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),

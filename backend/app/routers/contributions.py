@@ -44,6 +44,7 @@ def create_contribution(
         river_id=payload.riverId,
         river_name=payload.riverName,
         state=payload.state,
+        description=payload.description,
         points=[
             {
                 **point.model_dump(),

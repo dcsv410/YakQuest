@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   MapContainer,
@@ -7,7 +12,6 @@ import {
   Popup,
   TileLayer,
 } from "react-leaflet";
-
 import { fetchRivers, fetchRiverOutfitters } from "../services/riverService";
 import type {
   River,
@@ -15,6 +19,10 @@ import type {
 } from "@yakquest/shared";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
 import FitRiverBounds from "../components/FitRiverBounds";
+import CenterMapOnState from "../components/CenterMapOnState";
+import { useNavigate } from "react-router-dom";
+import { submitContribution } from "../services/contributionService";
+import { isLoggedIn } from "../services/authService";
 
 function getRiverCenter(river: River): [number, number] {
   if (!river.coordinates.length) {
@@ -143,6 +151,19 @@ export default function RiversPage() {
     queryFn: fetchRivers,
   });
 
+  const navigate = useNavigate();
+
+  const [requestFormOpen, setRequestFormOpen] = useState(false);
+  const [requestedRiverName, setRequestedRiverName] = useState("");
+  const [requestedRiverState, setRequestedRiverState] = useState("AL");
+  const [highestAccessPoint, setHighestAccessPoint] = useState("");
+  const [lowestAccessPoint, setLowestAccessPoint] = useState("");
+  const [requestNotes, setRequestNotes] = useState("");
+
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState("");
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
+
   const [selectedRiverId, setSelectedRiverId] = useState<string>("");
   const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
 
@@ -154,6 +175,12 @@ export default function RiversPage() {
   }, [rivers]);
 
   const [selectedState, setSelectedState] = useState("AL");
+
+  useEffect(() => {
+    if (!requestFormOpen) {
+      setRequestedRiverState(selectedState);
+    }
+  }, [requestFormOpen, selectedState]);
 
   const filteredRivers = useMemo(() => {
     return rivers
@@ -236,6 +263,89 @@ export default function RiversPage() {
     enabled: !!selectedRiver?.id,
   });
 
+  const closeRiverRequestForm = () => {
+    if (requestSubmitting) return;
+
+    setRequestFormOpen(false);
+    setRequestError("");
+    setRequestSubmitted(false);
+  };
+
+  const submitRiverRequest = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!isLoggedIn()) {
+      navigate("/login", {
+        state: {
+          returnTo: "/rivers",
+          message: "Please log in to request a new river.",
+        },
+      });
+
+      return;
+    }
+
+    const riverName = requestedRiverName.trim();
+    const state = requestedRiverState.trim().toUpperCase();
+    const highest = highestAccessPoint.trim();
+    const lowest = lowestAccessPoint.trim();
+    const notes = requestNotes.trim();
+
+    if (!riverName) {
+      setRequestError("Enter the river name.");
+      return;
+    }
+
+    if (!state) {
+      setRequestError("Select a state.");
+      return;
+    }
+
+    if (!highest || !lowest) {
+      setRequestError(
+        "Please provide the highest and lowest known access points."
+      );
+      return;
+    }
+
+    const description = [
+      `Highest known access point: ${highest}`,
+      `Lowest known access point: ${lowest}`,
+      notes ? `Additional details: ${notes}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    setRequestSubmitting(true);
+    setRequestError("");
+
+    try {
+      await submitContribution({
+        kind: "new-river",
+        riverName,
+        state,
+        description,
+        points: [],
+      });
+
+      setRequestSubmitted(true);
+      setRequestedRiverName("");
+      setHighestAccessPoint("");
+      setLowestAccessPoint("");
+      setRequestNotes("");
+    } catch (error) {
+      setRequestError(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit the river request."
+      );
+    } finally {
+      setRequestSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return <p>Loading rivers...</p>;
   }
@@ -264,6 +374,11 @@ export default function RiversPage() {
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          <CenterMapOnState
+            state={selectedState}
+            enabled={!selectedRiver}
           />
 
           {selectedRiver ? (
@@ -387,6 +502,19 @@ export default function RiversPage() {
               points, flow information, and planning options, or choose from the
               lists below.
             </p>
+
+            <button
+              type="button"
+              className="request-river-button"
+              onClick={() => {
+                setRequestedRiverState(selectedState);
+                setRequestError("");
+                setRequestSubmitted(false);
+                setRequestFormOpen(true);
+              }}
+            >
+              Request a New River
+            </button>
 
             <label className="form-label">
               State
@@ -551,6 +679,167 @@ export default function RiversPage() {
           </>
         )}
       </aside>
+
+      {requestFormOpen ? (
+        <div
+          className="river-request-modal-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeRiverRequestForm();
+            }
+          }}
+        >
+          <div
+            className="river-request-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="river-request-title"
+          >
+            <div className="river-request-modal-header">
+              <div>
+                <p className="eyebrow">River Contribution</p>
+                <h2 id="river-request-title">
+                  Request a New River
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="river-request-modal-close"
+                onClick={closeRiverRequestForm}
+                aria-label="Close request form"
+              >
+                ×
+              </button>
+            </div>
+
+            {requestSubmitted ? (
+              <div className="river-request-success">
+                <h3>Request submitted</h3>
+                <p>
+                  Thank you. The river request has been sent for review.
+                </p>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={closeRiverRequestForm}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form
+                className="river-request-form"
+                onSubmit={submitRiverRequest}
+              >
+                <p className="muted">
+                  Tell us the river and the highest and lowest access
+                  points you know. This helps us determine the section
+                  needed when building the river map.
+                </p>
+
+                <label className="form-label">
+                  River name
+                  <input
+                    type="text"
+                    value={requestedRiverName}
+                    onChange={(event) =>
+                      setRequestedRiverName(event.target.value)
+                    }
+                    placeholder="Example: Paint Rock River"
+                    maxLength={255}
+                    required
+                  />
+                </label>
+
+                <label className="form-label">
+                  State
+                  <select
+                    value={requestedRiverState}
+                    onChange={(event) =>
+                      setRequestedRiverState(event.target.value)
+                    }
+                    required
+                  >
+                    {states.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-label">
+                  Highest known access point
+                  <textarea
+                    value={highestAccessPoint}
+                    onChange={(event) =>
+                      setHighestAccessPoint(event.target.value)
+                    }
+                    placeholder="Name, road, bridge, park, town, or approximate location"
+                    rows={3}
+                    required
+                  />
+                </label>
+
+                <label className="form-label">
+                  Lowest known access point
+                  <textarea
+                    value={lowestAccessPoint}
+                    onChange={(event) =>
+                      setLowestAccessPoint(event.target.value)
+                    }
+                    placeholder="Name, road, bridge, park, town, or approximate location"
+                    rows={3}
+                    required
+                  />
+                </label>
+
+                <label className="form-label">
+                  Additional details
+                  <textarea
+                    value={requestNotes}
+                    onChange={(event) =>
+                      setRequestNotes(event.target.value)
+                    }
+                    placeholder="Optional notes about the requested section"
+                    rows={4}
+                  />
+                </label>
+
+                {requestError ? (
+                  <p className="river-request-error">
+                    {requestError}
+                  </p>
+                ) : null}
+
+                <div className="river-request-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={closeRiverRequestForm}
+                    disabled={requestSubmitting}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={requestSubmitting}
+                  >
+                    {requestSubmitting
+                      ? "Submitting..."
+                      : "Submit River Request"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

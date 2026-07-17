@@ -26,6 +26,7 @@ export type ContributionResponseDTO = {
   river_id?: string | null;
   river_name: string;
   state?: string | null;
+  description?: string | null;
 
   points: ContributionPointDTO[];
 
@@ -50,6 +51,7 @@ export type CreateContributionRequestDTO = {
   riverId?: string | null;
   riverName: string;
   state?: string | null;
+  description?: string | null;
 
   points: ContributionPointDTO[];
 

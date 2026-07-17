@@ -18,6 +18,7 @@ import {
 } from "@yakquest/shared";
 import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
+import CenterMapOnState from "../components/CenterMapOnState";
 import { fetchSavedTrips, createSavedTrip } from "../services/savedTripService";
 import { isLoggedIn } from "../services/authService";
 import { fetchUSGSFlow, getFlowPercentile, getFlowRating } from "../utils/flow";
@@ -763,6 +764,11 @@ export default function PlanTripPage() {
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          <CenterMapOnState
+            state={selectedState}
+            enabled={!selectedRiver}
           />
 
           {userCenter ? (
