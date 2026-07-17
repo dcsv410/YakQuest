@@ -949,18 +949,109 @@ def get_admin_analytics(
     db: Session = Depends(get_db),
     admin_user: User = Depends(require_admin_user),
 ):
+    completed_trip_totals = (
+        db.query(
+            func.count(CompletedTrip.id).label(
+                "trips_completed"
+            ),
+            func.coalesce(
+                func.sum(
+                    CompletedTrip.actual_distance_miles
+                ),
+                0.0,
+            ).label("actual_miles"),
+            func.coalesce(
+                func.sum(
+                    CompletedTrip.planned_distance_miles
+                ),
+                0.0,
+            ).label("planned_miles"),
+            func.coalesce(
+                func.sum(
+                    CompletedTrip.elapsed_time_seconds
+                ),
+                0,
+            ).label("elapsed_time_seconds"),
+            func.count(
+                func.distinct(
+                    CompletedTrip.river_id
+                )
+            ).label("rivers_explored"),
+        )
+        .one()
+    )
+
+    unique_contributors = (
+        db.query(
+            func.count(
+                func.distinct(
+                    Contribution.user_id
+                )
+            )
+        )
+        .filter(
+            Contribution.user_id.isnot(None)
+        )
+        .scalar()
+        or 0
+    )
+
     return {
         "rivers": db.query(River).count(),
         "users": db.query(User).count(),
-        "pendingContributions": db.query(Contribution)
-        .filter(Contribution.status == "pending")
-        .count(),
-        "approvedContributions": db.query(Contribution)
-        .filter(Contribution.status == "approved")
-        .count(),
-        "rejectedContributions": db.query(Contribution)
-        .filter(Contribution.status == "rejected")
-        .count(),
-        "completedTrips": db.query(CompletedTrip).count(),
-        "savedTrips": db.query(SavedTrip).count(),
+        "uniqueContributors": (
+            unique_contributors
+        ),
+        "pendingContributions": (
+            db.query(Contribution)
+            .filter(
+                Contribution.status == "pending"
+            )
+            .count()
+        ),
+        "approvedContributions": (
+            db.query(Contribution)
+            .filter(
+                Contribution.status == "approved"
+            )
+            .count()
+        ),
+        "rejectedContributions": (
+            db.query(Contribution)
+            .filter(
+                Contribution.status == "rejected"
+            )
+            .count()
+        ),
+        "completedTrips": (
+            completed_trip_totals.trips_completed
+        ),
+        "savedTrips": db.query(
+            SavedTrip
+        ).count(),
+        "completedTripSummary": {
+            "tripsCompleted": (
+                completed_trip_totals
+                .trips_completed
+            ),
+            "actualMiles": float(
+                completed_trip_totals
+                .actual_miles
+                or 0
+            ),
+            "plannedMiles": float(
+                completed_trip_totals
+                .planned_miles
+                or 0
+            ),
+            "elapsedTimeSeconds": int(
+                completed_trip_totals
+                .elapsed_time_seconds
+                or 0
+            ),
+            "riversExplored": (
+                completed_trip_totals
+                .rivers_explored
+            ),
+        },
     }

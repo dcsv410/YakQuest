@@ -1121,6 +1121,30 @@ h1 {
   margin-top: 10px;
 }
 
+.admin-analytics-section {
+  margin-top: 42px;
+  padding-top: 30px;
+  border-top: 1px solid
+    rgba(16, 32, 28, 0.12);
+}
+
+.admin-analytics-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-analytics-section-heading h2 {
+  margin: 4px 0 0;
+}
+
+.admin-analytics-section-heading > p {
+  max-width: 420px;
+  margin: 0;
+  text-align: right;
+}
+
 .admin-rivers-page {
   display: grid;
   grid-template-columns: 300px minmax(520px, 1fr) 320px;
@@ -3045,5 +3069,17 @@ h1 {
 
   .about-attribution-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-analytics-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-analytics-section-heading > p {
+    text-align: left;
   }
 }
