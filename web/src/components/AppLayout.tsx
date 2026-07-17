@@ -118,11 +118,11 @@ export default function AppLayout() {
           <nav className="nav">
             <Link to="/rivers">Rivers</Link>
             <Link to="/plan">Plan</Link>
+            <Link to="/about">About</Link>
 
             {user ? (
               <>
-                <Link to="/saved-trips">Saved Trips</Link>
-                <Link to="/about">About</Link>
+                <Link to="/saved-trips">Saved Trips</Link>                
                 <Link to="/account">
                   {user.display_name || "Account"}
                 </Link>
