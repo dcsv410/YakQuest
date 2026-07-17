@@ -8,3 +8,4 @@ export * from "./enums";
 export * from "./validation";
 export * from "./geometry";
 export * from "./trip";
+export * from "./content/about";

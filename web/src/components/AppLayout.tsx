@@ -122,6 +122,7 @@ export default function AppLayout() {
             {user ? (
               <>
                 <Link to="/saved-trips">Saved Trips</Link>
+                <Link to="/about">About</Link>
                 <Link to="/account">
                   {user.display_name || "Account"}
                 </Link>
