@@ -293,14 +293,23 @@ h1 {
   font-weight: 800;
 }
 
-.form-label select,
-.form-label input {
+.form-label input,
+.form-label select {
   width: 100%;
-  border: 1px solid rgba(16, 32, 28, 0.2);
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 15px;
-  background: white;
+  padding: 12px 14px;
+  box-sizing: border-box;
+
+  border: 1px solid
+    rgba(16, 32, 28, 0.18);
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #10201c;
+  font: inherit;
+}
+
+.form-label select {
+  cursor: pointer;
 }
 
 .text-button {

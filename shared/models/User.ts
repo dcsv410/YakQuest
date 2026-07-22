@@ -1,7 +1,8 @@
 export type AuthUser = {
   id: string;
   email: string;
-  display_name?: string | null;
+  display_name: string;
+  home_state: string;
   is_admin: boolean;
   trust_score: number;
 };
@@ -20,7 +21,11 @@ export type LoginRequest = {
 export type RegisterRequest = {
   email: string;
   password: string;
-  displayName?: string;
+};
+
+export type UpdateProfileRequest = {
+  displayName: string;
+  homeState: string;
 };
 
 export type ChangePasswordRequest = {

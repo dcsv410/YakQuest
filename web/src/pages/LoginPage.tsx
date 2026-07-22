@@ -24,9 +24,6 @@ export default function LoginPage() {
   const [password, setPassword] =
     useState("");
 
-  const [displayName, setDisplayName] =
-    useState("");
-
   const [loading, setLoading] =
     useState(false);
 
@@ -61,11 +58,7 @@ export default function LoginPage() {
       }
 
       if (mode === "register") {
-        await register(
-          email,
-          password,
-          displayName || undefined
-        );
+        await register(email, password);
 
         navigate("/account");
         return;
@@ -107,22 +100,6 @@ export default function LoginPage() {
           className="auth-form"
           onSubmit={handleSubmit}
         >
-          {mode === "register" ? (
-            <label className="form-label">
-              Display Name
-
-              <input
-                value={displayName}
-                onChange={(event) =>
-                  setDisplayName(
-                    event.target.value
-                  )
-                }
-                placeholder="Your name"
-                autoComplete="name"
-              />
-            </label>
-          ) : null}
 
           <label className="form-label">
             Email

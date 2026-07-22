@@ -18,7 +18,12 @@ import {
   fetchMe,
   getStoredUser,
   logout,
+  updateProfile,
 } from "../services/authService";
+
+import {
+  US_STATES,
+} from "../constants/usStates";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -30,6 +35,39 @@ export default function AccountPage() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [
+    displayName,
+    setDisplayName,
+  ] = useState(
+    () =>
+      getStoredUser()?.display_name ||
+      "YakQuest User"
+  );
+
+  const [
+    homeState,
+    setHomeState,
+  ] = useState(
+    () =>
+      getStoredUser()?.home_state ||
+      "AL"
+  );
+
+  const [
+    profileMessage,
+    setProfileMessage,
+  ] = useState("");
+
+  const [
+    profileError,
+    setProfileError,
+  ] = useState("");
+
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] = useState(false);
 
   const [
     currentPassword,
@@ -88,6 +126,16 @@ export default function AccountPage() {
           await fetchMe();
 
         setUser(currentUser);
+
+        setDisplayName(
+          currentUser.display_name ||
+            "YakQuest User"
+        );
+
+        setHomeState(
+          currentUser.home_state ||
+            "AL"
+        );
       } catch {
         setUser(null);
       } finally {
@@ -102,6 +150,59 @@ export default function AccountPage() {
     logout();
     setUser(null);
     navigate("/");
+  }
+
+  async function handleUpdateProfile(
+    event:
+      React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setProfileError("");
+    setProfileMessage("");
+
+    const cleanedDisplayName =
+      displayName.trim();
+
+    if (cleanedDisplayName.length > 255) {
+      setProfileError(
+        "Display name must be 255 characters or fewer."
+      );
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+
+      const updatedUser =
+        await updateProfile(
+          cleanedDisplayName ||
+            "YakQuest User",
+          homeState
+        );
+
+      setUser(updatedUser);
+
+      setDisplayName(
+        updatedUser.display_name
+      );
+
+      setHomeState(
+        updatedUser.home_state
+      );
+
+      setProfileMessage(
+        "Profile updated successfully."
+      );
+    } catch (error) {
+      setProfileError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update profile."
+      );
+    } finally {
+      setProfileLoading(false);
+    }
   }
 
   async function handleChangePassword(
@@ -254,7 +355,7 @@ export default function AccountPage() {
 
           <h1>
             {user.display_name ||
-              "Paddler"}
+              "YakQuest User"}
           </h1>
 
           <p className="muted">
@@ -262,6 +363,12 @@ export default function AccountPage() {
           </p>
 
           <div className="account-detail-list">
+            <div>
+              <span>Home State</span>
+              <strong>
+                {user.home_state || "AL"}
+              </strong>
+            </div>
             <div>
               <span>Trust Score</span>
               <strong>
@@ -285,6 +392,86 @@ export default function AccountPage() {
           >
             Log Out
           </button>
+        </div>
+
+        <div className="account-card">
+          <p className="eyebrow">
+            Profile
+          </p>
+
+          <h2>Personalize YakQuest</h2>
+
+          <p className="muted">
+            Your home state helps YakQuest show
+            more relevant rivers and paddling
+            information.
+          </p>
+
+          <form
+            className="auth-form"
+            onSubmit={handleUpdateProfile}
+          >
+            <label className="form-label">
+              Display Name
+
+              <input
+                type="text"
+                value={displayName}
+                maxLength={255}
+                autoComplete="name"
+                placeholder="YakQuest User"
+                onChange={(event) =>
+                  setDisplayName(
+                    event.target.value
+                  )
+                }
+              />
+            </label>
+
+            <label className="form-label">
+              Home State
+
+              <select
+                value={homeState}
+                onChange={(event) =>
+                  setHomeState(
+                    event.target.value
+                  )
+                }
+              >
+                {US_STATES.map((state) => (
+                  <option
+                    key={state.code}
+                    value={state.code}
+                  >
+                    {state.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {profileError ? (
+              <div className="form-error">
+                {profileError}
+              </div>
+            ) : null}
+
+            {profileMessage ? (
+              <div className="form-success">
+                {profileMessage}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="primary-button account-button"
+              disabled={profileLoading}
+            >
+              {profileLoading
+                ? "Saving..."
+                : "Save Profile"}
+            </button>
+          </form>
         </div>
 
         <div className="account-card">

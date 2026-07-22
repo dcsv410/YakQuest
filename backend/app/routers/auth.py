@@ -33,6 +33,7 @@ from app.schemas import (
     ResetPasswordRequest,
     UserCreate,
     UserOut,
+    UserProfileUpdate,
 )
 from app.security import (
     create_access_token,
@@ -49,6 +50,59 @@ router = APIRouter(
 )
 
 MINIMUM_PASSWORD_LENGTH = 8
+
+VALID_US_STATE_CODES = {
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+}
 
 
 def validate_new_password(
@@ -91,7 +145,8 @@ def register(
 
     user = User(
         email=email,
-        display_name=payload.displayName,
+        display_name="YakQuest User",
+        home_state="AL",
         hashed_password=hash_password(
             payload.password
         ),
@@ -160,6 +215,62 @@ def me(
         get_current_user
     ),
 ):
+    return current_user
+
+
+@router.patch(
+    "/profile",
+    response_model=UserOut,
+)
+def update_profile(
+    payload: UserProfileUpdate,
+    current_user: User = Depends(
+        get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    display_name = (
+        payload.displayName.strip()
+    )
+
+    home_state = (
+        payload.homeState
+        .strip()
+        .upper()
+    )
+
+    if not display_name:
+        display_name = "YakQuest User"
+
+    if len(display_name) > 255:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Display name must be "
+                "255 characters or fewer."
+            ),
+        )
+
+    if home_state not in VALID_US_STATE_CODES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Please select a valid "
+                "home state."
+            ),
+        )
+
+    current_user.display_name = (
+        display_name
+    )
+
+    current_user.home_state = (
+        home_state
+    )
+
+    db.commit()
+    db.refresh(current_user)
+
     return current_user
 
 

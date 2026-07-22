@@ -105,15 +105,21 @@ class ReviewCreate(BaseModel):
 class UserCreate(BaseModel):
     email: str
     password: str
-    displayName: str | None = None
+
+
+class UserProfileUpdate(BaseModel):
+    displayName: str
+    homeState: str
 
 
 class UserOut(BaseModel):
     id: UUID
     email: str
-    display_name: str | None = None
+    display_name: str
+    home_state: str
     is_admin: bool
     trust_score: int
+
     class Config:
         from_attributes = True
 

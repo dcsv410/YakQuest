@@ -47,6 +47,50 @@ with engine.begin() as conn:
         password_reset_expires_at TIMESTAMP
     """))
 
+    conn.execute(text("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS
+        home_state VARCHAR(2)
+    """))
+
+    conn.execute(text("""
+        UPDATE users
+        SET display_name = 'YakQuest User'
+        WHERE display_name IS NULL
+           OR TRIM(display_name) = ''
+    """))
+
+    conn.execute(text("""
+        UPDATE users
+        SET home_state = 'AL'
+        WHERE home_state IS NULL
+           OR TRIM(home_state) = ''
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE users
+        ALTER COLUMN display_name
+        SET DEFAULT 'YakQuest User'
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE users
+        ALTER COLUMN home_state
+        SET DEFAULT 'AL'
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE users
+        ALTER COLUMN display_name
+        SET NOT NULL
+    """))
+
+    conn.execute(text("""
+        ALTER TABLE users
+        ALTER COLUMN home_state
+        SET NOT NULL
+    """))
+
 app = FastAPI(
     title="YakQuest API",
     version="0.1.0",

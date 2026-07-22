@@ -9,6 +9,7 @@ import type {
   MessageResponse,
   RegisterRequest,
   ResetPasswordRequest,
+  UpdateProfileRequest,
 } from "@yakquest/shared";
 
 const AUTH_TOKEN_KEY =
@@ -136,13 +137,11 @@ export async function login(
 
 export async function register(
   email: string,
-  password: string,
-  displayName?: string
+  password: string
 ): Promise<AuthResponse> {
   const payload: RegisterRequest = {
     email,
     password,
-    displayName,
   };
 
   const response = await fetch(
@@ -209,6 +208,57 @@ export async function fetchMe():
     AUTH_USER_KEY,
     JSON.stringify(user)
   );
+
+  return user;
+}
+
+export async function updateProfile(
+  displayName: string,
+  homeState: string
+): Promise<AuthUser> {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Not logged in");
+  }
+
+  const payload: UpdateProfileRequest = {
+    displayName,
+    homeState,
+  };
+
+  const response = await fetch(
+    `${API_URL}/auth/profile`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        "Unable to update profile."
+      )
+    );
+  }
+
+  const user: AuthUser =
+    await response.json();
+
+  localStorage.setItem(
+    AUTH_USER_KEY,
+    JSON.stringify(user)
+  );
+
+  notifyAuthChanged();
 
   return user;
 }
