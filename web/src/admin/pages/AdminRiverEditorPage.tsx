@@ -278,7 +278,8 @@ export default function AdminRiverEditorPage() {
     editingAdminPoint?.photos ?? editingPoint?.photos ?? [];
 
   const [markerFilters, setMarkerFilters] = useState({
-    access: true,
+    publicAccess: true,
+    privateAccess: true,
     poi: true,
     hazard: true,
     newPoint: true,
@@ -858,17 +859,30 @@ export default function AdminRiverEditorPage() {
     ...(river.hazards ?? []),
   ].filter((point) => {
     if (
-      (point.type === "public_access" || point.type === "private_access") &&
-      !markerFilters.access
+      point.type === "public_access" &&
+      !markerFilters.publicAccess
     ) {
       return false;
     }
 
-    if (point.type === "poi" && !markerFilters.poi) {
+    if (
+      point.type === "private_access" &&
+      !markerFilters.privateAccess
+    ) {
       return false;
     }
 
-    if (point.type === "hazard" && !markerFilters.hazard) {
+    if (
+      point.type === "poi" &&
+      !markerFilters.poi
+    ) {
+      return false;
+    }
+
+    if (
+      point.type === "hazard" &&
+      !markerFilters.hazard
+    ) {
       return false;
     }
 
@@ -1777,11 +1791,42 @@ export default function AdminRiverEditorPage() {
             ) : null}
             <button
               type="button"
-              className={!markerFilters.access ? "disabled" : ""}
-              onClick={() => toggleMarkerFilter("access")}
+              className={
+                !markerFilters.publicAccess
+                  ? "disabled"
+                  : ""
+              }
+              onClick={() =>
+                toggleMarkerFilter(
+                  "publicAccess"
+                )
+              }
+              aria-pressed={
+                markerFilters.publicAccess
+              }
             >
               <span className="legend-dot admin-marker-public" />
-              Access
+              Public Access
+            </button>
+
+            <button
+              type="button"
+              className={
+                !markerFilters.privateAccess
+                  ? "disabled"
+                  : ""
+              }
+              onClick={() =>
+                toggleMarkerFilter(
+                  "privateAccess"
+                )
+              }
+              aria-pressed={
+                markerFilters.privateAccess
+              }
+            >
+              <span className="legend-dot admin-marker-private" />
+              Private Access
             </button>
 
             <button
