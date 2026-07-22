@@ -4,6 +4,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import L from "leaflet";
 import { useQuery } from "@tanstack/react-query";
 import {
   MapContainer,
@@ -11,6 +12,7 @@ import {
   Polyline,
   Popup,
   TileLayer,
+  useMap,
 } from "react-leaflet";
 import { fetchRivers, fetchRiverOutfitters } from "../services/riverService";
 import type {
@@ -38,14 +40,100 @@ function getAccessCount(river: River) {
   return river.accessPoints.public.length + river.accessPoints.private.length;
 }
 
+type PointMarkerType =
+  | "public_access"
+  | "private_access"
+  | "poi"
+  | "hazard";
+
+function getRiverPointMarkerClass(type: PointMarkerType) {
+  switch (type) {
+    case "public_access":
+      return "river-marker-public";
+
+    case "private_access":
+      return "river-marker-private";
+
+    case "poi":
+      return "river-marker-poi";
+
+    case "hazard":
+      return "river-marker-hazard";
+
+    default:
+      return "river-marker-default";
+  }
+}
+
+function getRiverPointIcon(
+  type: PointMarkerType,
+  selected: boolean
+) {
+  const size = selected ? 30 : 20;
+  const anchor = size / 2;
+
+  return L.divIcon({
+    className: [
+      "river-map-marker",
+      getRiverPointMarkerClass(type),
+      selected ? "river-map-marker-selected" : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    html: "",
+    iconSize: [size, size],
+    iconAnchor: [anchor, anchor],
+    popupAnchor: [0, -(anchor + 3)],
+  });
+}
+
+type CenterMapOnPointProps = {
+  point: RiverPoint | null;
+};
+
+function CenterMapOnPoint({
+  point,
+}: CenterMapOnPointProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!point) return;
+
+    const currentZoom = map.getZoom();
+    const destinationZoom = Math.max(currentZoom, 14);
+
+    map.flyTo(
+      [point.latitude, point.longitude],
+      destinationZoom,
+      {
+        animate: true,
+        duration: 0.6,
+      }
+    );
+  }, [map, point]);
+
+  return null;
+}
+
+type PointPhotoViewer = {
+  pointName: string;
+  photos: string[];
+  index: number;
+};
+
 type RiverPointPopupProps = {
   point: RiverPoint;
   typeLabel: string;
+  onPhotoClick: (
+    point: RiverPoint,
+    photoIndex: number
+  ) => void;
 };
 
 function RiverPointPopup({
   point,
   typeLabel,
+  onPhotoClick,
 }: RiverPointPopupProps) {
   const photos = point.photos ?? [];
 
@@ -114,13 +202,12 @@ function RiverPointPopup({
 
           <div className="river-point-popup-photo-grid">
             {photos.map((photo, index) => (
-              <a
+              <button
                 key={`${point.id}-photo-${index}`}
-                href={photo}
-                target="_blank"
-                rel="noreferrer"
-                className="river-point-popup-photo-link"
-                aria-label={`Open photo ${index + 1} of ${point.name}`}
+                type="button"
+                className="river-point-popup-photo-button"
+                aria-label={`View photo ${index + 1} of ${point.name}`}
+                onClick={() => onPhotoClick(point, index)}
               >
                 <img
                   src={photo}
@@ -128,12 +215,12 @@ function RiverPointPopup({
                   className="river-point-popup-photo"
                   loading="lazy"
                 />
-              </a>
+              </button>
             ))}
           </div>
 
           <div className="river-point-popup-photo-hint">
-            Select a photo to view it full size.
+            Select a photo to enlarge it.
           </div>
         </div>
       ) : null}
@@ -165,8 +252,17 @@ export default function RiversPage() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   const [selectedRiverId, setSelectedRiverId] = useState<string>("");
+  const [selectedPointId, setSelectedPointId] = useState<string>("");
   const [userCenter, setUserCenter] = useState<[number, number] | null>(null);
 
+  const [pointFilters, setPointFilters] = useState({
+    public: true,
+    private: true,
+    poi: true,
+    hazard: true,
+  });
+
+  const [photoViewer, setPhotoViewer] = useState<PointPhotoViewer | null>(null);
   const [flowCfs, setFlowCfs] = useState<number | null>(null);
   const [flowLoading, setFlowLoading] = useState(false);
 
@@ -211,6 +307,111 @@ export default function RiversPage() {
   const selectedRiver = rivers.find(
     (river) => river.id === selectedRiverId
   );
+
+  const selectedPoint = useMemo(() => {
+    if (!selectedRiver || !selectedPointId) {
+      return null;
+    }
+
+    const allPoints = [
+      ...selectedRiver.accessPoints.public,
+      ...selectedRiver.accessPoints.private,
+      ...selectedRiver.pois,
+      ...(selectedRiver.hazards ?? []),
+    ];
+
+    return (
+      allPoints.find(
+        (point) => point.id === selectedPointId
+      ) ?? null
+    );
+  }, [selectedRiver, selectedPointId]);
+
+  function togglePointFilter(
+    filter: keyof typeof pointFilters
+  ) {
+    setPointFilters((current) => {
+      const nextEnabled = !current[filter];
+
+      if (!nextEnabled && selectedPoint) {
+        const selectedPointFilter =
+          selectedPoint.type === "public_access"
+            ? "public"
+            : selectedPoint.type === "private_access"
+              ? "private"
+              : selectedPoint.type === "poi"
+                ? "poi"
+                : selectedPoint.type === "hazard"
+                  ? "hazard"
+                  : null;
+
+        if (selectedPointFilter === filter) {
+          setSelectedPointId("");
+        }
+      }
+
+      return {
+        ...current,
+        [filter]: nextEnabled,
+      };
+    });
+  }
+
+  useEffect(() => {
+    setSelectedPointId("");
+    setPhotoViewer(null);
+  }, [selectedRiverId]);
+
+  useEffect(() => {
+    if (!photoViewer) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPhotoViewer(null);
+      }
+
+      if (
+        event.key === "ArrowLeft" &&
+        photoViewer.photos.length > 1
+      ) {
+        setPhotoViewer((current) => {
+          if (!current) return null;
+
+          return {
+            ...current,
+            index:
+              (current.index - 1 + current.photos.length) %
+              current.photos.length,
+          };
+        });
+      }
+
+      if (
+        event.key === "ArrowRight" &&
+        photoViewer.photos.length > 1
+      ) {
+        setPhotoViewer((current) => {
+          if (!current) return null;
+
+          return {
+            ...current,
+            index:
+              (current.index + 1) %
+              current.photos.length,
+          };
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [photoViewer]);
 
   useEffect(() => {
     const gaugeId = selectedRiver?.usgsGaugeId;
@@ -365,6 +566,61 @@ export default function RiversPage() {
   return (
     <section className="rivers-map-page">
       <div className="rivers-map-shell">
+        {selectedRiver ? (
+          <div
+            className="rivers-map-legend"
+            aria-label="Map point filters"
+          >
+            <button
+              type="button"
+              className={
+                pointFilters.public ? "" : "disabled"
+              }
+              onClick={() => togglePointFilter("public")}
+              aria-pressed={pointFilters.public}
+            >
+              <span className="river-legend-dot river-marker-public" />
+              Public
+            </button>
+
+            <button
+              type="button"
+              className={
+                pointFilters.private ? "" : "disabled"
+              }
+              onClick={() => togglePointFilter("private")}
+              aria-pressed={pointFilters.private}
+            >
+              <span className="river-legend-dot river-marker-private" />
+              Private
+            </button>
+
+            <button
+              type="button"
+              className={
+                pointFilters.poi ? "" : "disabled"
+              }
+              onClick={() => togglePointFilter("poi")}
+              aria-pressed={pointFilters.poi}
+            >
+              <span className="river-legend-dot river-marker-poi" />
+              POI
+            </button>
+
+            <button
+              type="button"
+              className={
+                pointFilters.hazard ? "" : "disabled"
+              }
+              onClick={() => togglePointFilter("hazard")}
+              aria-pressed={pointFilters.hazard}
+            >
+              <span className="river-legend-dot river-marker-hazard" />
+              Hazard
+            </button>
+          </div>
+        ) : null}
+
         <MapContainer
           center={defaultCenter}
           zoom={9}
@@ -384,6 +640,8 @@ export default function RiversPage() {
           {selectedRiver ? (
             <FitRiverBounds coordinates={selectedRiver.coordinates} />
           ) : null}
+
+          <CenterMapOnPoint point={selectedPoint} />
 
           {userCenter ? (
             <Marker position={userCenter}>
@@ -414,79 +672,199 @@ export default function RiversPage() {
 
           {selectedRiver ? (
             <>
-              {[
-                ...selectedRiver.accessPoints.public,
-                ...selectedRiver.accessPoints.private,
-              ].map((point) => {
-                const typeLabel =
-                  point.type === "public_access" 
-                    ? "Public Access"
-                    : point.type === "private_access" 
-                      ? "Private Access"
-                      : point.type;
+              {pointFilters.public
+                ? selectedRiver.accessPoints.public.map(
+                    (point) => (
+                      <Marker
+                        key={point.id}
+                        position={[
+                          point.latitude,
+                          point.longitude,
+                        ]}
+                        icon={getRiverPointIcon(
+                          "public_access",
+                          selectedPointId === point.id
+                        )}
+                        zIndexOffset={
+                          selectedPointId === point.id
+                            ? 1000
+                            : 0
+                        }
+                        eventHandlers={{
+                          click: () =>
+                            setSelectedPointId(point.id),
+                        }}
+                      >
+                        <Popup
+                          minWidth={240}
+                          maxWidth={340}
+                        >
+                          <RiverPointPopup
+                            point={point}
+                            typeLabel="Public Access"
+                            onPhotoClick={(
+                              selectedPhotoPoint,
+                              photoIndex
+                            ) => {
+                              setPhotoViewer({
+                                pointName:
+                                  selectedPhotoPoint.name,
+                                photos:
+                                  selectedPhotoPoint.photos ?? [],
+                                index: photoIndex,
+                              });
+                            }}
+                          />
+                        </Popup>
+                      </Marker>
+                    )
+                  )
+                : null}
 
-                return (
-                  <Marker
-                    key={point.id}
-                    position={[
-                      point.latitude,
-                      point.longitude,
-                    ]}
-                  >
-                    <Popup
-                      minWidth={240}
-                      maxWidth={340}
+              {pointFilters.private
+                ? selectedRiver.accessPoints.private.map(
+                    (point) => (
+                      <Marker
+                        key={point.id}
+                        position={[
+                          point.latitude,
+                          point.longitude,
+                        ]}
+                        icon={getRiverPointIcon(
+                          "private_access",
+                          selectedPointId === point.id
+                        )}
+                        zIndexOffset={
+                          selectedPointId === point.id
+                            ? 1000
+                            : 0
+                        }
+                        eventHandlers={{
+                          click: () =>
+                            setSelectedPointId(point.id),
+                        }}
+                      >
+                        <Popup
+                          minWidth={240}
+                          maxWidth={340}
+                        >
+                          <RiverPointPopup
+                            point={point}
+                            typeLabel="Private Access"
+                            onPhotoClick={(
+                              selectedPhotoPoint,
+                              photoIndex
+                            ) => {
+                              setPhotoViewer({
+                                pointName:
+                                  selectedPhotoPoint.name,
+                                photos:
+                                  selectedPhotoPoint.photos ?? [],
+                                index: photoIndex,
+                              });
+                            }}
+                          />
+                        </Popup>
+                      </Marker>
+                    )
+                  )
+                : null}
+
+              {pointFilters.poi
+                ? selectedRiver.pois.map((point) => (
+                    <Marker
+                      key={point.id}
+                      position={[
+                        point.latitude,
+                        point.longitude,
+                      ]}
+                      icon={getRiverPointIcon(
+                        "poi",
+                        selectedPointId === point.id
+                      )}
+                      zIndexOffset={
+                        selectedPointId === point.id
+                          ? 1000
+                          : 0
+                      }
+                      eventHandlers={{
+                        click: () =>
+                          setSelectedPointId(point.id),
+                      }}
                     >
-                      <RiverPointPopup
-                        point={point}
-                        typeLabel={typeLabel}
-                      />
-                    </Popup>
-                  </Marker>
-                );
-              })}
+                      <Popup
+                        minWidth={240}
+                        maxWidth={340}
+                      >
+                        <RiverPointPopup
+                          point={point}
+                          typeLabel="Point of Interest"
+                          onPhotoClick={(
+                            selectedPhotoPoint,
+                            photoIndex
+                          ) => {
+                            setPhotoViewer({
+                              pointName:
+                                selectedPhotoPoint.name,
+                              photos:
+                                selectedPhotoPoint.photos ?? [],
+                              index: photoIndex,
+                            });
+                          }}
+                        />
+                      </Popup>
+                    </Marker>
+                  ))
+                : null}
 
-              {selectedRiver.pois.map((point) => (
-                <Marker
-                  key={point.id}
-                  position={[
-                    point.latitude,
-                    point.longitude,
-                  ]}
-                >
-                  <Popup
-                    minWidth={240}
-                    maxWidth={340}
-                  >
-                    <RiverPointPopup
-                      point={point}
-                      typeLabel="Point of Interest"
-                    />
-                  </Popup>
-                </Marker>
-              ))}
-
-              {(selectedRiver.hazards ?? []).map(
-                (point) => (
-                  <Marker
-                    key={point.id}
-                    position={[
-                      point.latitude,
-                      point.longitude,
-                    ]}
-                  >
-                    <Popup
-                      minWidth={240}
-                      maxWidth={340}
-                    >
-                      <RiverPointPopup
-                        point={point}
-                        typeLabel="Hazard"
-                      />
-                    </Popup>
-                  </Marker>
-                )
-              )}
+              {pointFilters.hazard
+                ? (selectedRiver.hazards ?? []).map(
+                    (point) => (
+                      <Marker
+                        key={point.id}
+                        position={[
+                          point.latitude,
+                          point.longitude,
+                        ]}
+                        icon={getRiverPointIcon(
+                          "hazard",
+                          selectedPointId === point.id
+                        )}
+                        zIndexOffset={
+                          selectedPointId === point.id
+                            ? 1000
+                            : 0
+                        }
+                        eventHandlers={{
+                          click: () =>
+                            setSelectedPointId(point.id),
+                        }}
+                      >
+                        <Popup
+                          minWidth={240}
+                          maxWidth={340}
+                        >
+                          <RiverPointPopup
+                            point={point}
+                            typeLabel="Hazard"
+                            onPhotoClick={(
+                              selectedPhotoPoint,
+                              photoIndex
+                            ) => {
+                              setPhotoViewer({
+                                pointName:
+                                  selectedPhotoPoint.name,
+                                photos:
+                                  selectedPhotoPoint.photos ?? [],
+                                index: photoIndex,
+                              });
+                            }}
+                          />
+                        </Popup>
+                      </Marker>
+                    )
+                  )
+                : null}
             </>
           ) : null}
         </MapContainer>
@@ -840,6 +1218,96 @@ export default function RiversPage() {
           </div>
         </div>
       ) : null}
+      {photoViewer &&
+        photoViewer.photos[photoViewer.index] ? (
+          <div
+            className="river-photo-viewer-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${photoViewer.pointName} photo viewer`}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setPhotoViewer(null);
+              }
+            }}
+          >
+            <div className="river-photo-viewer">
+              <div className="river-photo-viewer-header">
+                <div>
+                  <strong>{photoViewer.pointName}</strong>
+
+                  <span>
+                    Photo {photoViewer.index + 1} of{" "}
+                    {photoViewer.photos.length}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="river-photo-viewer-close"
+                  onClick={() => setPhotoViewer(null)}
+                  aria-label="Close photo viewer"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="river-photo-viewer-image-area">
+                <img
+                  src={photoViewer.photos[photoViewer.index]}
+                  alt={`${photoViewer.pointName} photo ${
+                    photoViewer.index + 1
+                  }`}
+                  className="river-photo-viewer-image"
+                />
+              </div>
+
+              {photoViewer.photos.length > 1 ? (
+                <div className="river-photo-viewer-controls">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      setPhotoViewer((current) => {
+                        if (!current) return null;
+
+                        return {
+                          ...current,
+                          index:
+                            (current.index -
+                              1 +
+                              current.photos.length) %
+                            current.photos.length,
+                        };
+                      });
+                    }}
+                  >
+                    ← Previous
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      setPhotoViewer((current) => {
+                        if (!current) return null;
+
+                        return {
+                          ...current,
+                          index:
+                            (current.index + 1) %
+                            current.photos.length,
+                        };
+                      });
+                    }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
     </section>
   );
 }
