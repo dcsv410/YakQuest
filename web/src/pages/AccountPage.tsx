@@ -464,7 +464,7 @@ export default function AccountPage() {
 
             <button
               type="submit"
-              className="primary-button account-button"
+              className="primary-button"
               disabled={profileLoading}
             >
               {profileLoading
