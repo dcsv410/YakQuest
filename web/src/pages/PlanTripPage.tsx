@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
-import { divIcon, Icon } from "leaflet";
+// import { divIcon, Icon } from "leaflet";
 import L from "leaflet";
 import { useSearchParams } from "react-router-dom";
 
