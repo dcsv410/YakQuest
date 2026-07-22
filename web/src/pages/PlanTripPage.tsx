@@ -128,32 +128,32 @@ function getPlannerPointIcon(
 
 const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
 
-const defaultAccessPointIcon =
-  new Icon.Default();
+// const defaultAccessPointIcon =
+//   new Icon.Default();
 
-const selectedLaunchIcon = divIcon({
-  className: "selected-trip-marker-wrapper",
-  html: `
-    <div class="selected-trip-marker selected-trip-marker-launch">
-      L
-    </div>
-  `,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  popupAnchor: [0, -20],
-});
+// const selectedLaunchIcon = divIcon({
+//   className: "selected-trip-marker-wrapper",
+//   html: `
+//     <div class="selected-trip-marker selected-trip-marker-launch">
+//       L
+//     </div>
+//   `,
+//   iconSize: [36, 36],
+//   iconAnchor: [18, 18],
+//   popupAnchor: [0, -20],
+// });
 
-const selectedTakeoutIcon = divIcon({
-  className: "selected-trip-marker-wrapper",
-  html: `
-    <div class="selected-trip-marker selected-trip-marker-takeout">
-      T
-    </div>
-  `,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  popupAnchor: [0, -20],
-});
+// const selectedTakeoutIcon = divIcon({
+//   className: "selected-trip-marker-wrapper",
+//   html: `
+//     <div class="selected-trip-marker selected-trip-marker-takeout">
+//       T
+//     </div>
+//   `,
+//   iconSize: [36, 36],
+//   iconAnchor: [18, 18],
+//   popupAnchor: [0, -20],
+// });
 
 export default function PlanTripPage() {
   const {
