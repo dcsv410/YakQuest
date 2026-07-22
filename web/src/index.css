@@ -214,16 +214,24 @@ h1 {
 
 .planner-center {
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
 }
 
 .planner-map-legend {
+  position: relative;
+  z-index: 1100;
+
   display: grid;
   gap: 10px;
 
   padding: 12px 14px;
 
-  border: 1px solid
-    rgba(16, 32, 28, 0.14);
+  border: 1px solid rgba(16, 32, 28, 0.14);
   border-bottom: 0;
   border-radius: 14px 14px 0 0;
 
@@ -315,6 +323,14 @@ h1 {
 
 .planner-map-legend-options button.disabled .planner-legend-dot {
   filter: grayscale(1);
+}
+
+.planner-center > .leaflet-container {
+  position: relative;
+  z-index: 1;
+
+  flex: 1;
+  min-height: 400px;
 }
 
 .planner-map-selection-legend {
