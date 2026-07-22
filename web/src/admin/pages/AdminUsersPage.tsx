@@ -15,7 +15,12 @@ import {
   updateAdminUser,
 } from "../../services/adminService";
 
+import {
+  US_STATES,
+} from "../../constants/usStates";
+
 type EditableAdminUser = {
+  homeState: string;
   isAdmin: boolean;
   trustScore: string;
 };
@@ -53,6 +58,7 @@ export default function AdminUsersPage() {
       users.forEach((user) => {
         if (!next[user.id]) {
           next[user.id] = {
+            homeState: user.homeState || "AL",
             isAdmin: user.isAdmin,
             trustScore:
               user.trustScore.toString(),
@@ -91,6 +97,8 @@ export default function AdminUsersPage() {
       setEditableUsers((current) => ({
         ...current,
         [updatedUser.id]: {
+          homeState:
+            updatedUser.homeState || "AL",
           isAdmin: updatedUser.isAdmin,
           trustScore:
             updatedUser.trustScore.toString(),
@@ -140,6 +148,7 @@ export default function AdminUsersPage() {
     setEditableUsers((current) => ({
       ...current,
       [user.id]: {
+        homeState: user.homeState || "AL",
         isAdmin: user.isAdmin,
         trustScore:
           user.trustScore.toString(),
@@ -177,6 +186,14 @@ export default function AdminUsersPage() {
     const updates: AdminUserUpdateDTO = {};
 
     if (
+      editableUser.homeState !==
+      (user.homeState || "AL")
+    ) {
+      updates.homeState =
+        editableUser.homeState;
+    }
+
+    if (
       editableUser.isAdmin !== user.isAdmin
     ) {
       updates.isAdmin =
@@ -190,6 +207,7 @@ export default function AdminUsersPage() {
     }
 
     if (
+      updates.homeState === undefined &&
       updates.isAdmin === undefined &&
       updates.trustScore === undefined
     ) {
@@ -221,6 +239,8 @@ export default function AdminUsersPage() {
     }
 
     return (
+      editableUser.homeState !==
+        (user.homeState || "AL") ||
       editableUser.isAdmin !==
         user.isAdmin ||
       editableUser.trustScore !==
@@ -271,6 +291,7 @@ export default function AdminUsersPage() {
             <tr>
               <th>Email</th>
               <th>Name</th>
+              <th>Home State</th>
               <th>Admin</th>
               <th>Trust Score</th>
               <th>Approval</th>
@@ -302,6 +323,37 @@ export default function AdminUsersPage() {
 
                   <td data-label="Name">
                     {user.displayName || "—"}
+                  </td>
+
+                  <td data-label="Home State">
+                    <select
+                      className="admin-user-state-select"
+                      value={
+                        editableUser?.homeState ??
+                        user.homeState ??
+                        "AL"
+                      }
+                      disabled={isSaving}
+                      onChange={(event) =>
+                        updateEditableUser(
+                          user.id,
+                          {
+                            homeState:
+                              event.target.value,
+                          }
+                        )
+                      }
+                      aria-label={`Home state for ${user.email}`}
+                    >
+                      {US_STATES.map((state) => (
+                        <option
+                          key={state.code}
+                          value={state.code}
+                        >
+                          {state.code}
+                        </option>
+                      ))}
+                    </select>
                   </td>
 
                   <td data-label="Admin">
@@ -447,7 +499,7 @@ export default function AdminUsersPage() {
             {users.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="admin-users-empty"
                 >
                   No users were found.

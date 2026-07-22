@@ -1,5 +1,6 @@
 import {
   adminApi,
+  type AdminAnalyticsFiltersDTO,
   type AdminUserUpdateDTO,
 } from "@yakquest/shared";
 
@@ -23,3 +24,11 @@ export const updateAdminUser = (
 
 export const fetchAdminAnalytics = () =>
   adminApi.analytics(apiClient);
+
+export const fetchFilteredAdminAnalytics = (
+  filters: AdminAnalyticsFiltersDTO
+) =>
+  adminApi.filteredAnalytics(
+    apiClient,
+    filters
+  );

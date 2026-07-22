@@ -1,7 +1,9 @@
 import type { ApiClient } from "../../network";
 import type {
   AdminAnalyticsDTO,
+  AdminAnalyticsFiltersDTO,
   AdminDashboardStatsDTO,
+  AdminFilteredAnalyticsDTO,
   AdminUserDTO,
   AdminUserUpdateDTO,
 } from "../../dto";
@@ -39,6 +41,37 @@ export const adminApi = {
   ): Promise<AdminAnalyticsDTO> {
     return client.get<AdminAnalyticsDTO>(
       "/admin/analytics"
+    );
+  },
+
+  filteredAnalytics(
+    client: ApiClient,
+    filters: AdminAnalyticsFiltersDTO
+  ): Promise<AdminFilteredAnalyticsDTO> {
+    const searchParams =
+      new URLSearchParams();
+
+    searchParams.set(
+      "start_date",
+      filters.startDate
+    );
+
+    searchParams.set(
+      "end_date",
+      filters.endDate
+    );
+
+    if (filters.homeState) {
+      searchParams.set(
+        "home_state",
+        filters.homeState
+      );
+    }
+
+    return client.get<
+      AdminFilteredAnalyticsDTO
+    >(
+      `/admin/analytics/filtered?${searchParams.toString()}`
     );
   },
 };

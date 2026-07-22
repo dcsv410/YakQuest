@@ -351,9 +351,10 @@ class OutfitterUpdate(BaseModel):
 
 
 class AdminUserOut(BaseModel):
-    id: str
+    id: UUID
     email: str
     displayName: Optional[str] = None
+    homeState: str
     isAdmin: bool
     trustScore: int
     approvedContributions: int = 0
@@ -362,6 +363,7 @@ class AdminUserOut(BaseModel):
 
 
 class AdminUserUpdate(BaseModel):
+    homeState: Optional[str] = None
     isAdmin: Optional[bool] = None
     trustScore: Optional[int] = None
 

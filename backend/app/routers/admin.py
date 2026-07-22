@@ -1,11 +1,17 @@
 from uuid import UUID
+from datetime import date, datetime, time, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+)
 from geoalchemy2.shape import from_shape
 from geoalchemy2.elements import WKTElement
 from shapely.geometry import Point
 from sqlalchemy.orm import Session
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.database import get_db
@@ -26,7 +32,55 @@ from app.schemas import (
 )
 from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point, serialize_outfitter
 
+VALID_US_STATE_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO",
+    "CT", "DE", "FL", "GA", "HI", "ID",
+    "IL", "IN", "IA", "KS", "KY", "LA",
+    "ME", "MD", "MA", "MI", "MN", "MS",
+    "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK",
+    "OR", "PA", "RI", "SC", "SD", "TN",
+    "TX", "UT", "VT", "VA", "WA", "WV",
+    "WI", "WY",
+}
+
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+def serialize_admin_completed_trip(
+    trip: CompletedTrip,
+    user: User,
+):
+    return {
+        "id": str(trip.id),
+        "completedAt":
+            trip.completed_at.isoformat(),
+        "userId": str(user.id),
+        "userEmail": user.email,
+        "userDisplayName": (
+            user.display_name
+            or "YakQuest User"
+        ),
+        "userHomeState": (
+            user.home_state or "AL"
+        ),
+        "riverId": str(trip.river_id),
+        "riverName": trip.river_name,
+        "riverState": trip.state,
+        "startName": trip.start_name,
+        "endName": trip.end_name,
+        "plannedMiles": float(
+            trip.planned_distance_miles
+            or 0
+        ),
+        "actualMiles": float(
+            trip.actual_distance_miles
+            or 0
+        ),
+        "elapsedTimeSeconds": int(
+            trip.elapsed_time_seconds
+            or 0
+        ),
+    }
 
 def require_admin_user(
     current_user: User = Depends(get_current_user),
@@ -843,6 +897,8 @@ def list_admin_users(
                 "email": user.email,
                 "displayName":
                     user.display_name,
+                "homeState":
+                    user.home_state or "AL",
                 "isAdmin": user.is_admin,
                 "trustScore":
                     user.trust_score,
@@ -882,6 +938,19 @@ def update_admin_user(
     updates = payload.model_dump(
         exclude_unset=True
     )
+
+    if "homeState" in updates:
+        home_state = (
+            updates["homeState"] or ""
+        ).strip().upper()
+
+        if home_state not in VALID_US_STATE_CODES:
+            raise HTTPException(
+                status_code=400,
+                detail="Please select a valid home state",
+            )
+
+    user.home_state = home_state
 
     if not updates:
         raise HTTPException(
@@ -935,12 +1004,51 @@ def update_admin_user(
     db.commit()
     db.refresh(user)
 
+    approved_count = (
+        db.query(Contribution)
+        .filter(
+            Contribution.user_id == user.id,
+            Contribution.status == "approved",
+        )
+        .count()
+    )
+
+    rejected_count = (
+        db.query(Contribution)
+        .filter(
+            Contribution.user_id == user.id,
+            Contribution.status == "rejected",
+        )
+        .count()
+    )
+
+    total_reviewed = (
+        approved_count + rejected_count
+    )
+
+    approval_rate = (
+        round(
+            approved_count
+            / total_reviewed
+            * 100,
+            1,
+        )
+        if total_reviewed > 0
+        else None
+    )
+
     return {
         "id": str(user.id),
         "email": user.email,
         "displayName": user.display_name,
+        "homeState": user.home_state or "AL",
         "isAdmin": user.is_admin,
         "trustScore": user.trust_score,
+        "approvedContributions":
+            approved_count,
+        "rejectedContributions":
+            rejected_count,
+        "approvalRate": approval_rate,
     }
 
 
@@ -994,6 +1102,22 @@ def get_admin_analytics(
         )
         .scalar()
         or 0
+    )
+
+    completed_trip_rows = (
+        db.query(
+            CompletedTrip,
+            User,
+        )
+        .join(
+            User,
+            CompletedTrip.user_id == User.id,
+        )
+        .order_by(
+            CompletedTrip.completed_at.desc()
+        )
+        .limit(250)
+        .all()
     )
 
     return {
@@ -1054,4 +1178,359 @@ def get_admin_analytics(
                 .rivers_explored
             ),
         },
+        "completedTripRows": [
+            serialize_admin_completed_trip(
+                trip,
+                user,
+            )
+            for trip, user in completed_trip_rows
+        ],
+    }
+
+
+@router.get("/analytics/filtered")
+def get_filtered_admin_analytics(
+    home_state: str | None = Query(
+        default=None,
+        alias="home_state",
+    ),
+    start_date: date = Query(
+        alias="start_date",
+    ),
+    end_date: date = Query(
+        alias="end_date",
+    ),
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(
+        require_admin_user
+    ),
+):
+    if end_date < start_date:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "End date cannot be before "
+                "start date"
+            ),
+        )
+
+    normalized_home_state = None
+
+    if home_state:
+        normalized_home_state = (
+            home_state.strip().upper()
+        )
+
+        if (
+            normalized_home_state
+            not in VALID_US_STATE_CODES
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Please select a valid "
+                    "home state"
+                ),
+            )
+
+    range_start = datetime.combine(
+        start_date,
+        time.min,
+    )
+
+    # Exclusive end boundary makes the entire
+    # selected end date count.
+    range_end = datetime.combine(
+        end_date + timedelta(days=1),
+        time.min,
+    )
+
+    def apply_user_state_filter(query):
+        if normalized_home_state:
+            return query.filter(
+                User.home_state
+                == normalized_home_state
+            )
+
+        return query
+
+    # ----------------------------------
+    # User cohort
+    # ----------------------------------
+
+    total_users_query = db.query(
+        func.count(User.id)
+    )
+
+    total_users_query = (
+        apply_user_state_filter(
+            total_users_query
+        )
+    )
+
+    total_users = (
+        total_users_query.scalar() or 0
+    )
+
+    new_users_query = db.query(
+        func.count(User.id)
+    ).filter(
+        User.created_at >= range_start,
+        User.created_at < range_end,
+    )
+
+    new_users_query = (
+        apply_user_state_filter(
+            new_users_query
+        )
+    )
+
+    new_users = (
+        new_users_query.scalar() or 0
+    )
+
+    # ----------------------------------
+    # Contributions
+    # ----------------------------------
+
+    contribution_query = (
+        db.query(Contribution)
+        .join(
+            User,
+            Contribution.user_id == User.id,
+        )
+        .filter(
+            Contribution.created_at
+            >= range_start,
+            Contribution.created_at
+            < range_end,
+        )
+    )
+
+    contribution_query = (
+        apply_user_state_filter(
+            contribution_query
+        )
+    )
+
+    contributions = (
+        contribution_query.all()
+    )
+
+    submitted_contributions = len(
+        contributions
+    )
+
+    pending_contributions = sum(
+        1
+        for contribution in contributions
+        if contribution.status == "pending"
+    )
+
+    approved_contributions = sum(
+        1
+        for contribution in contributions
+        if contribution.status == "approved"
+    )
+
+    rejected_contributions = sum(
+        1
+        for contribution in contributions
+        if contribution.status == "rejected"
+    )
+
+    reviewed_contributions = (
+        approved_contributions
+        + rejected_contributions
+    )
+
+    contribution_approval_rate = (
+        round(
+            approved_contributions
+            / reviewed_contributions
+            * 100,
+            1,
+        )
+        if reviewed_contributions > 0
+        else None
+    )
+
+    contributing_user_ids = {
+        contribution.user_id
+        for contribution in contributions
+        if contribution.user_id is not None
+    }
+
+    # ----------------------------------
+    # Saved trips
+    # ----------------------------------
+
+    saved_trip_query = (
+        db.query(SavedTrip)
+        .join(
+            User,
+            SavedTrip.user_id == User.id,
+        )
+        .filter(
+            SavedTrip.created_at >= range_start,
+            SavedTrip.created_at < range_end,
+        )
+    )
+
+    saved_trip_query = (
+        apply_user_state_filter(
+            saved_trip_query
+        )
+    )
+
+    saved_trips = saved_trip_query.all()
+
+    # ----------------------------------
+    # Completed trips
+    # ----------------------------------
+
+    completed_trip_query = (
+        db.query(
+            CompletedTrip,
+            User,
+        )
+        .join(
+            User,
+            CompletedTrip.user_id == User.id,
+        )
+        .filter(
+            CompletedTrip.completed_at
+            >= range_start,
+            CompletedTrip.completed_at
+            < range_end,
+        )
+    )
+
+    completed_trip_query = (
+        apply_user_state_filter(
+            completed_trip_query
+        )
+    )
+
+    completed_trip_rows = (
+        completed_trip_query
+        .order_by(
+            CompletedTrip.completed_at.desc()
+        )
+        .limit(250)
+        .all()
+    )
+
+    completed_trips = [
+        trip
+        for trip, _user
+        in completed_trip_rows
+    ]
+
+    planned_miles = sum(
+        float(
+            trip.planned_distance_miles
+            or 0
+        )
+        for trip in completed_trips
+    )
+
+    actual_miles = sum(
+        float(
+            trip.actual_distance_miles
+            or 0
+        )
+        for trip in completed_trips
+    )
+
+    elapsed_time_seconds = sum(
+        int(
+            trip.elapsed_time_seconds
+            or 0
+        )
+        for trip in completed_trips
+    )
+
+    rivers_explored = len({
+        trip.river_id
+        for trip in completed_trips
+    })
+
+    # ----------------------------------
+    # Active users
+    # ----------------------------------
+
+    active_user_ids = set(
+        contributing_user_ids
+    )
+
+    active_user_ids.update(
+        trip.user_id
+        for trip in saved_trips
+    )
+
+    active_user_ids.update(
+        trip.user_id
+        for trip in completed_trips
+    )
+
+    return {
+        "filters": {
+            "homeState":
+                normalized_home_state,
+            "startDate":
+                start_date.isoformat(),
+            "endDate":
+                end_date.isoformat(),
+        },
+        "users": {
+            "totalUsers": int(
+                total_users
+            ),
+            "newUsers": int(
+                new_users
+            ),
+            "activeUsers": len(
+                active_user_ids
+            ),
+            "contributingUsers": len(
+                contributing_user_ids
+            ),
+        },
+        "trips": {
+            "savedTrips": len(
+                saved_trips
+            ),
+            "completedTrips": len(
+                completed_trips
+            ),
+            "plannedMiles":
+                planned_miles,
+            "actualMiles":
+                actual_miles,
+            "elapsedTimeSeconds":
+                elapsed_time_seconds,
+            "riversExplored":
+                rivers_explored,
+        },
+        "contributions": {
+            "submitted":
+                submitted_contributions,
+            "pending":
+                pending_contributions,
+            "approved":
+                approved_contributions,
+            "rejected":
+                rejected_contributions,
+            "approvalRate":
+                contribution_approval_rate,
+        },
+        "completedTripRows": [
+            serialize_admin_completed_trip(
+                trip,
+                user,
+            )
+            for trip, user
+            in completed_trip_rows
+        ],
     }
