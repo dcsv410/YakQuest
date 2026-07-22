@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 import { divIcon, Icon } from "leaflet";
+import L from "leaflet";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
@@ -19,6 +20,13 @@ import { fetchTripWeather, type TripWeather } from "../services/weatherService";
 import { sendTripPlanEmail } from "../services/tripPlanService";
 
 type SelectionMode = "start" | "end";
+
+type PointFilters = {
+  publicAccess: boolean;
+  privateAccess: boolean;
+  poi: boolean;
+  hazard: boolean;
+};
 
 function getAccessPoints(river: River): RiverPoint[] {
   return [
@@ -44,6 +52,78 @@ function getPointLabel(point: RiverPoint) {
     default:
       return point.type;
   }
+}
+
+function getPlannerMarkerClass(
+  point: RiverPoint,
+  isStart: boolean,
+  isEnd: boolean
+): string {
+  if (isStart) {
+    return "planner-marker-start";
+  }
+
+  if (isEnd) {
+    return "planner-marker-end";
+  }
+
+  switch (point.type) {
+    case "public_access":
+      return "planner-marker-public";
+
+    case "private_access":
+      return "planner-marker-private";
+
+    case "poi":
+      return "planner-marker-poi";
+
+    case "hazard":
+      return "planner-marker-hazard";
+
+    default:
+      return "planner-marker-default";
+  }
+}
+
+function getPlannerPointIcon(
+  point: RiverPoint,
+  isStart = false,
+  isEnd = false
+) {
+  const selected =
+    isStart || isEnd;
+
+  const size = selected ? 28 : 20;
+
+  return L.divIcon({
+    className: [
+      "planner-map-marker",
+      getPlannerMarkerClass(
+        point,
+        isStart,
+        isEnd
+      ),
+      selected
+        ? "planner-map-marker-selected"
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+
+    html: "",
+
+    iconSize: [size, size],
+
+    iconAnchor: [
+      size / 2,
+      size / 2,
+    ],
+
+    popupAnchor: [
+      0,
+      -(size / 2),
+    ],
+  });
 }
 
 const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
@@ -104,6 +184,16 @@ export default function PlanTripPage() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>("start");
+
+  const [
+    pointFilters,
+    setPointFilters,
+  ] = useState<PointFilters>({
+    publicAccess: true,
+    privateAccess: true,
+    poi: true,
+    hazard: true,
+  });
 
   const selectedRiver = rivers.find(
     (river) => river.id === selectedRiverId
@@ -170,8 +260,75 @@ export default function PlanTripPage() {
     ? getAccessPoints(selectedRiver)
     : [];
 
+  const allMapPoints = useMemo(
+    () => {
+      if (!selectedRiver) {
+        return [];
+      }
+
+      return [
+        ...selectedRiver
+          .accessPoints.public,
+
+        ...selectedRiver
+          .accessPoints.private,
+
+        ...selectedRiver.pois,
+
+        ...(selectedRiver.hazards ?? []),
+      ];
+    },
+    [selectedRiver]
+  );
+
   const start = accessPoints.find((point) => point.id === startId);
   const end = accessPoints.find((point) => point.id === endId);
+
+  const visibleMapPoints = useMemo(
+    () => {
+      return allMapPoints.filter(
+        (point) => {
+          /*
+          * Always keep the selected launch
+          * and takeout visible.
+          */
+          if (
+            point.id === startId ||
+            point.id === endId
+          ) {
+            return true;
+          }
+
+          switch (point.type) {
+            case "public_access":
+              return (
+                pointFilters.publicAccess
+              );
+
+            case "private_access":
+              return (
+                pointFilters.privateAccess
+              );
+
+            case "poi":
+              return pointFilters.poi;
+
+            case "hazard":
+              return pointFilters.hazard;
+
+            default:
+              return true;
+          }
+        }
+      );
+    },
+    [
+      allMapPoints,
+      startId,
+      endId,
+      pointFilters,
+    ]
+  );
 
   const tripDistanceMiles = useMemo(() => {
     if (!selectedRiver || !start || !end) return 0;
@@ -208,6 +365,25 @@ export default function PlanTripPage() {
 
     setEndId(point.id);
   };
+
+  function togglePointFilter(
+    filter:
+      keyof PointFilters
+  ) {
+    setPointFilters((current) => ({
+      ...current,
+      [filter]: !current[filter],
+    }));
+  }
+
+  function showAllPointTypes() {
+    setPointFilters({
+      publicAccess: true,
+      privateAccess: true,
+      poi: true,
+      hazard: true,
+    });
+  }
 
   const { data: outfitters = [] } = useQuery({
     queryKey: ["riverOutfitters", selectedRiver?.id],
@@ -975,6 +1151,123 @@ export default function PlanTripPage() {
       </aside>
 
       <main className="planner-center">
+        {selectedRiver ? (
+          <div
+            className="planner-map-legend"
+            aria-label="Map point filters"
+          >
+            <div className="planner-map-legend-heading">
+              <strong>Map Points</strong>
+
+              <button
+                type="button"
+                className="planner-map-legend-reset"
+                onClick={showAllPointTypes}
+              >
+                Show All
+              </button>
+            </div>
+
+            <div className="planner-map-legend-options">
+              <button
+                type="button"
+                className={
+                  pointFilters.publicAccess
+                    ? "active"
+                    : "disabled"
+                }
+                aria-pressed={
+                  pointFilters.publicAccess
+                }
+                onClick={() =>
+                  togglePointFilter(
+                    "publicAccess"
+                  )
+                }
+              >
+                <span className="planner-legend-dot planner-marker-public" />
+                Public
+              </button>
+
+              <button
+                type="button"
+                className={
+                  pointFilters.privateAccess
+                    ? "active"
+                    : "disabled"
+                }
+                aria-pressed={
+                  pointFilters.privateAccess
+                }
+                onClick={() =>
+                  togglePointFilter(
+                    "privateAccess"
+                  )
+                }
+              >
+                <span className="planner-legend-dot planner-marker-private" />
+                Private
+              </button>
+
+              <button
+                type="button"
+                className={
+                  pointFilters.poi
+                    ? "active"
+                    : "disabled"
+                }
+                aria-pressed={
+                  pointFilters.poi
+                }
+                onClick={() =>
+                  togglePointFilter("poi")
+                }
+              >
+                <span className="planner-legend-dot planner-marker-poi" />
+                POIs
+              </button>
+
+              <button
+                type="button"
+                className={
+                  pointFilters.hazard
+                    ? "active"
+                    : "disabled"
+                }
+                aria-pressed={
+                  pointFilters.hazard
+                }
+                onClick={() =>
+                  togglePointFilter(
+                    "hazard"
+                  )
+                }
+              >
+                <span className="planner-legend-dot planner-marker-hazard" />
+                Hazards
+              </button>
+            </div>
+
+            {start || end ? (
+              <div className="planner-map-selection-legend">
+                {start ? (
+                  <span>
+                    <span className="planner-legend-dot planner-marker-start" />
+                    Launch
+                  </span>
+                ) : null}
+
+                {end ? (
+                  <span>
+                    <span className="planner-legend-dot planner-marker-end" />
+                    Takeout
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <MapContainer
           key={selectedRiver?.id ?? "empty-map"}
           center={mapCenter}
@@ -1035,27 +1328,19 @@ export default function PlanTripPage() {
           ) : null}
 
           {selectedRiver ? (
-            <>
-              {/* <Polyline
-                positions={selectedRiver.coordinates.map((coord) => [
-                  coord.latitude,
-                  coord.longitude,
-                ])}
-              /> */}
-
-              {accessPoints.map((point) => {
+            <>        
+              {visibleMapPoints.map((point) => {
                 const isStart =
                   point.id === startId;
 
                 const isEnd =
                   point.id === endId;
 
-                const markerIcon =
-                  isStart
-                    ? selectedLaunchIcon
-                    : isEnd
-                      ? selectedTakeoutIcon
-                      : defaultAccessPointIcon;
+                const isAccessPoint =
+                  point.type ===
+                    "public_access" ||
+                  point.type ===
+                    "private_access";
 
                 return (
                   <Marker
@@ -1064,78 +1349,92 @@ export default function PlanTripPage() {
                       point.latitude,
                       point.longitude,
                     ]}
-                    icon={markerIcon}
+                    icon={getPlannerPointIcon(
+                      point,
+                      isStart,
+                      isEnd
+                    )}
                     zIndexOffset={
                       isStart || isEnd
                         ? 1000
-                        : 0
+                        : point.type === "hazard"
+                          ? 500
+                          : 0
                     }
-                    eventHandlers={{
-                      click: () =>
-                        selectPointFromMap(point),
-                    }}
+                    eventHandlers={
+                      isAccessPoint
+                        ? {
+                            click: () =>
+                              selectPointFromMap(
+                                point
+                              ),
+                          }
+                        : undefined
+                    }
                   >
                     <Popup>
-                      <strong>{point.name}</strong>
+                      <strong>
+                        {point.name}
+                      </strong>
 
                       <br />
 
                       {getPointLabel(point)}
 
-                      <br />
-
-                      <button
-                        className="popup-button"
-                        onClick={() => {
-                          setStartId(point.id);
-
-                          if (!endId) {
-                            setSelectionMode("end");
-                          }
-                        }}
-                      >
-                        Set as launch
-                      </button>
-
-                      <button
-                        className="popup-button"
-                        onClick={() =>
-                          setEndId(point.id)
-                        }
-                      >
-                        Set as takeout
-                      </button>
-
-                      {isStart ? (
-                        <p>Selected launch</p>
+                      {point.description ? (
+                        <>
+                          <br />
+                          {point.description}
+                        </>
                       ) : null}
 
-                      {isEnd ? (
-                        <p>Selected takeout</p>
+                      {isAccessPoint ? (
+                        <>
+                          <div className="planner-popup-actions">
+                            <button
+                              type="button"
+                              className="popup-button"
+                              onClick={() => {
+                                setStartId(point.id);
+
+                                if (!endId) {
+                                  setSelectionMode(
+                                    "end"
+                                  );
+                                }
+                              }}
+                            >
+                              Set as launch
+                            </button>
+
+                            <button
+                              type="button"
+                              className="popup-button"
+                              onClick={() =>
+                                setEndId(point.id)
+                              }
+                            >
+                              Set as takeout
+                            </button>
+                          </div>
+
+                          {isStart ? (
+                            <p className="planner-popup-selection planner-popup-selection-start">
+                              Selected launch
+                            </p>
+                          ) : null}
+
+                          {isEnd ? (
+                            <p className="planner-popup-selection planner-popup-selection-end">
+                              Selected takeout
+                            </p>
+                          ) : null}
+                        </>
                       ) : null}
                     </Popup>
                   </Marker>
                 );
               })}
-
-              {selectedRiver.pois.map((point) => (
-                <Marker
-                  key={point.id}
-                  position={[point.latitude, point.longitude]}
-                >
-                  <Popup>
-                    <strong>{point.name}</strong>
-                    <br />
-                    Point of Interest
-                    {point.description ? (
-                      <>
-                        <br />
-                        {point.description}
-                      </>
-                    ) : null}
-                  </Popup>
-                </Marker>
-              ))}
             </>
           ) : null}
         </MapContainer>

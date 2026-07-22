@@ -208,6 +208,235 @@ h1 {
   min-height: 0;
 }
 
+/* ======================================
+   PLAN TRIP MAP LEGEND
+   ====================================== */
+
+.planner-center {
+  position: relative;
+}
+
+.planner-map-legend {
+  display: grid;
+  gap: 10px;
+
+  padding: 12px 14px;
+
+  border: 1px solid
+    rgba(16, 32, 28, 0.14);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+
+  background: #ffffff;
+}
+
+.planner-map-legend-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.planner-map-legend-heading strong {
+  color: #172522;
+  font-size: 14px;
+}
+
+.planner-map-legend-reset {
+  padding: 0;
+  border: 0;
+
+  background: transparent;
+  color: #147473;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.planner-map-legend-reset:hover {
+  text-decoration: underline;
+}
+
+.planner-map-legend-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.planner-map-legend-options button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  min-height: 34px;
+  padding: 6px 10px;
+
+  border: 1px solid
+    rgba(16, 32, 28, 0.16);
+  border-radius: 999px;
+
+  background: #ffffff;
+  color: #263936;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition:
+    opacity 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.planner-map-legend-options button:hover {
+  border-color: rgba(
+    20,
+    116,
+    115,
+    0.6
+  );
+  background: rgba(
+    20,
+    116,
+    115,
+    0.06
+  );
+}
+
+.planner-map-legend-options button.disabled {
+  opacity: 0.42;
+  background: #eef1f0;
+}
+
+.planner-map-legend-options button.disabled .planner-legend-dot {
+  filter: grayscale(1);
+}
+
+.planner-map-selection-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding-top: 8px;
+  border-top: 1px solid
+    rgba(16, 32, 28, 0.1);
+
+  color: #52615d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.planner-map-selection-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.planner-legend-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+
+  width: 12px;
+  height: 12px;
+
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 1px
+    rgba(16, 32, 28, 0.25);
+}
+
+/* ======================================
+   PLAN TRIP MAP MARKERS
+   ====================================== */
+
+.planner-map-marker {
+  box-sizing: border-box;
+
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+
+  box-shadow:
+    0 2px 7px
+    rgba(0, 0, 0, 0.4);
+
+  transition:
+    width 150ms ease,
+    height 150ms ease,
+    transform 150ms ease;
+}
+
+.planner-map-marker:hover {
+  transform: scale(1.16);
+}
+
+.planner-marker-public {
+  background: #2f9e44;
+}
+
+.planner-marker-private {
+  background: #7b4ab3;
+}
+
+.planner-marker-poi {
+  background: #3468c9;
+}
+
+.planner-marker-hazard {
+  background: #c53030;
+}
+
+.planner-marker-default {
+  background: #66736f;
+}
+
+.planner-marker-start {
+  background: #76d000;
+}
+
+.planner-marker-end {
+  background: #e03131;
+}
+
+.planner-map-marker-selected {
+  border-width: 4px;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(255, 255, 255, 0.9),
+    0 3px 10px
+    rgba(0, 0, 0, 0.48);
+}
+
+.planner-popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  margin-top: 10px;
+}
+
+.planner-popup-selection {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.planner-popup-selection-start {
+  color: #397d00;
+}
+
+.planner-popup-selection-end {
+  color: #b42323;
+}
+
 .panel-heading,
 .planner-controls,
 .overview-card {
@@ -332,6 +561,11 @@ h1 {
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+.planner-map-legend + .leaflet-container,
+.planner-map-legend + .leaflet-map {
+  border-radius: 0 0 14px 14px;
 }
 
 .metric-grid {
@@ -3629,5 +3863,33 @@ h1 {
   .admin-analytics-applied-summary {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 700px) {
+  .planner-map-legend {
+    padding: 10px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .planner-map-legend-options {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-map-legend-options button {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .planner-map-selection-legend {
+    gap: 8px 14px;
+  }
+
+  .planner-center
+    .planner-map-legend
+    + .leaflet-container {
+    border-radius: 0 0 12px 12px;
   }
 }
