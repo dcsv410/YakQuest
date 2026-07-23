@@ -97,19 +97,51 @@ export function useTripNavigation({
     }
 
     if (previousLocationRef.current) {
-      const movedFeet = distanceFeet(previousLocationRef.current, location);
+      const movedFeet = distanceFeet(
+        previousLocationRef.current,
+        location
+      );
 
-      if (movedFeet > 10 && movedFeet < 1000) {
+      /*
+       * Ignore tiny GPS drift, but do not move the tracking
+       * baseline until enough real movement has accumulated.
+       *
+       * This prevents several small location updates from
+       * being discarded permanently.
+       */
+      const minimumMovementFeet = 8;
+      const maximumMovementFeet = 300;
+
+      if (
+        movedFeet >= minimumMovementFeet &&
+        movedFeet <= maximumMovementFeet
+      ) {
         actualDistanceFeetRef.current += movedFeet;
+
+        /*
+         * Only advance the baseline after accepting the segment.
+         */
+        previousLocationRef.current = location;
+      } else if (movedFeet > maximumMovementFeet) {
+        /*
+         * Treat a large jump as a GPS correction. Do not count
+         * it, but reset the baseline so subsequent valid movement
+         * can continue normally.
+         */
+        previousLocationRef.current = location;
       }
     }
 
-    const gpsSpeedMetersPerSecond = location.speed ?? 0;
-    const gpsSpeedMph = Math.max(0, gpsSpeedMetersPerSecond * 2.23694);
+    const gpsSpeedMetersPerSecond =
+      typeof location.speed === "number" &&
+      location.speed > 0
+        ? location.speed
+        : 0;
+
+    const gpsSpeedMph =
+      gpsSpeedMetersPerSecond * 2.23694;
 
     setCurrentSpeedMph(gpsSpeedMph);
-
-    previousLocationRef.current = location;
   }, [location, tripActive, navigationArmed]);
 
   useEffect(() => {

@@ -230,13 +230,26 @@ export default function NavigateScreen() {
         location
       );
 
-      // Ignore GPS jumps
-      if (segmentFeet < 300) {
-        totalLiveDistanceFeetRef.current += segmentFeet;
+      const minimumMovementFeet = 8;
+      const maximumMovementFeet = 300;
+
+      if (
+        segmentFeet >= minimumMovementFeet &&
+        segmentFeet <= maximumMovementFeet
+      ) {
+        totalLiveDistanceFeetRef.current +=
+          segmentFeet;
+
+        lastLiveLocationRef.current = location;
+      } else if (
+        segmentFeet > maximumMovementFeet
+      ) {
+        /*
+         * Reset after a GPS jump without counting it.
+         */
+        lastLiveLocationRef.current = location;
       }
     }
-
-    lastLiveLocationRef.current = location;
 
     const elapsedMs = Date.now() - liveStartTimeRef.current;
 
