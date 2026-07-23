@@ -5,6 +5,7 @@ import type {
   AuthUser,
   LoginRequest,
   RegisterRequest,
+  UpdateProfileRequest,
 } from "@yakquest/shared";
 
 export const AUTH_TOKEN_KEY = "yakquest:authToken";
@@ -32,27 +33,36 @@ async function readApiError(
 
 export async function register(
   email: string,
-  password: string,
-  displayName?: string
+  password: string
 ): Promise<AuthResponse> {
   const payload: RegisterRequest = {
     email,
     password,
-    displayName,
   };
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+
+  const response = await fetch(
+    `${API_URL}/auth/register`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(
+      await readApiError(
+        response,
+        "Registration failed."
+      )
+    );
   }
 
-  const data = await response.json();
+  const data: AuthResponse =
+    await response.json();
 
   await AsyncStorage.setItem(
     AUTH_TOKEN_KEY,
@@ -100,6 +110,55 @@ export async function login(
   );
 
   return data;
+}
+
+export async function updateProfile(
+  displayName: string,
+  homeState: string
+): Promise<AuthUser> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error("Not logged in");
+  }
+
+  const payload: UpdateProfileRequest = {
+    displayName,
+    homeState,
+  };
+
+  const response = await fetch(
+    `${API_URL}/auth/profile`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Authorization:
+          `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readApiError(
+        response,
+        "Unable to update profile."
+      )
+    );
+  }
+
+  const user: AuthUser =
+    await response.json();
+
+  await AsyncStorage.setItem(
+    AUTH_USER_KEY,
+    JSON.stringify(user)
+  );
+
+  return user;
 }
 
 export async function changePassword(

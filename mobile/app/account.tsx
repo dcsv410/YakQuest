@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,10 +17,64 @@ import {
   login,
   logout,
   register,
+  updateProfile,
 } from "../src/services/authService";
 import type { AuthUser } from "@yakquest/shared";
 import { syncUserData } from "../src/services/syncService";
 import TripQrModal from "../src/features/trip-participants/components/TripQrModal";
+
+const US_STATES = [
+  { code: "AL", name: "Alabama" },
+  { code: "AK", name: "Alaska" },
+  { code: "AZ", name: "Arizona" },
+  { code: "AR", name: "Arkansas" },
+  { code: "CA", name: "California" },
+  { code: "CO", name: "Colorado" },
+  { code: "CT", name: "Connecticut" },
+  { code: "DE", name: "Delaware" },
+  { code: "FL", name: "Florida" },
+  { code: "GA", name: "Georgia" },
+  { code: "HI", name: "Hawaii" },
+  { code: "ID", name: "Idaho" },
+  { code: "IL", name: "Illinois" },
+  { code: "IN", name: "Indiana" },
+  { code: "IA", name: "Iowa" },
+  { code: "KS", name: "Kansas" },
+  { code: "KY", name: "Kentucky" },
+  { code: "LA", name: "Louisiana" },
+  { code: "ME", name: "Maine" },
+  { code: "MD", name: "Maryland" },
+  { code: "MA", name: "Massachusetts" },
+  { code: "MI", name: "Michigan" },
+  { code: "MN", name: "Minnesota" },
+  { code: "MS", name: "Mississippi" },
+  { code: "MO", name: "Missouri" },
+  { code: "MT", name: "Montana" },
+  { code: "NE", name: "Nebraska" },
+  { code: "NV", name: "Nevada" },
+  { code: "NH", name: "New Hampshire" },
+  { code: "NJ", name: "New Jersey" },
+  { code: "NM", name: "New Mexico" },
+  { code: "NY", name: "New York" },
+  { code: "NC", name: "North Carolina" },
+  { code: "ND", name: "North Dakota" },
+  { code: "OH", name: "Ohio" },
+  { code: "OK", name: "Oklahoma" },
+  { code: "OR", name: "Oregon" },
+  { code: "PA", name: "Pennsylvania" },
+  { code: "RI", name: "Rhode Island" },
+  { code: "SC", name: "South Carolina" },
+  { code: "SD", name: "South Dakota" },
+  { code: "TN", name: "Tennessee" },
+  { code: "TX", name: "Texas" },
+  { code: "UT", name: "Utah" },
+  { code: "VT", name: "Vermont" },
+  { code: "VA", name: "Virginia" },
+  { code: "WA", name: "Washington" },
+  { code: "WV", name: "West Virginia" },
+  { code: "WI", name: "Wisconsin" },
+  { code: "WY", name: "Wyoming" },
+] as const;
 
 export default function AccountScreen() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -30,7 +85,26 @@ export default function AccountScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+
+  const [
+    profileDisplayName,
+    setProfileDisplayName,
+  ] = useState("");
+
+  const [
+    profileHomeState,
+    setProfileHomeState,
+  ] = useState("AL");
+
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] = useState(false);
+
+  const [
+    showStatePicker,
+    setShowStatePicker,
+  ] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -61,8 +135,22 @@ export default function AccountScreen() {
   ] = useState("");
 
   const loadUser = async () => {
-    const currentUser = await getCurrentUser();
+    const currentUser =
+      await getCurrentUser();
+
     setUser(currentUser);
+
+    if (currentUser) {
+      setProfileDisplayName(
+        currentUser.display_name ||
+          "YakQuest User"
+      );
+
+      setProfileHomeState(
+        currentUser.home_state ||
+          "AL"
+      );
+    }
   };
 
   useEffect(() => {
@@ -78,8 +166,20 @@ export default function AccountScreen() {
     try {
       setLoading(true);
 
-      const result = await login(email, password);
+      const result =
+        await login(email, password);
+
       setUser(result.user);
+
+      setProfileDisplayName(
+        result.user.display_name ||
+          "YakQuest User"
+      );
+
+      setProfileHomeState(
+        result.user.home_state ||
+          "AL"
+      );
 
       setSyncing(true);
       await syncUserData();
@@ -103,8 +203,18 @@ export default function AccountScreen() {
     try {
       setLoading(true);
 
-      const result = await register(email, password, displayName || undefined);
+      const result = await register(email, password);
       setUser(result.user);
+
+      setProfileDisplayName(
+        result.user.display_name ||
+          "YakQuest User"
+      );
+
+      setProfileHomeState(
+        result.user.home_state ||
+          "AL"
+      );
 
       setSyncing(true);
       await syncUserData();
@@ -129,6 +239,66 @@ export default function AccountScreen() {
       Alert.alert("Sync failed", "Could not sync saved trips.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    const cleanedDisplayName =
+      profileDisplayName.trim();
+
+    if (cleanedDisplayName.length > 255) {
+      Alert.alert(
+        "Display Name Too Long",
+        "Display name must be 255 characters or fewer."
+      );
+      return;
+    }
+
+    if (!profileHomeState) {
+      Alert.alert(
+        "Home State Required",
+        "Select your home state."
+      );
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+
+      const updatedUser =
+        await updateProfile(
+          cleanedDisplayName ||
+            "YakQuest User",
+          profileHomeState
+        );
+
+      setUser(updatedUser);
+
+      setProfileDisplayName(
+        updatedUser.display_name ||
+          "YakQuest User"
+      );
+
+      setProfileHomeState(
+        updatedUser.home_state ||
+          "AL"
+      );
+
+      Alert.alert(
+        "Profile Updated",
+        "Your profile was saved successfully."
+      );
+    } catch (error) {
+      console.error(error);
+
+      Alert.alert(
+        "Unable to Update Profile",
+        error instanceof Error
+          ? error.message
+          : "Please try again."
+      );
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -308,21 +478,118 @@ export default function AccountScreen() {
         <Text style={styles.title}>Account</Text>
 
         <View style={styles.card}>
-          <Text style={styles.label}>Signed in as</Text>
-          <Text style={styles.value}>{user.email}</Text>
+          <Text style={styles.sectionTitle}>
+            Account
+          </Text>
 
-          {user.display_name ? (
-            <>
-              <Text style={styles.label}>Name</Text>
-              <Text style={styles.value}>{user.display_name}</Text>
-            </>
-          ) : null}
+          <Text style={styles.label}>
+            Display Name
+          </Text>
+          <Text style={styles.value}>
+            {user.display_name ||
+              "YakQuest User"}
+          </Text>
 
-          <Text style={styles.label}>Admin</Text>
-          <Text style={styles.value}>{user.is_admin ? "Yes" : "No"}</Text>
+          <Text style={styles.label}>
+            Email
+          </Text>
+          <Text style={styles.value}>
+            {user.email}
+          </Text>
 
-          <Text style={styles.label}>Trust Score</Text>
-          <Text style={styles.value}>{user.trust_score}</Text>
+          <Text style={styles.label}>
+            Home State
+          </Text>
+          <Text style={styles.value}>
+            {US_STATES.find(
+              (state) =>
+                state.code ===
+                user.home_state
+            )?.name ||
+              user.home_state ||
+              "Alabama"}
+          </Text>
+
+          <Text style={styles.label}>
+            Trust Score
+          </Text>
+          <Text style={styles.value}>
+            {user.trust_score}
+          </Text>
+
+          <Text style={styles.label}>
+            Admin
+          </Text>
+          <Text style={styles.value}>
+            {user.is_admin ? "Yes" : "No"}
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            Profile
+          </Text>
+
+          <Text style={styles.cardDescription}>
+            Your home state helps YakQuest show
+            more relevant rivers and paddling
+            information.
+          </Text>
+
+          <Text style={styles.inputLabel}>
+            Display Name
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="YakQuest User"
+            value={profileDisplayName}
+            onChangeText={
+              setProfileDisplayName
+            }
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={255}
+          />
+
+          <Text style={styles.inputLabel}>
+            Home State
+          </Text>
+
+          <TouchableOpacity
+            style={styles.selectInput}
+            onPress={() =>
+              setShowStatePicker(true)
+            }
+          >
+            <Text style={styles.selectInputText}>
+              {US_STATES.find(
+                (state) =>
+                  state.code ===
+                  profileHomeState
+              )?.name || "Select a state"}
+            </Text>
+
+            <Text style={styles.selectArrow}>
+              ▼
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              profileLoading &&
+                styles.disabledButton,
+            ]}
+            onPress={handleUpdateProfile}
+            disabled={profileLoading}
+          >
+            <Text style={styles.buttonText}>
+              {profileLoading
+                ? "Saving..."
+                : "Save Profile"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -439,6 +706,91 @@ export default function AccountScreen() {
         <TouchableOpacity style={styles.secondaryButton} onPress={handleLogout}>
           <Text style={styles.secondaryButtonText}>Log Out</Text>
         </TouchableOpacity>
+
+        <Modal
+          visible={showStatePicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() =>
+            setShowStatePicker(false)
+          }
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.stateModal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Select Home State
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() =>
+                    setShowStatePicker(false)
+                  }
+                >
+                  <Text
+                    style={
+                      styles.modalCloseButtonText
+                    }
+                  >
+                    ✕
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                style={styles.stateList}
+                contentContainerStyle={
+                  styles.stateListContent
+                }
+              >
+                {US_STATES.map((state) => {
+                  const isSelected =
+                    state.code ===
+                    profileHomeState;
+
+                  return (
+                    <TouchableOpacity
+                      key={state.code}
+                      style={[
+                        styles.stateOption,
+                        isSelected &&
+                          styles.selectedStateOption,
+                      ]}
+                      onPress={() => {
+                        setProfileHomeState(
+                          state.code
+                        );
+                        setShowStatePicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.stateOptionText,
+                          isSelected &&
+                            styles.selectedStateOptionText,
+                        ]}
+                      >
+                        {state.name}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.stateCode,
+                          isSelected &&
+                            styles.selectedStateOptionText,
+                        ]}
+                      >
+                        {state.code}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+        
         <TripQrModal
           visible={showTripQr}
           onClose={() =>
@@ -455,14 +807,6 @@ export default function AccountScreen() {
       <Text style={styles.subtitle}>
         An account is optional. You only need one to sync saved trips and submit contributions.
       </Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Display name"
-        value={displayName}
-        onChangeText={setDisplayName}
-        autoCapitalize="words"
-      />
 
       <TextInput
         style={styles.input}
@@ -612,5 +956,124 @@ const styles = StyleSheet.create({
 
   disabledButton: {
     opacity: 0.45,
+  },
+
+  cardDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    opacity: 0.72,
+    marginBottom: 8,
+  },
+
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    opacity: 0.75,
+    marginTop: 6,
+  },
+
+  selectInput: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.2)",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#ffffff",
+  },
+
+  selectInputText: {
+    fontSize: 16,
+    color: "#111111",
+  },
+
+  selectArrow: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor:
+      "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    padding: 20,
+  },
+
+  stateModal: {
+    maxHeight: "80%",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+
+  modalHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor:
+      "rgba(0,0,0,0.12)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  modalTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+  },
+
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor:
+      "rgba(0,0,0,0.08)",
+  },
+
+  modalCloseButtonText: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+
+  stateList: {
+    flexGrow: 0,
+  },
+
+  stateListContent: {
+    padding: 10,
+  },
+
+  stateOption: {
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  selectedStateOption: {
+    backgroundColor: "#1f6f4a",
+  },
+
+  stateOptionText: {
+    fontSize: 16,
+    color: "#111111",
+  },
+
+  stateCode: {
+    fontSize: 13,
+    fontWeight: "700",
+    opacity: 0.65,
+  },
+
+  selectedStateOptionText: {
+    color: "#ffffff",
+    opacity: 1,
   },
 });
