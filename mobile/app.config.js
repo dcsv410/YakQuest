@@ -32,6 +32,13 @@ module.exports = {
           isAndroidBackgroundLocationEnabled: true,
         },
       ],
+      [
+        "expo-camera",
+        {
+          cameraPermission:
+            "Allow YakQuest to use the camera to scan another paddler's trip QR code.",
+        },
+      ],
     ],
 
     android: {
@@ -49,6 +56,7 @@ module.exports = {
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.CAMERA",
       ],
 
       config: {

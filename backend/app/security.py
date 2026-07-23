@@ -16,6 +16,7 @@ from app.models import User
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+TRIP_PARTICIPANT_TOKEN_EXPIRE_MINUTES = 10
 
 bearer_scheme = HTTPBearer()
 
@@ -56,6 +57,72 @@ def create_access_token(user: User) -> str:
     }
 
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_trip_participant_token(
+    user: User,
+) -> tuple[str, datetime]:
+    expires_at = (
+        datetime.now(timezone.utc)
+        + timedelta(
+            minutes=(
+                TRIP_PARTICIPANT_TOKEN_EXPIRE_MINUTES
+            )
+        )
+    )
+
+    payload = {
+        "sub": str(user.id),
+        "purpose": "trip-participant",
+        "exp": expires_at,
+    }
+
+    token = jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    return token, expires_at
+
+
+def decode_trip_participant_token(
+    token: str,
+) -> UUID:
+    credentials_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            "This trip QR code is invalid "
+            "or has expired."
+        ),
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+        )
+
+        if (
+            payload.get("purpose")
+            != "trip-participant"
+        ):
+            raise credentials_error
+
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise credentials_error
+
+        return UUID(user_id)
+
+    except (
+        JWTError,
+        ValueError,
+        TypeError,
+    ):
+        raise credentials_error
 
 
 def get_current_user(

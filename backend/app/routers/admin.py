@@ -15,10 +15,19 @@ from sqlalchemy import case, func, or_
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.database import get_db
-from app.models import Contribution, Review, River, RiverPoint, User, CompletedTrip, SavedTrip
+from app.models import (
+    CompletedTrip,
+    CompletedTripParticipant,
+    Contribution,
+    Review,
+    River,
+    RiverPoint,
+    SavedTrip,
+    User,
+    Outfitter,
+)
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
-from app.models import User, Outfitter
 from app.security import get_current_user, verify_password
 from app.schemas import (
     AdminUserUpdate,
@@ -931,6 +940,11 @@ def get_admin_dashboard(
         .count(),
         "users": db.query(User).count(),
         "completedTrips": db.query(CompletedTrip).count(),
+        "creditedTripCompletions": (
+            db.query(
+                CompletedTripParticipant
+            ).count()
+        ),
     }
 
 

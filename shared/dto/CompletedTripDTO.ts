@@ -1,4 +1,7 @@
-import type { CompletedTrip } from "../models";
+import type {
+  CompletedTrip,
+  CompletedTripParticipant,
+} from "../models";
 
 export type CompletedTripResponseDTO = {
   id: string;
@@ -24,6 +27,11 @@ export type CompletedTripResponseDTO = {
 
   created_at: string;
   updated_at?: string | null;
+  participants: CompletedTripParticipant[];
+
+  currentUserRole:
+    | "navigator"
+    | "participant";
 };
 
 export type CreateCompletedTripRequestDTO = {
@@ -43,6 +51,7 @@ export type CreateCompletedTripRequestDTO = {
   completedAt: string;
 
   notes?: string | null;
+  participantUserIds?: string[];
 };
 
 export type UpdateCompletedTripRequestDTO = {
@@ -73,7 +82,11 @@ export function completedTripFromApi(
 
     createdAt: api.created_at,
     updatedAt: api.updated_at,
-  };
+    participants: api.participants ?? [],
+
+    currentUserRole:
+      api.currentUserRole,
+      };
 }
 
 export function completedTripToApi(

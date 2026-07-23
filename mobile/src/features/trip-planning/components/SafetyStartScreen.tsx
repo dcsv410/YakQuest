@@ -8,12 +8,30 @@ import {
   ScrollView,
 } from "react-native";
 import SafetyDisclaimer from "./SafetyDisclaimer";
+import type {
+  TripParticipant,
+} from "../../trip-participants/types";
+
+import TripParticipantScanner from "../../trip-participants/components/TripParticipantScanner";
 
 type FlowLevel = string | null | undefined;
 
 type Props = {
   visible: boolean;
   flowLevel: FlowLevel;
+
+  navigatorName: string;
+
+  participants: TripParticipant[];
+
+  onParticipantAdded: (
+    participant: TripParticipant
+  ) => void;
+
+  onParticipantRemoved: (
+    userId: string
+  ) => void;
+
   onStart: () => void;
 };
 
@@ -74,9 +92,17 @@ const safetyItems = [
 export default function SafetyStartScreen({
   visible,
   flowLevel,
+  navigatorName,
+  participants,
+  onParticipantAdded,
+  onParticipantRemoved,
   onStart,
 }: Props) {
   const flow = getFlowConfig(flowLevel);
+  const [
+    showScanner,
+    setShowScanner,
+  ] = React.useState(false);
 
   return (
     <Modal visible={visible} animationType="slide">
@@ -99,12 +125,146 @@ export default function SafetyStartScreen({
             ))}
           </View>
 
+          <View style={styles.paddlerCard}>
+            <Text
+              style={
+                styles.paddlerCardTitle
+              }
+            >
+              Trip Paddlers
+            </Text>
+
+            <Text
+              style={
+                styles.paddlerExplanation
+              }
+            >
+              Added paddlers will receive
+              credit when this trip log is
+              saved.
+            </Text>
+
+            <View style={styles.paddlerRow}>
+              <View>
+                <Text
+                  style={
+                    styles.paddlerName
+                  }
+                >
+                  {navigatorName}
+                </Text>
+
+                <Text
+                  style={
+                    styles.paddlerRole
+                  }
+                >
+                  Navigator
+                </Text>
+              </View>
+
+              <Text
+                style={
+                  styles.paddlerCheck
+                }
+              >
+                ✓
+              </Text>
+            </View>
+
+            {participants.map(
+              (participant) => (
+                <View
+                  key={
+                    participant.userId
+                  }
+                  style={
+                    styles.paddlerRow
+                  }
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={
+                        styles.paddlerName
+                      }
+                    >
+                      {
+                        participant
+                          .displayName
+                      }
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.paddlerRole
+                      }
+                    >
+                      Paddler
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() =>
+                      onParticipantRemoved(
+                        participant.userId
+                      )
+                    }
+                    style={
+                      styles.removePaddlerButton
+                    }
+                  >
+                    <Text
+                      style={
+                        styles
+                          .removePaddlerText
+                      }
+                    >
+                      Remove
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )
+            )}
+
+            <TouchableOpacity
+              style={
+                styles.addPaddlerButton
+              }
+              onPress={() =>
+                setShowScanner(true)
+              }
+            >
+              <Text
+                style={
+                  styles.addPaddlerText
+                }
+              >
+                ＋ Add a Paddler
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <SafetyDisclaimer />
         </ScrollView>
 
         <TouchableOpacity style={styles.startButton} onPress={onStart}>
           <Text style={styles.startText}>Start Paddling</Text>
         </TouchableOpacity>
+        <TripParticipantScanner
+          visible={showScanner}
+          existingParticipantIds={
+            participants.map(
+              (participant) =>
+                participant.userId
+            )
+          }
+          onParticipantAdded={
+            onParticipantAdded
+          }
+          onClose={() =>
+            setShowScanner(false)
+          }
+        />
       </View>
     </Modal>
   );
@@ -188,6 +348,79 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "900",
+    textAlign: "center",
+  },
+  paddlerCard: {
+    marginTop: 18,
+    marginBottom: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 18,
+  },
+
+  paddlerCardTitle: {
+    fontSize: 19,
+    fontWeight: "900",
+    color: "#222222",
+  },
+
+  paddlerExplanation: {
+    marginTop: 6,
+    marginBottom: 12,
+    color: "#5C6670",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  paddlerRow: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#E7EBEF",
+    paddingVertical: 10,
+  },
+
+  paddlerName: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#222222",
+  },
+
+  paddlerRole: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "#69737D",
+  },
+
+  paddlerCheck: {
+    color: "#1CA7A6",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  removePaddlerButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+
+  removePaddlerText: {
+    color: "#B72E2E",
+    fontWeight: "800",
+  },
+
+  addPaddlerButton: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#1CA7A6",
+    borderRadius: 12,
+    paddingVertical: 13,
+  },
+
+  addPaddlerText: {
+    color: "#197A79",
+    fontSize: 15,
+    fontWeight: "800",
     textAlign: "center",
   },
 });

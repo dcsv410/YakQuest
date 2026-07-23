@@ -20,6 +20,7 @@ export type ApiCompletedTripPayload = {
   completedAt: string;
 
   notes?: string | null;
+  participantUserIds?: string[];
 };
 
 async function getAuthHeaders() {

@@ -7,6 +7,9 @@ import {
   fetchCompletedTripsFromApi,
   updateCompletedTripInApi,
 } from "./apiCompletedTripService";
+import type {
+  CompletedTripParticipant,
+} from "../features/trip-participants/types";
 
 const COMPLETED_TRIPS_KEY = "yakquest:completedTrips";
 const AUTH_TOKEN_KEY = "yakquest:authToken";
@@ -23,6 +26,14 @@ export type CompletedTrip = {
   elapsedMs: number;
   notes: string;
   completedAt: string;
+
+  participantUserIds?: string[];
+
+  participants?: CompletedTripParticipant[];
+
+  currentUserRole?:
+    | "navigator"
+    | "participant";
 
   backendId?: string;
   syncedAt?: string;
@@ -86,6 +97,8 @@ const toApiCompletedTripPayload = async (trip: CompletedTrip) => {
     completedAt: trip.completedAt,
 
     notes: trip.notes ?? null,
+    participantUserIds:
+      trip.participantUserIds ?? [],
   };
 };
 
@@ -118,6 +131,25 @@ const fromApiCompletedTrip = (apiTrip: any): CompletedTrip => ({
   elapsedMs: (apiTrip.elapsed_time_seconds ?? 0) * 1000,
   notes: apiTrip.notes ?? "",
   completedAt: apiTrip.completed_at,
+
+  participants:
+    apiTrip.participants ?? [],
+
+  participantUserIds:
+    (apiTrip.participants ?? [])
+      .filter(
+        (participant: any) =>
+          participant.role
+          === "participant"
+      )
+      .map(
+        (participant: any) =>
+          participant.userId
+      ),
+
+  currentUserRole:
+    apiTrip.currentUserRole
+    ?? "navigator",
 
   syncStatus: "synced",
   syncedAt: new Date().toISOString(),
@@ -158,8 +190,31 @@ export const syncCompletedTripsAfterLogin = async () => {
     }
   }
 
-  const backendTripsRaw = await fetchCompletedTripsFromApi();
-  const backendTrips = backendTripsRaw.map(fromApiCompletedTrip);
+  let backendTrips: CompletedTrip[] = [];
+
+  try {
+    const backendTripsRaw =
+      await fetchCompletedTripsFromApi();
+
+    backendTrips =
+      backendTripsRaw.map(
+        fromApiCompletedTrip
+      );
+  } catch (error) {
+    console.error(
+      "Failed to download completed trips during sync",
+      error
+    );
+
+    /*
+    * Keep the locally available trips.
+    * Do not discard verified participant IDs
+    * merely because the download step failed.
+    */
+    backendTrips = localTrips.filter(
+      (trip) => Boolean(trip.backendId)
+    );
+  }
 
   const mergedByBackendId = new Map<string, CompletedTrip>();
 

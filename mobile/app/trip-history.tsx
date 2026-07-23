@@ -45,32 +45,102 @@ export default function TripHistoryScreen() {
   };
 
   const handleEditNotes = (trip: CompletedTrip) => {
+    if (trip.currentUserRole === "participant") {
+      Alert.alert(
+        "Notes Cannot Be Edited",
+        "Only the paddler who navigated and recorded this trip can edit its notes."
+      );
+
+      return;
+    }
+
     setEditingTripId(trip.id);
     setEditingNotes(trip.notes || "");
   };
 
   const handleSaveNotes = async (tripId: string) => {
-    await updateCompletedTripNotes(tripId, editingNotes);
-    setEditingTripId(null);
-    setEditingNotes("");
-    loadTrips();
+    try {
+      await updateCompletedTripNotes(
+        tripId,
+        editingNotes
+      );
+
+      setEditingTripId(null);
+      setEditingNotes("");
+
+      await loadTrips();
+    } catch (error) {
+      console.error(
+        "Failed to update completed trip notes",
+        error
+      );
+
+      Alert.alert(
+        "Unable to Save Notes",
+        error instanceof Error
+          ? error.message
+          : "The trip notes could not be saved."
+      );
+    }
   };
 
   const handleDeleteTrip = (trip: CompletedTrip) => {
+    const isParticipant =
+      trip.currentUserRole === "participant";
+
+    const title = isParticipant
+      ? "Remove Trip from Your History?"
+      : "Delete Trip for All Paddlers?";
+
+    const message = isParticipant
+      ? (
+          `Remove this ${trip.riverName} trip from your history? `
+          + "The navigator and other paddlers will still keep the trip."
+        )
+      : (
+          `Delete this ${trip.riverName} trip? `
+          + "Because you are the trip navigator, this will remove the trip "
+          + "from every credited paddler's history and statistics."
+        );
+
+    const confirmText = isParticipant
+      ? "Remove"
+      : "Delete for Everyone";
+
     Alert.alert(
-      "Remove Trip from History?",
-      `Are you sure you want to remove this ${trip.riverName} trip from your history?`,
+      title,
+      message,
       [
         {
           text: "Cancel",
           style: "cancel",
         },
         {
-          text: "Remove",
+          text: confirmText,
           style: "destructive",
           onPress: async () => {
-            await deleteCompletedTrip(trip.id);
-            loadTrips();
+            try {
+              await deleteCompletedTrip(
+                trip.id
+              );
+
+              await loadTrips();
+            } catch (error) {
+              console.error(
+                "Failed to remove completed trip",
+                error
+              );
+
+              Alert.alert(
+                "Unable to Remove Trip",
+                error instanceof Error
+                  ? error.message
+                  : (
+                      "The trip could not be "
+                      + "removed."
+                    )
+              );
+            }
           },
         },
       ]
@@ -78,10 +148,26 @@ export default function TripHistoryScreen() {
   };
 
   const loadTrips = async () => {
-    setLoading(true);
-    const trips = await getCompletedTrips();
-    setCompletedTrips(trips);
-    setLoading(false);
+    try {
+      setLoading(true);
+
+      const trips =
+        await getCompletedTrips();
+
+      setCompletedTrips(trips);
+    } catch (error) {
+      console.error(
+        "Failed to load completed trips",
+        error
+      );
+
+      Alert.alert(
+        "Unable to Load Trip History",
+        "Your saved trip history could not be loaded."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -175,6 +261,44 @@ export default function TripHistoryScreen() {
                   {new Date(trip.completedAt).toLocaleDateString()}
                 </Text>
 
+                {trip.participants &&
+                  trip.participants.length > 0 && (
+                    <View style={styles.paddlersSection}>
+                      <Text style={styles.paddlersLabel}>
+                        Paddlers
+                      </Text>
+
+                      {trip.participants.map(
+                        (participant) => (
+                          <View
+                            key={participant.userId}
+                            style={styles.paddlerHistoryRow}
+                          >
+                            <Text
+                              style={styles.paddlerHistoryName}
+                            >
+                              {participant.displayName}
+                            </Text>
+
+                            <Text
+                              style={styles.paddlerHistoryRole}
+                            >
+                              {participant.role === "navigator"
+                                ? "Navigator"
+                                : "Paddler"}
+                            </Text>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  )}
+
+                {trip.currentUserRole === "participant" && (
+                  <Text style={styles.sharedTripNotice}>
+                    You received credit as a paddler on this trip.
+                  </Text>
+                )}
+
                 <Text style={styles.stat}>
                   Start: {trip.start.name}
                 </Text>
@@ -195,7 +319,9 @@ export default function TripHistoryScreen() {
                   Time: {formatElapsed(trip.elapsedMs)}
                 </Text>
 
-                {editingTripId === trip.id ? (
+                {editingTripId === trip.id &&
+                  trip.currentUserRole
+                    !== "participant" ? (
                   <>
                     <TextInput
                       value={editingNotes}
@@ -221,23 +347,47 @@ export default function TripHistoryScreen() {
                 <View style={styles.actionRow}>
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => handleRunAgain(trip)}
+                    onPress={() =>
+                      handleRunAgain(trip)
+                    }
                   >
-                    <Text style={styles.actionButtonText}>Run Again</Text>
+                    <Text
+                      style={styles.actionButtonText}
+                    >
+                      Run Again
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleEditNotes(trip)}
-                  >
-                    <Text style={styles.actionButtonText}>Edit Notes</Text>
-                  </TouchableOpacity>
+                  {trip.currentUserRole
+                    !== "participant" && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() =>
+                        handleEditNotes(trip)
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.actionButtonText
+                        }
+                      >
+                        Edit Notes
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => handleDeleteTrip(trip)}
+                    onPress={() =>
+                      handleDeleteTrip(trip)
+                    }
                   >
-                    <Text style={styles.deleteText}>Remove</Text>
+                    <Text style={styles.deleteText}>
+                      {trip.currentUserRole
+                        === "participant"
+                        ? "Remove Mine"
+                        : "Delete Trip"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -369,5 +519,54 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
+  },
+  paddlersSection: {
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 10,
+    backgroundColor: "#F4F8F8",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DDE8E8",
+  },
+
+  paddlersLabel: {
+    marginBottom: 6,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#38434D",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+
+  paddlerHistoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 3,
+  },
+
+  paddlerHistoryName: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#25303A",
+  },
+
+  paddlerHistoryRole: {
+    marginLeft: 10,
+    fontSize: 12,
+    color: "#68737D",
+  },
+
+  sharedTripNotice: {
+    marginBottom: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    backgroundColor: "#E7F6F6",
+    color: "#176F6E",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

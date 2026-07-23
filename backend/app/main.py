@@ -12,6 +12,7 @@ from app.routers import (
     contributions,
     rivers,
     saved_trips,
+    trip_participants,
     trip_plans,
 )
 
@@ -91,6 +92,39 @@ with engine.begin() as conn:
         SET NOT NULL
     """))
 
+    conn.execute(text("""
+        CREATE EXTENSION IF NOT EXISTS pgcrypto
+    """))
+
+    conn.execute(text("""
+        INSERT INTO completed_trip_participants (
+            id,
+            completed_trip_id,
+            user_id,
+            role,
+            added_at
+        )
+        SELECT
+            gen_random_uuid(),
+            completed_trips.id,
+            completed_trips.user_id,
+            'navigator',
+            COALESCE(
+                completed_trips.created_at,
+                CURRENT_TIMESTAMP
+            )
+        FROM completed_trips
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM completed_trip_participants
+            WHERE
+                completed_trip_participants.completed_trip_id
+                    = completed_trips.id
+                AND completed_trip_participants.user_id
+                    = completed_trips.user_id
+        )
+    """))
+
 app = FastAPI(
     title="YakQuest API",
     version="0.1.0",
@@ -103,6 +137,7 @@ app.include_router(rivers.router)
 app.include_router(auth.router)
 app.include_router(saved_trips.router)
 app.include_router(completed_trips.router)
+app.include_router(trip_participants.router)
 app.include_router(trip_plans.router)
 
 app.add_middleware(

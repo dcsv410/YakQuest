@@ -19,6 +19,7 @@ from app.email_service import (
 )
 from app.models import (
     CompletedTrip,
+    CompletedTripParticipant,
     Contribution,
     SavedTrip,
     User,
@@ -524,6 +525,15 @@ def delete_account(
 
     db.query(SavedTrip).filter(
         SavedTrip.user_id
+        == current_user.id
+    ).delete(
+        synchronize_session=False
+    )
+
+    db.query(
+        CompletedTripParticipant
+    ).filter(
+        CompletedTripParticipant.user_id
         == current_user.id
     ).delete(
         synchronize_session=False

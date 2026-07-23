@@ -2,7 +2,18 @@ import uuid
 from datetime import datetime
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -273,6 +284,82 @@ class CompletedTrip(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+    participants = relationship(
+        "CompletedTripParticipant",
+        back_populates="completed_trip",
+        cascade="all, delete-orphan",
+    )
+
+
+class CompletedTripParticipant(Base):
+    __tablename__ = "completed_trip_participants"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    completed_trip_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "completed_trips.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    role = Column(
+        String(30),
+        nullable=False,
+        default="participant",
+    )
+
+    added_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
+    completed_trip = relationship(
+        "CompletedTrip",
+        back_populates="participants",
+    )
+
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "completed_trip_id",
+            "user_id",
+            name="uq_completed_trip_participant",
+        ),
+    )
+
+    @property
+    def display_name(self):
+        if not self.user:
+            return "YakQuest User"
+
+        return (
+            self.user.display_name
+            or "YakQuest User"
+        )
+
 
 class Outfitter(Base):
     __tablename__ = "outfitters"
@@ -294,3 +381,5 @@ class Outfitter(Base):
 
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+

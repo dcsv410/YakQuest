@@ -197,6 +197,28 @@ class SavedTripOut(BaseModel):
         from_attributes = True
 
 
+class TripParticipantQrTokenOut(BaseModel):
+    token: str
+    qrValue: str
+    displayName: str
+    expiresAt: datetime
+
+
+class TripParticipantResolveRequest(BaseModel):
+    token: str
+
+
+class TripParticipantResolveOut(BaseModel):
+    userId: UUID
+    displayName: str
+
+
+class CompletedTripParticipantOut(BaseModel):
+    userId: UUID
+    displayName: str
+    role: str
+
+
 class CompletedTripCreate(BaseModel):
     riverId: UUID
     riverName: str
@@ -209,6 +231,10 @@ class CompletedTripCreate(BaseModel):
     startedAt: datetime | None = None
     completedAt: datetime
     notes: str | None = None
+
+    participantUserIds: list[UUID] = Field(
+        default_factory=list
+    )
 
 
 class CompletedTripUpdate(BaseModel):
@@ -231,6 +257,13 @@ class CompletedTripOut(BaseModel):
     notes: str | None = None
     created_at: datetime
     updated_at: datetime
+
+    participants: list[
+        CompletedTripParticipantOut
+    ] = Field(default_factory=list)
+
+    currentUserRole: str
+
     class Config:
         from_attributes = True
 

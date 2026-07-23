@@ -58,6 +58,14 @@ import {
   SLOW_PADDLING_MPH,
 } from "@yakquest/shared";
 import { PointDetailsModal } from "../src/features/trip-planning/components/PointDetailsModal";
+import {
+  getCurrentUser,
+  isLoggedIn,
+} from "../src/services/authService";
+
+import type {
+  TripParticipant,
+} from "../src/features/trip-participants/types";
 
 export default function PlanTrip() {
   const mapRef = useRef<MapView | null>(null);
@@ -156,6 +164,77 @@ export default function PlanTrip() {
   const [showRiverSelect, setShowRiverSelect] = useState(false);
   const { recentRivers, addRecentRiver } = useRecentRivers();
   const [showSafetyStart, setShowSafetyStart] = useState(false);
+  const [
+    tripParticipants,
+    setTripParticipants,
+  ] = useState<TripParticipant[]>([]);
+
+  const [
+    navigatorName,
+    setNavigatorName,
+  ] = useState("You");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadNavigatorName =
+      async () => {
+        const currentUser =
+          await getCurrentUser();
+
+        if (!mounted) {
+          return;
+        }
+
+        setNavigatorName(
+          currentUser?.display_name
+          || "You"
+        );
+      };
+
+    loadNavigatorName();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleAddParticipant = (
+    participant: TripParticipant
+  ) => {
+    setTripParticipants(
+      (currentParticipants) => {
+        const alreadyAdded =
+          currentParticipants.some(
+            (currentParticipant) =>
+              currentParticipant.userId
+              === participant.userId
+          );
+
+        if (alreadyAdded) {
+          return currentParticipants;
+        }
+
+        return [
+          ...currentParticipants,
+          participant,
+        ];
+      }
+    );
+  };
+
+  const handleRemoveParticipant = (
+    userId: string
+  ) => {
+    setTripParticipants(
+      (currentParticipants) =>
+        currentParticipants.filter(
+          (participant) =>
+            participant.userId
+            !== userId
+        )
+    );
+  };
 
   const allPoints = [
     ...getRiverMapPoints(selectedRiver),
@@ -630,6 +709,7 @@ export default function PlanTrip() {
           timeline={timeline}
           onOpenMaps={openMaps}
           onResetTrip={() => {
+            setTripParticipants([]);
             planner.resetTrip();
             resetNavigationAlerts();
           }}
@@ -669,7 +749,43 @@ export default function PlanTrip() {
         !showRiverSelect && (
           <TouchableOpacity
             style={styles.beginPaddlingButton}
-            onPress={() => setShowSafetyStart(true)}
+            onPress={async () => {
+              const loggedIn =
+                await isLoggedIn();
+
+              if (!loggedIn) {
+                Alert.alert(
+                  "Account Required",
+                  (
+                    "You can begin this trip "
+                    + "without an account, but "
+                    + "adding another paddler "
+                    + "requires the navigator "
+                    + "to be logged in."
+                  ),
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel",
+                    },
+                    {
+                      text: "Continue Alone",
+                      onPress: () =>
+                        setShowSafetyStart(true),
+                    },
+                    {
+                      text: "Go to Account",
+                      onPress: () =>
+                        router.push("/account"),
+                    },
+                  ]
+                );
+
+                return;
+              }
+
+              setShowSafetyStart(true);
+            }}
           >
             <Text style={styles.buttonText}>Begin Paddling</Text>
           </TouchableOpacity>
@@ -692,6 +808,16 @@ export default function PlanTrip() {
       <SafetyStartScreen
         visible={showSafetyStart}
         flowLevel={flowRating}
+        navigatorName={navigatorName}
+        participants={
+          tripParticipants
+        }
+        onParticipantAdded={
+          handleAddParticipant
+        }
+        onParticipantRemoved={
+          handleRemoveParticipant
+        }
         onStart={() => {
           setShowSafetyStart(false);
           planner.beginPaddling();
@@ -731,6 +857,11 @@ export default function PlanTrip() {
               elapsedMs:
                 tripSummary.elapsedMs,
               notes: combinedNotes,
+              participantUserIds:
+                tripParticipants.map(
+                  (participant) =>
+                    participant.userId
+                ),
             });
 
             Alert.alert(
@@ -744,6 +875,7 @@ export default function PlanTrip() {
           onDone={() => {
             stopBackgroundNavigation();
             setTripSummary(null);
+            setTripParticipants([]);
             planner.resetTrip();
             resetNavigationAlerts();
           }}

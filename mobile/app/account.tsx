@@ -19,9 +19,14 @@ import {
 } from "../src/services/authService";
 import type { AuthUser } from "@yakquest/shared";
 import { syncUserData } from "../src/services/syncService";
+import TripQrModal from "../src/features/trip-participants/components/TripQrModal";
 
 export default function AccountScreen() {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [
+    showTripQr,
+    setShowTripQr,
+  ] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -320,6 +325,17 @@ export default function AccountScreen() {
           <Text style={styles.value}>{user.trust_score}</Text>
         </View>
 
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            setShowTripQr(true)
+          }
+        >
+          <Text style={styles.buttonText}>
+            My Trip QR Code
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.button} onPress={handleSync} disabled={syncing}>
           <Text style={styles.buttonText}>
             {syncing ? "Syncing..." : "Sync Saved Trips"}
@@ -423,6 +439,12 @@ export default function AccountScreen() {
         <TouchableOpacity style={styles.secondaryButton} onPress={handleLogout}>
           <Text style={styles.secondaryButtonText}>Log Out</Text>
         </TouchableOpacity>
+        <TripQrModal
+          visible={showTripQr}
+          onClose={() =>
+            setShowTripQr(false)
+          }
+        />
       </ScrollView>
     );
   }

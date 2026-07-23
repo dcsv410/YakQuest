@@ -55,10 +55,33 @@ export type AdminAnalyticsDTO = {
   pendingContributions: number;
   approvedContributions: number;
   rejectedContributions: number;
+
+  /*
+   * Number of actual completed trip records.
+   *
+   * One outing remains one completed trip,
+   * even when several paddlers receive credit.
+   */
   completedTrips: number;
+
+  /*
+   * Total number of user credits across all
+   * completed trips.
+   *
+   * Example:
+   * One trip with one navigator and two added
+   * paddlers produces:
+   *
+   * completedTrips: 1
+   * creditedTripCompletions: 3
+   */
+  creditedTripCompletions: number;
+
   savedTrips: number;
+
   completedTripSummary:
     AdminCompletedTripSummaryDTO;
+
   completedTripRows:
     AdminCompletedTripRowDTO[];
 };

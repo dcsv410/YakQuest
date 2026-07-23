@@ -454,6 +454,17 @@ export default function AdminAnalyticsPage() {
 
           <div className="admin-stat-card">
             <span>
+              Paddler Trip Credits
+            </span>
+
+            <strong>
+              {globalData
+                ?.creditedTripCompletions ?? 0}
+            </strong>
+          </div>
+
+          <div className="admin-stat-card">
+            <span>
               Pending Contributions
             </span>
             <strong>

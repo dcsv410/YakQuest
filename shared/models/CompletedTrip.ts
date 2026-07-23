@@ -1,3 +1,9 @@
+export type CompletedTripParticipant = {
+  userId: string;
+  displayName: string;
+  role: "navigator" | "participant";
+};
+
 export type CompletedTrip = {
   id: string;
   riverId: string;
@@ -13,4 +19,10 @@ export type CompletedTrip = {
   notes?: string | null;
   createdAt: string;
   updatedAt?: string | null;
+
+  participants: CompletedTripParticipant[];
+
+  currentUserRole:
+    | "navigator"
+    | "participant";
 };
