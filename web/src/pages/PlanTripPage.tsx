@@ -1,13 +1,24 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
-// import { divIcon, Icon } from "leaflet";
+import {
+  MapContainer,
+  Marker,
+  Polyline,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import { useSearchParams } from "react-router-dom";
 
 import { fetchRivers } from "../services/riverService";
 import type { River, RiverPoint } from "@yakquest/shared";
-import { getTripDistanceMiles, getTripTimeRange, getTripTimelinePoints } from "@yakquest/shared";
+import {
+  findClosestIndex,
+  getTripDistanceMiles,
+  getTripTimeRange,
+  getTripTimelinePoints,
+} from "@yakquest/shared";
 import FitRiverBounds from "../components/FitRiverBounds";
 import FitTripBounds from "../components/FitTripBounds";
 import CenterMapOnState from "../components/CenterMapOnState";
@@ -52,6 +63,85 @@ function getPointLabel(point: RiverPoint) {
     default:
       return point.type;
   }
+}
+
+type PlannerPointPopupProps = {
+  point: RiverPoint;
+  isStart: boolean;
+  isEnd: boolean;
+  onSetLaunch: (
+    point: RiverPoint
+  ) => void;
+  onSetTakeout: (
+    point: RiverPoint
+  ) => void;
+};
+
+function PlannerPointPopup({
+  point,
+  isStart,
+  isEnd,
+  onSetLaunch,
+  onSetTakeout,
+}: PlannerPointPopupProps) {
+  const map = useMap();
+
+  function handleSetLaunch() {
+    onSetLaunch(point);
+    map.closePopup();
+  }
+
+  function handleSetTakeout() {
+    onSetTakeout(point);
+    map.closePopup();
+  }
+
+  return (
+    <>
+      <strong>{point.name}</strong>
+
+      <br />
+
+      {getPointLabel(point)}
+
+      {point.description ? (
+        <>
+          <br />
+          {point.description}
+        </>
+      ) : null}
+
+      <div className="planner-popup-actions">
+        <button
+          type="button"
+          className="popup-button"
+          onClick={handleSetLaunch}
+        >
+          Set as launch
+        </button>
+
+        <button
+          type="button"
+          className="popup-button"
+          onClick={handleSetTakeout}
+        >
+          Set as takeout
+        </button>
+      </div>
+
+      {isStart ? (
+        <p className="planner-popup-selection planner-popup-selection-start">
+          Selected launch
+        </p>
+      ) : null}
+
+      {isEnd ? (
+        <p className="planner-popup-selection planner-popup-selection-end">
+          Selected takeout
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 function getPlannerMarkerClass(
@@ -127,33 +217,6 @@ function getPlannerPointIcon(
 }
 
 const HUNTSVILLE_CENTER: [number, number] = [34.7304, -86.5861];
-
-// const defaultAccessPointIcon =
-//   new Icon.Default();
-
-// const selectedLaunchIcon = divIcon({
-//   className: "selected-trip-marker-wrapper",
-//   html: `
-//     <div class="selected-trip-marker selected-trip-marker-launch">
-//       L
-//     </div>
-//   `,
-//   iconSize: [36, 36],
-//   iconAnchor: [18, 18],
-//   popupAnchor: [0, -20],
-// });
-
-// const selectedTakeoutIcon = divIcon({
-//   className: "selected-trip-marker-wrapper",
-//   html: `
-//     <div class="selected-trip-marker selected-trip-marker-takeout">
-//       T
-//     </div>
-//   `,
-//   iconSize: [36, 36],
-//   iconAnchor: [18, 18],
-//   popupAnchor: [0, -20],
-// });
 
 export default function PlanTripPage() {
   const {
@@ -352,19 +415,109 @@ export default function PlanTripPage() {
       ]
     : userCenter ?? HUNTSVILLE_CENTER;
 
-  const selectPointFromMap = (point: RiverPoint) => {
-    if (selectionMode === "start") {
-      setStartId(point.id);
+  function getRiverPointIndex(
+    point: RiverPoint
+  ) {
+    if (!selectedRiver) {
+      return -1;
+    }
 
-      if (!endId) {
-        setSelectionMode("end");
+    return findClosestIndex(
+      selectedRiver.coordinates,
+      point
+    );
+  }
+
+  function selectLaunch(
+    point: RiverPoint
+  ) {
+    if (!selectedRiver) {
+      return false;
+    }
+
+    const selectedTakeout =
+      accessPoints.find(
+        (accessPoint) =>
+          accessPoint.id === endId
+      );
+
+    if (selectedTakeout) {
+      const launchIndex =
+        getRiverPointIndex(point);
+
+      const takeoutIndex =
+        getRiverPointIndex(
+          selectedTakeout
+        );
+
+      if (
+        launchIndex >= takeoutIndex
+      ) {
+        window.alert(
+          "The launch must be upriver from the selected takeout."
+        );
+
+        return false;
       }
+    }
 
-      return;
+    setStartId(point.id);
+
+    if (!endId) {
+      setSelectionMode("end");
+    }
+
+    return true;
+  }
+
+  function selectTakeout(
+    point: RiverPoint
+  ) {
+    if (!selectedRiver) {
+      return false;
+    }
+
+    const selectedLaunch =
+      accessPoints.find(
+        (accessPoint) =>
+          accessPoint.id === startId
+      );
+
+    if (selectedLaunch) {
+      const launchIndex =
+        getRiverPointIndex(
+          selectedLaunch
+        );
+
+      const takeoutIndex =
+        getRiverPointIndex(point);
+
+      if (
+        takeoutIndex <= launchIndex
+      ) {
+        window.alert(
+          "The takeout must be downriver from the selected launch."
+        );
+
+        return false;
+      }
     }
 
     setEndId(point.id);
-  };
+
+    return true;
+  }
+
+  function selectPointFromMap(
+    point: RiverPoint
+  ) {
+    if (selectionMode === "start") {
+      selectLaunch(point);
+      return;
+    }
+
+    selectTakeout(point);
+  }
 
   function togglePointFilter(
     filter:
@@ -1115,13 +1268,34 @@ export default function PlanTripPage() {
               <select
                 value={startId}
                 onChange={(event) => {
-                  setStartId(event.target.value);
-                  if (!endId) setSelectionMode("end");
+                  const pointId =
+                    event.target.value;
+
+                  if (!pointId) {
+                    setStartId("");
+                    return;
+                  }
+
+                  const point =
+                    accessPoints.find(
+                      (accessPoint) =>
+                        accessPoint.id === pointId
+                    );
+
+                  if (point) {
+                    selectLaunch(point);
+                  }
                 }}
               >
-                <option value="">Select launch</option>
+                <option value="">
+                  Select launch
+                </option>
+
                 {accessPoints.map((point) => (
-                  <option key={point.id} value={point.id}>
+                  <option
+                    key={point.id}
+                    value={point.id}
+                  >
                     {point.name}
                   </option>
                 ))}
@@ -1132,11 +1306,35 @@ export default function PlanTripPage() {
               Takeout
               <select
                 value={endId}
-                onChange={(event) => setEndId(event.target.value)}
+                onChange={(event) => {
+                  const pointId =
+                    event.target.value;
+
+                  if (!pointId) {
+                    setEndId("");
+                    return;
+                  }
+
+                  const point =
+                    accessPoints.find(
+                      (accessPoint) =>
+                        accessPoint.id === pointId
+                    );
+
+                  if (point) {
+                    selectTakeout(point);
+                  }
+                }}
               >
-                <option value="">Select takeout</option>
+                <option value="">
+                  Select takeout
+                </option>
+
                 {accessPoints.map((point) => (
-                  <option key={point.id} value={point.id}>
+                  <option
+                    key={point.id}
+                    value={point.id}
+                  >
                     {point.name}
                   </option>
                 ))}
@@ -1373,64 +1571,36 @@ export default function PlanTripPage() {
                     }
                   >
                     <Popup>
-                      <strong>
-                        {point.name}
-                      </strong>
-
-                      <br />
-
-                      {getPointLabel(point)}
-
-                      {point.description ? (
-                        <>
-                          <br />
-                          {point.description}
-                        </>
-                      ) : null}
-
                       {isAccessPoint ? (
+                        <PlannerPointPopup
+                          point={point}
+                          isStart={isStart}
+                          isEnd={isEnd}
+                          onSetLaunch={
+                            selectLaunch
+                          }
+                          onSetTakeout={
+                            selectTakeout
+                          }
+                        />
+                      ) : (
                         <>
-                          <div className="planner-popup-actions">
-                            <button
-                              type="button"
-                              className="popup-button"
-                              onClick={() => {
-                                setStartId(point.id);
+                          <strong>
+                            {point.name}
+                          </strong>
 
-                                if (!endId) {
-                                  setSelectionMode(
-                                    "end"
-                                  );
-                                }
-                              }}
-                            >
-                              Set as launch
-                            </button>
+                          <br />
 
-                            <button
-                              type="button"
-                              className="popup-button"
-                              onClick={() =>
-                                setEndId(point.id)
-                              }
-                            >
-                              Set as takeout
-                            </button>
-                          </div>
+                          {getPointLabel(point)}
 
-                          {isStart ? (
-                            <p className="planner-popup-selection planner-popup-selection-start">
-                              Selected launch
-                            </p>
-                          ) : null}
-
-                          {isEnd ? (
-                            <p className="planner-popup-selection planner-popup-selection-end">
-                              Selected takeout
-                            </p>
+                          {point.description ? (
+                            <>
+                              <br />
+                              {point.description}
+                            </>
                           ) : null}
                         </>
-                      ) : null}
+                      )}
                     </Popup>
                   </Marker>
                 );
