@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     gap: 14,
-    paddingBottom: 20,
+    paddingBottom: 30,
   },
   card: {
     backgroundColor: "rgba(20, 25, 35, 0.35)",

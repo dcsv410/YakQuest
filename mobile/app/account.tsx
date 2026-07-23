@@ -487,6 +487,7 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+    paddingBottom: 60,
     gap: 14,
   },
   title: {
