@@ -48,16 +48,19 @@ export default function SavedTripsScreen() {
 
   const handleDelete = (trip: SavedTrip) => {
     Alert.alert(
-      "Delete Trip?",
-      `${trip.riverName}: ${trip.start.name} to ${trip.end.name}`,
+      "Delete Saved Trip?",
+      `Are you sure you want to delete this saved trip on ${trip.riverName}?`,
       [
-        { text: "Cancel", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
         {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
             await deleteSavedTrip(trip.id);
-            loadTrips();
+            await loadTrips();
           },
         },
       ]

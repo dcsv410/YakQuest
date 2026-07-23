@@ -58,8 +58,8 @@ export default function TripHistoryScreen() {
 
   const handleDeleteTrip = (trip: CompletedTrip) => {
     Alert.alert(
-      "Remove Trip?",
-      `${trip.riverName}: ${trip.start.name} to ${trip.end.name}`,
+      "Remove Trip from History?",
+      `Are you sure you want to remove this ${trip.riverName} trip from your history?`,
       [
         {
           text: "Cancel",
