@@ -14,6 +14,7 @@ import L from "leaflet";
 import {
   createOutfitter,
   createRiverPoint,
+  deleteRiver,
   fetchAdminRiver,
   fetchAdminRiverOutfitters,
   fetchRivers,
@@ -159,6 +160,10 @@ export default function AdminRiverEditorPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deletingRiver, setDeletingRiver] = useState(false);
   const [routeFileName, setRouteFileName] = useState("");
   const [replacementCoordinates, setReplacementCoordinates] = useState<Coordinate[]>([]);
   const [routeFileError, setRouteFileError] = useState("");
@@ -758,6 +763,91 @@ export default function AdminRiverEditorPage() {
     }
   }
 
+  async function handleDeleteRiver(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!river) return;
+
+    setDeleteError("");
+
+    if (deleteConfirmation !== "DELETE") {
+      setDeleteError(
+        'Type "DELETE" to confirm.'
+      );
+      return;
+    }
+
+    if (!deletePassword) {
+      setDeleteError(
+        "Enter your current password."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      [
+        `Permanently delete "${river.name}"?`,
+        "",
+        "This will also permanently delete:",
+        "• All access points, POIs, and hazards",
+        "• All point photos",
+        "• All outfitters for this river",
+        "• All saved trips for this river",
+        "• All completed trip history for this river",
+        "• All contributions attached to this river",
+        "",
+        "This action cannot be undone.",
+      ].join("\n")
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingRiver(true);
+
+    try {
+      await deleteRiver(river.id, {
+        password: deletePassword,
+        confirmation: deleteConfirmation,
+      });
+
+      queryClient.removeQueries({
+        queryKey: [
+          "adminRiver",
+          river.id,
+        ],
+      });
+
+      queryClient.removeQueries({
+        queryKey: [
+          "adminRiverOutfitters",
+          river.id,
+        ],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["rivers"],
+      });
+
+      navigate("/admin/rivers", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete river."
+      );
+    } finally {
+      setDeletingRiver(false);
+    }
+  }
+
   async function handleReplacementKml(file: File) {
     setRouteFileName(file.name);
     setRouteFileError("");
@@ -937,7 +1027,7 @@ export default function AdminRiverEditorPage() {
       </div>
 
       <div className="admin-editor-grid">
-        <form className="admin-editor-form" onSubmit={handleSubmit}>
+        <div className="admin-editor-form">
           <div className="admin-editor-section">
             <h2>River Details</h2>
 
@@ -1769,10 +1859,97 @@ export default function AdminRiverEditorPage() {
             </div>
           </div>
 
-          <button className="primary-button admin-save-button" disabled={saving}>
-            {saving ? "Saving..." : "Save River"}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <button
+              className="primary-button admin-save-button"
+              disabled={saving}
+            >
+              {saving
+                ? "Saving..."
+                : "Save River"}
+            </button>
+          </form>
+          <div className="admin-editor-section admin-river-danger-zone">
+            <p className="eyebrow">
+              Danger Zone
+            </p>
+
+            <h2>Delete River</h2>
+
+            <p>
+              Permanently delete{" "}
+              <strong>{river.name}</strong>{" "}
+              and all data directly associated
+              with it.
+            </p>
+
+            <p className="muted">
+              This includes access points,
+              POIs, hazards, photos,
+              outfitters, saved trips,
+              completed trips, and attached
+              contributions. This action
+              cannot be undone.
+            </p>
+
+            <form
+              className="admin-river-delete-form"
+              onSubmit={handleDeleteRiver}
+            >
+              <label className="form-label">
+                Current Password
+
+                <input
+                  type="password"
+                  value={deletePassword}
+                  autoComplete="current-password"
+                  onChange={(event) =>
+                    setDeletePassword(
+                      event.target.value
+                    )
+                  }
+                  required
+                />
+              </label>
+
+              <label className="form-label">
+                Type DELETE to confirm
+
+                <input
+                  value={deleteConfirmation}
+                  autoComplete="off"
+                  onChange={(event) =>
+                    setDeleteConfirmation(
+                      event.target.value
+                    )
+                  }
+                  required
+                />
+              </label>
+
+              {deleteError ? (
+                <div className="form-error">
+                  {deleteError}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                className="account-delete-button"
+                disabled={
+                  deletingRiver ||
+                  deleteConfirmation !==
+                    "DELETE" ||
+                  !deletePassword
+                }
+              >
+                {deletingRiver
+                  ? "Deleting River..."
+                  : "Delete River"}
+              </button>
+            </form>
+          </div>
+        </div>
 
         <div className="admin-editor-map-panel">
           <div className="admin-map-legend">

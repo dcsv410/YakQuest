@@ -19,7 +19,7 @@ from app.models import Contribution, Review, River, RiverPoint, User, CompletedT
 from app.schemas import AttachRiverRequest, ContributionOut, ReviewCreate
 from app.security import require_admin
 from app.models import User, Outfitter
-from app.security import get_current_user
+from app.security import get_current_user, verify_password
 from app.schemas import (
     AdminUserUpdate,
     RiverUpdate,
@@ -29,6 +29,7 @@ from app.schemas import (
     RiverRouteReplace,
     OutfitterCreate,
     OutfitterUpdate,
+    DeleteRiverRequest,
 )
 from app.routers.rivers import serialize_river, serialize_coordinates, serialize_point, serialize_outfitter
 
@@ -381,6 +382,132 @@ def update_river(
     db.refresh(river)
 
     return serialize_river(river)
+
+
+@router.delete("/rivers/{river_id}")
+def delete_river(
+    river_id: UUID,
+    payload: DeleteRiverRequest,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_admin_user),
+):
+    if payload.confirmation != "DELETE":
+        raise HTTPException(
+            status_code=400,
+            detail='Type "DELETE" to confirm river deletion',
+        )
+
+    if not verify_password(
+        payload.password,
+        admin_user.hashed_password,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Password is incorrect",
+        )
+
+    river = (
+        db.query(River)
+        .filter(River.id == river_id)
+        .first()
+    )
+
+    if not river:
+        raise HTTPException(
+            status_code=404,
+            detail="River not found",
+        )
+
+    try:
+        point_ids = [
+            point_id
+            for (point_id,) in (
+                db.query(RiverPoint.id)
+                .filter(
+                    RiverPoint.river_id
+                    == river.id
+                )
+                .all()
+            )
+        ]
+
+        contribution_query = db.query(
+            Contribution.id
+        ).filter(
+            or_(
+                Contribution.river_id
+                == river.id,
+                Contribution.target_point_id.in_(
+                    point_ids
+                )
+                if point_ids
+                else False,
+            )
+        )
+
+        contribution_ids = [
+            contribution_id
+            for (contribution_id,)
+            in contribution_query.all()
+        ]
+
+        if contribution_ids:
+            db.query(Review).filter(
+                Review.contribution_id.in_(
+                    contribution_ids
+                )
+            ).delete(
+                synchronize_session=False
+            )
+
+            db.query(Contribution).filter(
+                Contribution.id.in_(
+                    contribution_ids
+                )
+            ).delete(
+                synchronize_session=False
+            )
+
+        db.query(SavedTrip).filter(
+            SavedTrip.river_id == river.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.query(CompletedTrip).filter(
+            CompletedTrip.river_id
+            == river.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        # Outfitters must be deleted before river points because
+        # their highest/lowest point fields reference river_points.
+        db.query(Outfitter).filter(
+            Outfitter.river_id == river.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.query(RiverPoint).filter(
+            RiverPoint.river_id == river.id
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.delete(river)
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "message": (
+            f'River "{river.name}" and all associated data '
+            "were permanently deleted."
+        )
+    }
 
 
 @router.put("/rivers/{river_id}/route")

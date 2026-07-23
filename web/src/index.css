@@ -2920,6 +2920,30 @@ h1 {
   line-height: 1.4;
 }
 
+.admin-river-danger-zone {
+  margin-top: 32px;
+  border: 1px solid #df9b9b;
+  background: #fffafa;
+}
+
+.admin-river-danger-zone h2 {
+  color: #8f2020;
+}
+
+.admin-river-danger-zone .eyebrow {
+  color: #a12626;
+}
+
+.admin-river-delete-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.admin-river-delete-form .account-delete-button {
+  justify-self: start;
+}
+
 .account-danger-card {
   border-color: #df9b9b;
   background: #fffafa;

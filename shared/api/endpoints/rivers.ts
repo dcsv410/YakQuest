@@ -85,6 +85,30 @@ export const riversApi = {
     );
   },
 
+  deleteRiver(
+    client: ApiClient,
+    id: string,
+    payload: {
+      password: string;
+      confirmation: string;
+    }
+  ): Promise<{
+    message: string;
+  }> {
+    return client.deleteWithBody<
+      {
+        message: string;
+      },
+      {
+        password: string;
+        confirmation: string;
+      }
+    >(
+      `/admin/rivers/${id}`,
+      payload
+    );
+  },
+
   replaceRoute(
     client: ApiClient,
     id: string,

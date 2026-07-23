@@ -148,6 +148,11 @@ class DeleteAccountRequest(BaseModel):
     confirmation: str
 
 
+class DeleteRiverRequest(BaseModel):
+    password: str
+    confirmation: str
+
+
 class MessageResponse(BaseModel):
     message: str
 

@@ -17,6 +17,18 @@ export const updateRiver = (
   payload: UpdateRiverRequestDTO
 ) => riversApi.update(apiClient, id, payload);
 
+export const deleteRiver = (
+  id: string,
+  payload: {
+    password: string;
+    confirmation: string;
+  }
+) => riversApi.deleteRiver(
+  apiClient,
+  id,
+  payload
+);
+
 export const replaceRiverRoute = (
   id: string,
   payload: ReplaceRiverRouteRequestDTO
