@@ -121,6 +121,7 @@ export default function PlanTrip() {
     currentSpeedMph,
     currentSpeedEtaMs,
     resetNavigationAlerts,
+    getCurrentTripSummary,
   } = useTripNavigation({
     location,
     selectedRiver,
@@ -133,8 +134,10 @@ export default function PlanTrip() {
       planner.completeTrip();
 
       setTripSummary({
-        actualDistanceMiles: summary.actualDistanceFeet / FEET_PER_MILE,
+        actualDistanceMiles:
+          summary.actualDistanceFeet / FEET_PER_MILE,
         elapsedMs: summary.elapsedMs,
+        endedEarly: false,
       });
     },
   });
@@ -207,6 +210,7 @@ export default function PlanTrip() {
   const [tripSummary, setTripSummary] = useState<{
     actualDistanceMiles: number;
     elapsedMs: number;
+    endedEarly: boolean;
   } | null>(null);
 
   const centerMapAbovePanel = (river: River) => {
@@ -303,6 +307,46 @@ export default function PlanTrip() {
     );
   };
 
+  const handleEndTripEarly = () => {
+    if (!selectedRiver || !start || !end) {
+      return;
+    }
+
+    Alert.alert(
+      "End Trip Early?",
+      [
+        "Use this when you leave the river before reaching the planned takeout.",
+        "",
+        "YakQuest will save the distance and time recorded so far while preserving the original planned trip for comparison.",
+      ].join("\n"),
+      [
+        {
+          text: "Keep Navigating",
+          style: "cancel",
+        },
+        {
+          text: "End Trip",
+          style: "destructive",
+          onPress: async () => {
+            const summary = getCurrentTripSummary();
+
+            await stopBackgroundNavigation();
+
+            planner.completeTrip();
+
+            setTripSummary({
+              actualDistanceMiles:
+                summary.actualDistanceFeet /
+                FEET_PER_MILE,
+              elapsedMs: summary.elapsedMs,
+              endedEarly: true,
+            });
+          },
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state !== "active") return;
@@ -334,7 +378,11 @@ export default function PlanTrip() {
 
       setTripSummary({
         actualDistanceMiles: segmentMiles,
-        elapsedMs: Math.max(0, completedAt - startedAt),
+        elapsedMs: Math.max(
+          0,
+          completedAt - startedAt
+        ),
+        endedEarly: false,
       });
 
       planner.completeTrip();
@@ -365,6 +413,7 @@ export default function PlanTrip() {
               setTripSummary({
                 actualDistanceMiles: segmentMiles,
                 elapsedMs: 0,
+                endedEarly: false,
               });
             },
           },
@@ -626,6 +675,20 @@ export default function PlanTrip() {
           </TouchableOpacity>
         )}
 
+      {tripActive &&
+        navigationArmed &&
+        !tripSummary &&
+        !showSafetyStart && (
+          <TouchableOpacity
+            style={styles.endTripEarlyButton}
+            onPress={handleEndTripEarly}
+          >
+            <Text style={styles.endTripEarlyButtonText}>
+              End Trip Early
+            </Text>
+          </TouchableOpacity>
+        )}
+
       <SafetyStartScreen
         visible={showSafetyStart}
         flowLevel={flowRating}
@@ -641,20 +704,41 @@ export default function PlanTrip() {
           plannedDistanceMiles={segmentMiles}
           actualDistanceMiles={tripSummary.actualDistanceMiles}
           elapsedMs={tripSummary.elapsedMs}
+          endedEarly={tripSummary.endedEarly}
           onSave={async (notes) => {
+            const earlyExitNote =
+              tripSummary.endedEarly
+                ? "Trip ended early before reaching the planned takeout."
+                : "";
+
+            const combinedNotes = [
+              earlyExitNote,
+              notes.trim(),
+            ]
+              .filter(Boolean)
+              .join("\n\n");
+
             await saveCompletedTrip({
               riverId: selectedRiver.id,
               riverName: selectedRiver.name,
               state: selectedRiver.state,
               start,
               end,
-              plannedDistanceMiles: segmentMiles,
-              actualDistanceMiles: tripSummary.actualDistanceMiles,
-              elapsedMs: tripSummary.elapsedMs,
-              notes,
+              plannedDistanceMiles:
+                segmentMiles,
+              actualDistanceMiles:
+                tripSummary.actualDistanceMiles,
+              elapsedMs:
+                tripSummary.elapsedMs,
+              notes: combinedNotes,
             });
 
-            Alert.alert("Trip Saved", "Your completed trip log was saved.");
+            Alert.alert(
+              "Trip Saved",
+              tripSummary.endedEarly
+                ? "The completed portion of your trip was saved."
+                : "Your completed trip log was saved."
+            );
           }}
           onNavigateBackToStart={() => openMaps(start)}
           onDone={() => {
@@ -744,5 +828,24 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 15,
     fontWeight: "700",
+  },
+  endTripEarlyButton: {
+    position: "absolute",
+    left: 16,
+    bottom: 40,
+    minWidth: 145,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(160, 45, 45, 0.94)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    paddingHorizontal: 18,
+  },
+  endTripEarlyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });

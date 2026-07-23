@@ -24,6 +24,7 @@ const toApiContribution = (contribution: Contribution) => ({
   riverId: contribution.riverId,
   riverName: contribution.riverName,
   state: contribution.state,
+  description: contribution.description,
   points: contribution.points,
   targetPointId: contribution.targetPointId,
   targetPointName: contribution.targetPointName,

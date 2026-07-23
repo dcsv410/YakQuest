@@ -235,6 +235,15 @@ export function useTripNavigation({
     });
   }, [location, selectedRiver, tripActive, navigationArmed, localPoints]);
 
+  const getCurrentTripSummary = () => {
+    return {
+      actualDistanceFeet: actualDistanceFeetRef.current,
+      elapsedMs: tripStartTimeRef.current
+        ? Date.now() - tripStartTimeRef.current
+        : 0,
+    };
+  };
+
   const resetNavigationAlerts = () => {
     setMileAlertSent(false);
     setHalfMileAlertSent(false);
@@ -261,6 +270,7 @@ export function useTripNavigation({
     averageSpeedMph,
     estimatedTimeRemainingMs,
     resetNavigationAlerts,
+    getCurrentTripSummary,
     currentSpeedMph,
     currentSpeedEtaMs,
   };

@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +15,10 @@ import {
   Image,
 } from "react-native";
 
-import { useLocalSearchParams } from "expo-router";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+} from "expo-router";
 
 import { getAllRivers } from "../src/services/riverService";
 import { useUserLocation } from "../src/features/trip-planning/hooks/useUserLocation";
@@ -22,7 +29,10 @@ import {
   RiverPointType,
 } from "../src/data/types";
 import { Contribution } from "../src/services/contributionService";
-import { getCurrentUser } from "../src/services/authService";
+import {
+  getCurrentUser,
+  isLoggedIn,
+} from "../src/services/authService";
 import { pickContributionPhoto } from "../src/features/contribute/photoContribution";
 import { getAllRiverPoints } from "@yakquest/shared";
 
@@ -47,6 +57,11 @@ const pointTypes: {
 ];
 
 export default function ContributeScreen() {
+  const [checkingLogin, setCheckingLogin] =
+    useState(true);
+
+  const [userIsLoggedIn, setUserIsLoggedIn] =
+    useState(false);
   const params = useLocalSearchParams<{
     mode?: ContributionMode;
     riverId?: string;
@@ -61,6 +76,42 @@ export default function ContributeScreen() {
     editContribution,
     retryContribution,
   } = useContributions();
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function checkLoginStatus() {
+        try {
+          const loggedIn = await isLoggedIn();
+
+          if (isActive) {
+            setUserIsLoggedIn(loggedIn);
+          }
+        } catch (error) {
+          console.error(
+            "Failed to check contribution login status",
+            error
+          );
+
+          if (isActive) {
+            setUserIsLoggedIn(false);
+          }
+        } finally {
+          if (isActive) {
+            setCheckingLogin(false);
+          }
+        }
+      }
+
+      setCheckingLogin(true);
+      checkLoginStatus();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const [rivers, setRivers] = useState<River[]>([]);
   const [riversLoading, setRiversLoading] = useState(true);
@@ -416,6 +467,58 @@ export default function ContributeScreen() {
       return;
     }
 
+    if (mode === "new-river") {
+      if (!newRiverName.trim()) {
+        Alert.alert(
+          "Missing River Name",
+          "Please enter a river name."
+        );
+        return;
+      }
+
+      if (!newRiverState.trim()) {
+        Alert.alert(
+          "Missing State",
+          "Please enter the state containing this river."
+        );
+        return;
+      }
+
+      if (!newRiverDescription.trim()) {
+        Alert.alert(
+          "Description Required",
+          "Please tell us about the river and include the highest and lowest known access points."
+        );
+        return;
+      }
+
+      const result = await saveContribution({
+        kind: "new-river",
+        riverName: newRiverName.trim(),
+        state: newRiverState
+          .trim()
+          .toUpperCase(),
+        description:
+          newRiverDescription.trim(),
+        points: [],
+      });
+
+      Alert.alert(
+        result.submitted
+          ? "River Request Submitted"
+          : "River Request Saved",
+        result.submitted
+          ? "Your new river request was submitted for review."
+          : "Your new river request was saved locally and will be submitted when a connection is available."
+      );
+
+      setNewRiverName("");
+      setNewRiverState("AL");
+      setNewRiverDescription("");
+
+      return;
+    }
+
     if (!location) {
       Alert.alert(
         "Location Needed",
@@ -445,26 +548,8 @@ export default function ContributeScreen() {
       return;
     }
 
-    if (
-      mode === "new-river" &&
-      !newRiverName.trim()
-    ) {
-      Alert.alert(
-        "Missing River Name",
-        "Please enter a river name."
-      );
-      return;
-    }
-
-    const riverName =
-      mode === "new-river"
-        ? newRiverName.trim()
-        : selectedRiver!.name;
-
-    const state =
-      mode === "new-river"
-        ? newRiverState.trim().toUpperCase()
-        : selectedRiver!.state;
+    const riverName = selectedRiver!.name;
+    const state = selectedRiver!.state;
 
     const pointId = `${state.toLowerCase()}-${riverName
       .toLowerCase()
@@ -473,17 +558,10 @@ export default function ContributeScreen() {
       .replace(/\s+/g, "-")}-${Date.now()}`;
 
     const result = await saveContribution({
-      kind: mode,
-      riverId:
-        mode === "existing-river-point"
-          ? selectedRiver!.id
-          : undefined,
+      kind: "existing-river-point",
+      riverId: selectedRiver!.id,
       riverName,
       state,
-      description:
-        mode === "new-river"
-          ? newRiverDescription.trim()
-          : undefined,
       points: [
         {
           id: pointId,
@@ -540,6 +618,27 @@ export default function ContributeScreen() {
 
     setSelectedRiverId(nearestRiver.river.id);
   }, [params.riverId, mode, nearestRiver?.river?.id]);
+
+  if (checkingLogin) {
+    return (
+      <View style={styles.loginRequiredContainer}>
+        <Text style={styles.loginRequiredText}>
+          Checking your account...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!userIsLoggedIn) {
+    return (
+      <View style={styles.loginRequiredContainer}>
+        <Text style={styles.loginRequiredText}>
+          You must be logged into your YakQuest
+          account to contribute.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -735,11 +834,20 @@ export default function ContributeScreen() {
             onChangeText={
               setNewRiverDescription
             }
-            placeholder="Tell us about this river..."
+            placeholder="Tell us about this river, including the highest and lowest known access points..."
             placeholderTextColor="#777"
             multiline
             style={styles.textArea}
           />
+
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+          >
+            <Text style={styles.submitButtonText}>
+              Submit New River Request
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -999,92 +1107,90 @@ export default function ContributeScreen() {
         </View>
       )}
 
-      {mode !== "remove-existing-point" &&
-        mode !== "point-photo" && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Point Details</Text>
+      {mode === "existing-river-point" && (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Point Details</Text>
 
-            <TextInput
-              value={pointName}
-              onChangeText={setPointName}
-              placeholder="Point name"
-              placeholderTextColor="#777"
-              style={styles.input}
-            />
+          <TextInput
+            value={pointName}
+            onChangeText={setPointName}
+            placeholder="Point name"
+            placeholderTextColor="#777"
+            style={styles.input}
+          />
 
-            <Text style={styles.label}>Point Type</Text>
+          <Text style={styles.label}>Point Type</Text>
 
-            <View style={styles.typeGrid}>
-              {pointTypes.map((type) => (
-                <TouchableOpacity
-                  key={type.value}
+          <View style={styles.typeGrid}>
+            {pointTypes.map((type) => (
+              <TouchableOpacity
+                key={type.value}
+                style={[
+                  styles.typeButton,
+                  pointType === type.value && styles.typeButtonActive,
+                ]}
+                onPress={() => setPointType(type.value)}
+              >
+                <Text
                   style={[
-                    styles.typeButton,
-                    pointType === type.value && styles.typeButtonActive,
+                    styles.typeButtonText,
+                    pointType === type.value && styles.typeButtonTextActive,
                   ]}
-                  onPress={() => setPointType(type.value)}
                 >
-                  <Text
-                    style={[
-                      styles.typeButtonText,
-                      pointType === type.value && styles.typeButtonTextActive,
-                    ]}
-                  >
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TextInput
-              value={pointDescription}
-              onChangeText={setPointDescription}
-              placeholder="Description"
-              placeholderTextColor="#777"
-              multiline
-              style={styles.textArea}
-            />
-
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Parking</Text>
-              <Switch value={parking} onValueChange={setParking} />
-            </View>
-
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Restroom</Text>
-              <Switch value={restroom} onValueChange={setRestroom} />
-            </View>
-
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Camping</Text>
-              <Switch value={camping} onValueChange={setCamping} />
-            </View>
-
-            {permissionDenied ? (
-              <Text style={styles.permissionWarning}>
-                Location permission is required to add
-                a new point. Photo contributions do not
-                require location access.
-              </Text>
-            ) : null}
-
-            <Text style={styles.locationText}>
-              GPS:{" "}
-              {location
-                ? `${location.latitude.toFixed(
-                    5
-                  )}, ${location.longitude.toFixed(5)}`
-                : permissionDenied
-                  ? "Permission not granted"
-                  : "Loading..."}
-            </Text>
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>Save Contribution</Text>
-            </TouchableOpacity>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )
-      }
+
+          <TextInput
+            value={pointDescription}
+            onChangeText={setPointDescription}
+            placeholder="Description"
+            placeholderTextColor="#777"
+            multiline
+            style={styles.textArea}
+          />
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Parking</Text>
+            <Switch value={parking} onValueChange={setParking} />
+          </View>
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Restroom</Text>
+            <Switch value={restroom} onValueChange={setRestroom} />
+          </View>
+
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>Camping</Text>
+            <Switch value={camping} onValueChange={setCamping} />
+          </View>
+
+          {permissionDenied ? (
+            <Text style={styles.permissionWarning}>
+              Location permission is required to add
+              a new point. Photo contributions do not
+              require location access.
+            </Text>
+          ) : null}
+
+          <Text style={styles.locationText}>
+            GPS:{" "}
+            {location
+              ? `${location.latitude.toFixed(
+                  5
+                )}, ${location.longitude.toFixed(5)}`
+              : permissionDenied
+                ? "Permission not granted"
+                : "Loading..."}
+          </Text>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitButtonText}>Save Contribution</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Your Local Contributions</Text>
@@ -1622,5 +1728,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 13,
     lineHeight: 18,
+  },
+
+  loginRequiredContainer: {
+    flex: 1,
+    backgroundColor: "#F5F7FA",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+  },
+
+  loginRequiredText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#263238",
+    textAlign: "center",
+    lineHeight: 26,
   },
 });
